@@ -1,0 +1,10 @@
+gmail:
+  oauth:
+    project-id: cs-poc-dxk82jgpd30qog6ii1itvyo
+    auth-uri: https://accounts.google.com/o/oauth2/auth
+    token-uri: https://oauth2.googleapis.com/token
+    auth-provider-x509-cert-url: https://www.googleapis.com/oauth2/v1/certs
+    redirect-uris:
+      - http://localhost:8888/Callback
+    client-id: ${GMAIL_CLIENT_ID}
+    client-secret: ${GMAIL_CLIENT_SECRET}
