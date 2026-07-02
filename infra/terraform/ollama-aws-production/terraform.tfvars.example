@@ -1,0 +1,50 @@
+aws_region = "us-east-1"
+name       = "ollama-spot"
+
+# Strongly recommended: your exact public IP /32, VPN CIDR, or Tailscale subnet.
+admin_cidrs = [
+  "YOUR_PUBLIC_IP/32"
+]
+
+# Optional. Set null if you do not want SSH.
+key_name   = "your-ec2-keypair"
+enable_ssh = true
+
+ollama_model = "llama3.1:8b"
+
+# Cheapest practical GPU mix.
+primary_instance_type = "g4dn.xlarge"
+instance_types = [
+  "g4dn.xlarge",
+  "g5.xlarge"
+]
+
+# Cost-safe default: off until explicitly scaled up.
+min_size         = 0
+desired_capacity = 0
+max_size         = 1
+
+on_demand_base_capacity = 0
+on_demand_percentage    = 0
+
+# ALB is more production-friendly than direct instance IP.
+enable_alb = true
+
+# Optional. Add an ACM cert ARN to enable HTTPS.
+# acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/..."
+
+# Persistent model cache. Recommended if you frequently scale down to zero.
+enable_persistent_model_volume = false
+persistent_model_volume_gb     = 150
+persistent_volume_az           = "us-east-1a"
+
+# Optional scheduled start/stop. AWS cron uses UTC.
+enable_scheduled_scaling     = false
+scale_up_cron_expression     = "cron(0 13 ? * MON-FRI *)"
+scale_down_cron_expression   = "cron(0 23 ? * MON-FRI *)"
+scheduled_scale_up_capacity  = 1
+
+tags = {
+  Owner = "Randall"
+  App   = "Ollama"
+}
