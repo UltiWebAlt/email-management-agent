@@ -14,7 +14,7 @@ package com.ultiweb.jobs;
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// [START gmail_quickstart]
+// [START email_management_agent]
 
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -37,8 +37,8 @@ import java.util.List;
 /* class to demonstrate use of Gmail list labels API */
 @SpringBootApplication
 @EnableConfigurationProperties(GmailOAuthProperties.class)
-public class GmailQuickstart {
-private static final Logger logger = LoggerFactory.getLogger(GmailQuickstart.class);
+public class EmailManagementAgent {
+private static final Logger logger = LoggerFactory.getLogger(EmailManagementAgent.class);
 
 /**
  * Application name.
@@ -50,12 +50,12 @@ private static final String APPLICATION_NAME = "Gmail API Java Quickstart";
 private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 private final GMailOAuth gmailOAuth;
 
-GmailQuickstart(GMailOAuth gmailOAuth) {
+EmailManagementAgent(GMailOAuth gmailOAuth) {
 	this.gmailOAuth = gmailOAuth;
 }
 
 public static void main(String... args) {
-	System.exit(SpringApplication.exit(SpringApplication.run(GmailQuickstart.class, args)));
+	System.exit(SpringApplication.exit(SpringApplication.run(EmailManagementAgent.class, args)));
 }
 
 @Bean
@@ -82,4 +82,4 @@ CommandLineRunner listLabels() {
 	};
 }
 }
-// [END gmail_quickstart]
+// [END email_management_agent]

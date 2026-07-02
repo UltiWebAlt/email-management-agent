@@ -1,2 +1,7 @@
+.gradle/
+build/
+tokens/
+.idea/
+
 !gradle.properties
 !gradle/wrapper/gradle-wrapper.properties

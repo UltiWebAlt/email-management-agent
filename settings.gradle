@@ -4,4 +4,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'gmail-quickstart'
+rootProject.name = 'email-management-agent'

@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-    - Main application entry point: `src/main/java/com/ultiweb/jobs/GmailQuickstart.java`.
+    - Main application entry point: `src/main/java/com/ultiweb/jobs/EmailManagementAgent.java`.
     - Gmail OAuth2 support lives in `src/main/java/com/ultiweb/jobs/utils/oauth2`.
     - Gmail email examples live in `src/main/java/com/ultiweb/jobs/utils/email`.
     - Unit tests live under `src/test/java`.
