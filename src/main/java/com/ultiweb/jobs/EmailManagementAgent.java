@@ -43,7 +43,7 @@ private static final Logger logger = LoggerFactory.getLogger(EmailManagementAgen
 /**
  * Application name.
  */
-private static final String APPLICATION_NAME = "Gmail API Java Quickstart";
+private static final String APPLICATION_NAME = "Email Management Agent";
 /**
  * Global instance of the JSON factory.
  */
