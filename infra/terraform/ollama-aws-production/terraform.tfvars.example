@@ -1,7 +1,7 @@
 aws_region = "us-east-1"
 name       = "ollama-spot"
 
-# Strongly recommended: your exact public IP /32, VPN CIDR, or Tailscale subnet.
+# Required only for ALB, direct Ollama, or SSH access from the public internet.
 admin_cidrs = [
   "YOUR_PUBLIC_IP/32"
 ]
@@ -9,6 +9,13 @@ admin_cidrs = [
 # Optional. Set null if you do not want SSH.
 key_name   = "your-ec2-keypair"
 enable_ssh = true
+
+# Tailscale access. Store the auth key separately in SSM; never put it in this file.
+# See README for the key and SSM setup commands.
+enable_tailscale                    = false
+tailscale_auth_key_parameter_name   = "/ollama/tailscale-auth-key"
+tailscale_hostname                  = "ollama-spot"
+enable_tailscale_direct_connections = true
 
 ollama_model = "llama3.1:8b"
 
@@ -36,7 +43,12 @@ enable_alb = true
 # Persistent model cache. Recommended if you frequently scale down to zero.
 enable_persistent_model_volume = false
 persistent_model_volume_gb     = 150
+# Required when enable_persistent_model_volume is true. It must match one of
+# the configured subnet IDs (or a subnet in the selected default VPC).
 persistent_volume_az           = "us-east-1a"
+
+# Allows time for driver installation and model download during a cold start.
+health_check_grace_period_seconds = 2700
 
 # Optional scheduled start/stop. AWS cron uses UTC.
 enable_scheduled_scaling     = false

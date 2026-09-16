@@ -12,6 +12,7 @@ This Terraform stack provisions a cost-controlled Ollama deployment on AWS using
 - CloudWatch log group
 - Optional scheduled scale-up / scale-down via EventBridge + Lambda
 - Bootstrapped NVIDIA driver + Ollama install
+- Optional Tailscale node for private Ollama access
 
 ## Default cost posture
 
@@ -98,9 +99,48 @@ If HTTPS is enabled with `acm_certificate_arn`, use:
 curl https://YOUR_DOMAIN/api/tags
 ```
 
+## Private access with Tailscale
+
+Tailscale can expose Ollama privately without an ALB, a public Ollama security-group rule, or SSH. The auth key is read at boot from an AWS Systems Manager SecureString and is not stored in Terraform state.
+
+1. In the Tailscale admin console, create a **tagged, reusable, ephemeral** auth key. Use a dedicated tag such as `tag:ollama`; if device approval is enabled, make the key pre-approved. Grant your user/device access to `tag:ollama:11434` in your tailnet policy.
+2. Store the key in Parameter Store. This command reads it without echoing it:
+
+```bash
+read -rs TAILSCALE_AUTH_KEY
+aws ssm put-parameter \
+  --region us-east-1 \
+  --name /ollama/tailscale-auth-key \
+  --type SecureString \
+  --value "$TAILSCALE_AUTH_KEY" \
+  --overwrite
+unset TAILSCALE_AUTH_KEY
+```
+
+3. Configure Terraform for Tailnet-only access:
+
+```hcl
+enable_tailscale                    = true
+tailscale_auth_key_parameter_name   = "/ollama/tailscale-auth-key"
+tailscale_hostname                  = "ollama-spot"
+enable_tailscale_direct_connections = true
+
+enable_alb = false
+enable_ssh = false
+admin_cidrs = []
+```
+
+After the instance starts, use MagicDNS (if enabled) from this computer:
+
+```bash
+curl http://$(terraform output -raw tailscale_hostname):11434/api/tags
+```
+
+If MagicDNS is disabled, find the node's Tailscale IP with `tailscale status` and use that address instead. The ephemeral key ensures a terminated ASG instance is removed from the tailnet shortly after it goes offline.
+
 ## Security notes
 
-Do not expose Ollama publicly. Restrict `admin_cidrs` to your IP, VPN, or Tailscale subnet.
+Do not expose Ollama publicly. Restrict `admin_cidrs` to your IP or VPN when using an ALB or direct access. Tailscale traffic reaches the instance over its encrypted overlay and does not require a public Ollama `11434` ingress rule.
 
 Recommended:
 
@@ -119,7 +159,9 @@ persistent_model_volume_gb     = 150
 
 This creates an EBS volume and mounts it to `/usr/share/ollama`.
 
-Note: this stack attaches the volume to one instance at a time. Keep `max_size = 1` when using this mode.
+Set `persistent_volume_az` to the AZ of one of the configured subnets. When this mode is enabled, the ASG launches only in matching-AZ subnets and requires `max_size = 1`, because the EBS volume can attach to only one instance.
+
+Cold starts install NVIDIA drivers and download the configured model. The default `health_check_grace_period_seconds = 2700` allows 45 minutes before the ASG may replace an unhealthy instance. Increase it for larger models or slower package mirrors.
 
 ## Scheduled scaling
 

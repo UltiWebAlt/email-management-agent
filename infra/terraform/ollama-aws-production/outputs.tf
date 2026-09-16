@@ -28,3 +28,8 @@ output "model_cache_volume_id" {
 output "cloudwatch_log_group" {
   value = aws_cloudwatch_log_group.ollama.name
 }
+
+output "tailscale_hostname" {
+  value       = var.enable_tailscale ? coalesce(var.tailscale_hostname, var.name) : null
+  description = "Tailscale hostname for the Ollama node, if enabled."
+}

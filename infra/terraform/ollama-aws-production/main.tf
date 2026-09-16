@@ -45,6 +45,20 @@ locals {
   subnet_ids = length(var.subnet_ids) > 0 ? var.subnet_ids : data.aws_subnets.selected[0].ids
 }
 
+data "aws_subnet" "selected" {
+  for_each = toset(local.subnet_ids)
+
+  id = each.value
+}
+
+locals {
+  persistent_volume_subnet_ids = var.enable_persistent_model_volume ? [
+    for subnet_id, subnet in data.aws_subnet.selected : subnet_id
+    if subnet.availability_zone == var.persistent_volume_az
+  ] : []
+  instance_subnet_ids = var.enable_persistent_model_volume ? local.persistent_volume_subnet_ids : local.subnet_ids
+}
+
 data "aws_ami" "ubuntu_gpu" {
   most_recent = true
   owners      = ["099720109477"]
@@ -79,13 +93,37 @@ resource "aws_security_group" "instance" {
     }
   }
 
-  ingress {
-    description     = "Ollama from ALB"
-    from_port       = 11434
-    to_port         = 11434
-    protocol        = "tcp"
-    security_groups = var.enable_alb ? [aws_security_group.alb[0].id] : []
-    cidr_blocks     = var.enable_alb ? [] : var.admin_cidrs
+  dynamic "ingress" {
+    for_each = var.enable_alb ? [1] : []
+    content {
+      description     = "Ollama from ALB"
+      from_port       = 11434
+      to_port         = 11434
+      protocol        = "tcp"
+      security_groups = [aws_security_group.alb[0].id]
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = !var.enable_alb && length(var.admin_cidrs) > 0 ? [1] : []
+    content {
+      description = "Ollama from admin CIDRs"
+      from_port   = 11434
+      to_port     = 11434
+      protocol    = "tcp"
+      cidr_blocks = var.admin_cidrs
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = var.enable_tailscale && var.enable_tailscale_direct_connections ? [1] : []
+    content {
+      description = "Tailscale encrypted peer-to-peer UDP"
+      from_port   = 41641
+      to_port     = 41641
+      protocol    = "udp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   egress {
@@ -185,6 +223,15 @@ resource "aws_iam_role_policy" "ec2" {
           ]
           Resource = "*"
         }
+      ] : [],
+      var.enable_tailscale ? [
+        {
+          Effect = "Allow"
+          Action = [
+            "ssm:GetParameter"
+          ]
+          Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${var.tailscale_auth_key_parameter_name}"
+        }
       ] : []
     )
   })
@@ -206,6 +253,13 @@ resource "aws_ebs_volume" "model_cache" {
   tags = merge(local.tags, {
     Name = "${var.name}-model-cache"
   })
+
+  lifecycle {
+    precondition {
+      condition     = var.persistent_volume_az != null
+      error_message = "persistent_volume_az must be set when enable_persistent_model_volume is true."
+    }
+  }
 }
 
 resource "aws_launch_template" "ollama" {
@@ -223,12 +277,15 @@ resource "aws_launch_template" "ollama" {
   vpc_security_group_ids = [aws_security_group.instance.id]
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    ollama_model                    = var.ollama_model
-    log_group_name                  = aws_cloudwatch_log_group.ollama.name
-    aws_region                      = var.aws_region
-    enable_persistent_model_volume  = var.enable_persistent_model_volume
-    model_volume_id                 = var.enable_persistent_model_volume ? aws_ebs_volume.model_cache[0].id : ""
-    model_volume_device             = var.model_volume_device
+    ollama_model                      = var.ollama_model
+    log_group_name                    = aws_cloudwatch_log_group.ollama.name
+    aws_region                        = var.aws_region
+    enable_persistent_model_volume    = var.enable_persistent_model_volume
+    model_volume_id                   = var.enable_persistent_model_volume ? aws_ebs_volume.model_cache[0].id : ""
+    model_volume_device               = var.model_volume_device
+    enable_tailscale                  = var.enable_tailscale
+    tailscale_auth_key_parameter_name = var.enable_tailscale ? var.tailscale_auth_key_parameter_name : ""
+    tailscale_hostname                = coalesce(var.tailscale_hostname, var.name)
   }))
 
   block_device_mappings {
@@ -343,10 +400,10 @@ resource "aws_autoscaling_group" "ollama" {
   min_size            = var.min_size
   max_size            = var.max_size
   desired_capacity    = var.desired_capacity
-  vpc_zone_identifier = var.enable_persistent_model_volume ? [for s in local.subnet_ids : s if length(regexall(var.persistent_volume_az, s)) == 0] : local.subnet_ids
+  vpc_zone_identifier = local.instance_subnet_ids
 
   health_check_type         = var.enable_alb ? "ELB" : "EC2"
-  health_check_grace_period = 900
+  health_check_grace_period = var.health_check_grace_period_seconds
 
   target_group_arns = var.enable_alb ? [aws_lb_target_group.ollama[0].arn] : []
 
@@ -390,6 +447,21 @@ resource "aws_autoscaling_group" "ollama" {
 
   lifecycle {
     ignore_changes = [desired_capacity]
+
+    precondition {
+      condition     = !var.enable_tailscale || var.tailscale_auth_key_parameter_name != null
+      error_message = "tailscale_auth_key_parameter_name must be set when enable_tailscale is true."
+    }
+
+    precondition {
+      condition     = !var.enable_persistent_model_volume || length(local.persistent_volume_subnet_ids) > 0
+      error_message = "No configured subnet is in persistent_volume_az. Choose a subnet in that AZ or disable the persistent model volume."
+    }
+
+    precondition {
+      condition     = !var.enable_persistent_model_volume || var.max_size == 1
+      error_message = "max_size must be 1 when enable_persistent_model_volume is true because an EBS volume can attach to only one instance."
+    }
   }
 }
 

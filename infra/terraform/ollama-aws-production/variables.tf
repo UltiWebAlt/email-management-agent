@@ -40,6 +40,30 @@ variable "enable_ssh" {
   default     = true
 }
 
+variable "enable_tailscale" {
+  description = "Install and join the EC2 instance to a Tailnet using an auth key stored in AWS Systems Manager Parameter Store."
+  type        = bool
+  default     = false
+}
+
+variable "tailscale_auth_key_parameter_name" {
+  description = "Name of the SecureString SSM parameter containing the Tailscale auth key. Required when enable_tailscale is true."
+  type        = string
+  default     = null
+}
+
+variable "tailscale_hostname" {
+  description = "Optional hostname for the Tailscale node. Defaults to name."
+  type        = string
+  default     = null
+}
+
+variable "enable_tailscale_direct_connections" {
+  description = "Allow encrypted Tailscale UDP traffic on port 41641 for direct peer-to-peer connections."
+  type        = bool
+  default     = true
+}
+
 variable "admin_cidrs" {
   description = "CIDR blocks allowed to reach SSH/Ollama/ALB. Use your IP /32, VPN CIDR, or Tailscale subnet."
   type        = list(string)
@@ -157,9 +181,9 @@ variable "persistent_model_volume_gb" {
 }
 
 variable "persistent_volume_az" {
-  description = "AZ for persistent model EBS volume. Required if enable_persistent_model_volume = true."
+  description = "AZ for persistent model EBS volume. Required if enable_persistent_model_volume = true and must match a configured subnet."
   type        = string
-  default     = "us-east-1a"
+  default     = null
 }
 
 variable "model_volume_device" {
@@ -172,6 +196,17 @@ variable "enable_detailed_monitoring" {
   description = "Enable detailed EC2 monitoring."
   type        = bool
   default     = false
+}
+
+variable "health_check_grace_period_seconds" {
+  description = "Seconds to allow package installation, GPU driver setup, and model download before ASG health checks can replace an instance."
+  type        = number
+  default     = 2700
+
+  validation {
+    condition     = var.health_check_grace_period_seconds >= 900
+    error_message = "health_check_grace_period_seconds must be at least 900 seconds."
+  }
 }
 
 variable "log_retention_days" {

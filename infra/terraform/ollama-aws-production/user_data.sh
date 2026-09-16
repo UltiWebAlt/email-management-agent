@@ -9,6 +9,9 @@ OLLAMA_MODEL="${ollama_model}"
 ENABLE_PERSISTENT_MODEL_VOLUME="${enable_persistent_model_volume}"
 MODEL_VOLUME_ID="${model_volume_id}"
 MODEL_VOLUME_DEVICE="${model_volume_device}"
+ENABLE_TAILSCALE="${enable_tailscale}"
+TAILSCALE_AUTH_KEY_PARAMETER_NAME="${tailscale_auth_key_parameter_name}"
+TAILSCALE_HOSTNAME="${tailscale_hostname}"
 
 apt-get update
 apt-get install -y \
@@ -27,6 +30,26 @@ apt-get install -y \
 # Install recommended NVIDIA driver.
 ubuntu-drivers install || true
 
+if [ "$ENABLE_TAILSCALE" = "true" ]; then
+  curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.noarmor.gpg \
+    | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+  curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.tailscale-keyring.list \
+    | tee /etc/apt/sources.list.d/tailscale.list
+  apt-get update
+  apt-get install -y tailscale
+
+  set +x
+  TAILSCALE_AUTH_KEY="$(aws ssm get-parameter \
+    --region "$AWS_REGION" \
+    --name "$TAILSCALE_AUTH_KEY_PARAMETER_NAME" \
+    --with-decryption \
+    --query 'Parameter.Value' \
+    --output text)"
+  tailscale up --auth-key="$TAILSCALE_AUTH_KEY" --hostname="$TAILSCALE_HOSTNAME"
+  unset TAILSCALE_AUTH_KEY
+  set -x
+fi
+
 # Install Ollama.
 curl -fsSL https://ollama.com/install.sh | sh
 
@@ -41,22 +64,28 @@ if [ "$ENABLE_PERSISTENT_MODEL_VOLUME" = "true" ]; then
     --region "$AWS_REGION" \
     --volume-id "$MODEL_VOLUME_ID" \
     --instance-id "$INSTANCE_ID" \
-    --device "$MODEL_VOLUME_DEVICE" || true
+    --device "$MODEL_VOLUME_DEVICE"
 
-  sleep 15
+  aws ec2 wait volume-in-use \
+    --region "$AWS_REGION" \
+    --volume-ids "$MODEL_VOLUME_ID"
 
   # Nitro instances often expose EBS as NVMe. Find the actual device by volume ID.
   VOLUME_ID_NODASH="$(echo "$MODEL_VOLUME_ID" | tr -d '-')"
   REAL_DEVICE=""
-  for dev in /dev/nvme*n1; do
-    if nvme id-ctrl -v "$dev" 2>/dev/null | grep -q "$VOLUME_ID_NODASH"; then
-      REAL_DEVICE="$dev"
-      break
-    fi
+  for attempt in $(seq 1 30); do
+    for dev in /dev/nvme*n1; do
+      if nvme id-ctrl -v "$dev" 2>/dev/null | grep -q "$VOLUME_ID_NODASH"; then
+        REAL_DEVICE="$dev"
+        break 2
+      fi
+    done
+    sleep 5
   done
 
   if [ -z "$REAL_DEVICE" ]; then
-    REAL_DEVICE="$MODEL_VOLUME_DEVICE"
+    echo "Attached model volume was not available as an NVMe device." >&2
+    exit 1
   fi
 
   if ! blkid "$REAL_DEVICE"; then
