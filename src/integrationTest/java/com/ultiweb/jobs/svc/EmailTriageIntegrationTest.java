@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest
+@SpringBootTest(properties = "gmail.polling.enabled=false")
 @ActiveProfiles("ollama")
 @EnabledIfEnvironmentVariable(named = "RUN_GMAIL_OLLAMA_INTEGRATION_TEST", matches = "true")
 class EmailTriageIntegrationTest {

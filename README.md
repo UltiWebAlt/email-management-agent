@@ -36,6 +36,17 @@ Select DeepInfra explicitly with `SPRING_PROFILES_ACTIVE=deepinfra`, or leave th
 
 Start the web application with `./gradlew bootRun`. It stays running with an embedded HTTP server on port 8080 and logs startup to the console. Set `SERVER_PORT` to change the port; stop it with Ctrl+C. No frontend routes have been added yet, so `/` returns HTTP 404.
 
+On startup, a background job checks unread Gmail messages for every configured account, sends new messages to the selected inference provider for summaries and label recommendations, and applies matching Gmail labels. It starts immediately and waits five minutes after each completed poll before starting another; polls do not overlap. The console logs account checks, inference requests, summaries, applied labels, skipped messages, and failures. A failed account or message is retried on the next poll while other work continues.
+
+Configure polling in `gmail.polling` or through these environment variables:
+
+```bash
+export GMAIL_POLL_INTERVAL=PT5M
+export GMAIL_POLLING_ENABLED=true
+```
+
+Use `GMAIL_POLLING_ENABLED=false` to run only the web server. Successfully analyzed messages (including those with no matching label) are remembered by account and message ID for the life of this process. They remain unread but are not sent for inference again during later polls. This tracking is in memory: restarting the app allows unread messages to be analyzed again. Normal tests explicitly disable real polling; scheduling tests use mocks.
+
 Run isolated checks with:
 
 ```bash

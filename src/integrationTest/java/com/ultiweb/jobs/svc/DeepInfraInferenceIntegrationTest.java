@@ -46,7 +46,7 @@ class DeepInfraInferenceIntegrationTest {
 						new ConfigDataApplicationContextInitializer().initialize(context);
 					})
 					.withUserConfiguration(EmailManagementAgent.class)
-					.withPropertyValues("GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret",
+					.withPropertyValues("gmail.polling.enabled=false", "GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret",
 							"DEEPINFRA_API_KEY=test-deepinfra-key", "DEEPINFRA_MODEL=test/model",
 							"DEEPINFRA_BASE_URL=http://127.0.0.1:" + server.getAddress().getPort() + "/v1/openai")
 					.run(context -> {

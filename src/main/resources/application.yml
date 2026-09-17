@@ -1,4 +1,7 @@
 gmail:
+  polling:
+    enabled: ${GMAIL_POLLING_ENABLED:true}
+    interval: ${GMAIL_POLL_INTERVAL:PT5M}
   oauth:
     accounts: ${GMAIL_ACCOUNTS:randall.burgess@ultiweb.com}
     project-id: cs-poc-dxk82jgpd30qog6ii1itvyo
