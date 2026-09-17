@@ -59,4 +59,12 @@ Real Gmail/Ollama analysis remains opt-in, explicitly selects the `ollama` profi
 RUN_GMAIL_OLLAMA_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.EmailTriageIntegrationTest
 ```
 
+To run real Gmail/DeepInfra analysis:
+
+```bash
+RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.DeepInfraEmailTriageIntegrationTest --rerun-tasks
+```
+
+This requires `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `DEEPINFRA_API_KEY`. `GMAIL_ACCOUNTS` selects the accounts; `DEEPINFRA_MODEL` overrides the configured model. The test selects DeepInfra directly, disables background polling, and analyzes up to 50 latest emails per account (up to two inference requests per email). It logs summaries and recommended labels, including `NONE`, without modifying messages or labels. It fails if no messages are available or a summary is missing or blank. The opt-in flag enables console output; `--rerun-tasks` ensures Gradle runs it again even if previous test results are up to date. Normal checks skip this live test.
+
 Do not commit credentials or the local `tokens/` directory.
