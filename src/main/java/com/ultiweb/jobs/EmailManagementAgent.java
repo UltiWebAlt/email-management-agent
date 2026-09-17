@@ -23,6 +23,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @EnableConfigurationProperties(GmailOAuthProperties.class)
 public class EmailManagementAgent {
 	public static void main(final String... args) {
-		System.exit(SpringApplication.exit(SpringApplication.run(EmailManagementAgent.class, args)));
+		SpringApplication.run(EmailManagementAgent.class, args);
 	}
 }

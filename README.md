@@ -34,6 +34,8 @@ export SPRING_PROFILES_ACTIVE=ollama
 
 Select DeepInfra explicitly with `SPRING_PROFILES_ACTIVE=deepinfra`, or leave the active profile unset to use the default. Ollama keeps its existing `OLLAMA_BASE_URL` and `OLLAMA_MODEL` settings and requires no DeepInfra key. Summary prompts, label recommendations, and mailbox processing are shared by both providers. With DeepInfra selected, inference requests send the email content to DeepInfra.
 
+Start the web application with `./gradlew bootRun`. It stays running with an embedded HTTP server on port 8080 and logs startup to the console. Set `SERVER_PORT` to change the port; stop it with Ctrl+C. No frontend routes have been added yet, so `/` returns HTTP 404.
+
 Run isolated checks with:
 
 ```bash
