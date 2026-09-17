@@ -101,5 +101,4 @@ Normal `integrationTest` and `check` runs should use mock transport tests and mu
 
 - All commits must be signed with GnuPG.
 - Do not revert unrelated user changes.
-- Keep edits scoped to this sample unless explicitly asked to modify the wider repository.
 - Before summarizing work, run `git status --short` and mention any untracked or unrelated files only when relevant.
