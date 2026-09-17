@@ -32,7 +32,7 @@ class InferenceConfigurationTest {
 			assertThat(context.getEnvironment().getProperty("spring.ai.openai.base-url"))
 					.isEqualTo("https://api.deepinfra.com/v1/openai");
 			assertThat(context.getBean(ChatModel.class).getOptions().getModel())
-					.isEqualTo("meta-llama/Llama-3.3-70B-Instruct");
+					.isEqualTo("meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo");
 		});
 	}
 

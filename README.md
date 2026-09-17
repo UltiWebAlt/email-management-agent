@@ -24,7 +24,7 @@ Unread-mail processing visits every configured account. Latest-mail analysis rea
 
 Inference defaults to the `deepinfra` Spring profile and reads its API key from `DEEPINFRA_API_KEY`. No key is stored in configuration. DeepInfra uses its [OpenAI-compatible chat endpoint](https://docs.deepinfra.com/chat/overview) through Spring AI; an OpenAI account or key is not needed. Requests go directly to DeepInfra; Ollama is not involved and does not need to be running.
 
-The default DeepInfra model is `meta-llama/Llama-3.3-70B-Instruct`. Set `DEEPINFRA_MODEL` to change it, or `DEEPINFRA_BASE_URL` to override the endpoint. These settings live in `src/main/resources/application-deepinfra.yml`.
+The default DeepInfra model is `meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo`. Set `DEEPINFRA_MODEL` to change it, or `DEEPINFRA_BASE_URL` to override the endpoint. These settings live in `src/main/resources/application-deepinfra.yml`.
 
 Switch back to Ollama with:
 

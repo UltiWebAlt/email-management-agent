@@ -6,4 +6,4 @@ spring:
       base-url: ${DEEPINFRA_BASE_URL:https://api.deepinfra.com/v1/openai}
       api-key: ${DEEPINFRA_API_KEY:}
       chat:
-        model: ${DEEPINFRA_MODEL:meta-llama/Llama-3.3-70B-Instruct}
+        model: ${DEEPINFRA_MODEL:meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo}
