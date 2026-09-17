@@ -62,6 +62,7 @@ tasks.register('integrationTest', Test) {
     systemProperty 'java.awt.headless', 'false'
     testLogging {
         showStandardStreams = System.getenv('RUN_GMAIL_SEND_INTEGRATION_TEST') == 'true'
+                || System.getenv('RUN_GMAIL_OLLAMA_INTEGRATION_TEST') == 'true'
     }
     useJUnitPlatform()
 }
