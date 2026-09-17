@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
+	private static final Logger LOGGER = LoggerFactory.getLogger(GmailMailboxSvc.class);
 	private static final String USER_ID = "me";
 	private static final List<String> GMAIL_SCOPES = List.of(GmailScopes.GMAIL_MODIFY);
 
@@ -37,9 +40,20 @@ public class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 	public List<EmailMessage> readUnreadEmails() throws IOException {
 		final List<EmailMessage> emails = new ArrayList<>();
 		for (final String account : gmailOAuth.accounts()) {
-			final Gmail gmail = gmail(account);
-			final ListMessagesResponse response = gmail.users().messages().list(USER_ID).setQ("is:unread").execute();
-			emails.addAll(emailMessages(gmail, account, response));
+			LOGGER.info("Checking unread emails for account {}.", account);
+			try {
+				final Gmail gmail = gmail(account);
+				final var request = gmail.users().messages().list(USER_ID).setQ("is:unread");
+				String nextPage;
+				do {
+					final ListMessagesResponse response = request.execute();
+					emails.addAll(emailMessages(gmail, account, response));
+					nextPage = response.getNextPageToken();
+					request.setPageToken(nextPage);
+				} while (nextPage != null && !nextPage.isBlank());
+			} catch (final IOException | RuntimeException exception) {
+				LOGGER.error("Unable to read account {}; continuing other accounts and retrying on the next poll.", account, exception);
+			}
 		}
 		return List.copyOf(emails);
 	}

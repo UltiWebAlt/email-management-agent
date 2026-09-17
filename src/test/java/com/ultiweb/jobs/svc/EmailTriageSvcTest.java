@@ -70,4 +70,75 @@ class EmailTriageSvcTest {
 		assertEquals(List.of(), results);
 		verifyNoInteractions(emailLabelWriter);
 	}
+
+	@Test
+	void doesNotRepeatInferenceForLabeledOrUnmatchedEmailsDuringLaterPolls() throws Exception {
+		// given
+		final EmailMessage matched = new EmailMessage("first@example.com", "1", "Job", "jobs@example.com", "Job posting");
+		final EmailMessage unmatched = new EmailMessage("first@example.com", "2", "Receipt", "shop@example.com", "Thanks");
+		when(emailReader.readUnreadEmails()).thenReturn(List.of(matched, unmatched));
+		when(emailSummarySvc.summarize(matched)).thenReturn("Job opportunity");
+		when(emailSummarySvc.summarize(unmatched)).thenReturn("Purchase receipt");
+		when(emailTagSvc.suggestTag(matched, "Job opportunity")).thenReturn(Optional.of("Dev Jobs"));
+		when(emailTagSvc.suggestTag(unmatched, "Purchase receipt")).thenReturn(Optional.empty());
+
+		// when
+		final List<EmailTriageResult> firstPoll = service.processUnreadEmails();
+		final List<EmailTriageResult> secondPoll = service.processUnreadEmails();
+
+		// then
+		assertEquals(1, firstPoll.size());
+		assertEquals(List.of(), secondPoll);
+		verify(emailSummarySvc).summarize(matched);
+		verify(emailSummarySvc).summarize(unmatched);
+		verify(emailTagSvc).suggestTag(matched, "Job opportunity");
+		verify(emailTagSvc).suggestTag(unmatched, "Purchase receipt");
+		verify(emailLabelWriter).applyLabel("first@example.com", "1", "Dev Jobs");
+		verifyNoMoreInteractions(emailSummarySvc, emailTagSvc, emailLabelWriter);
+	}
+
+	@Test
+	void failedInferenceDoesNotBlockOtherMessagesAndIsRetriedNextPoll() throws Exception {
+		// given
+		final EmailMessage failing = new EmailMessage("first@example.com", "1", "Job", "jobs@example.com", "Job posting");
+		final EmailMessage healthy = new EmailMessage("second@example.com", "1", "News", "news@example.com", "News story");
+		when(emailReader.readUnreadEmails()).thenReturn(List.of(failing, healthy));
+		when(emailSummarySvc.summarize(failing)).thenThrow(new IllegalStateException("Inference unavailable"))
+				.thenReturn("Job opportunity");
+		when(emailSummarySvc.summarize(healthy)).thenReturn("Today's news");
+		when(emailTagSvc.suggestTag(failing, "Job opportunity")).thenReturn(Optional.of("Dev Jobs"));
+		when(emailTagSvc.suggestTag(healthy, "Today's news")).thenReturn(Optional.of("General News Publications"));
+
+		// when
+		final List<EmailTriageResult> firstPoll = service.processUnreadEmails();
+		final List<EmailTriageResult> retryPoll = service.processUnreadEmails();
+
+		// then
+		assertEquals("second@example.com", firstPoll.getFirst().account());
+		assertEquals("first@example.com", retryPoll.getFirst().account());
+		verify(emailSummarySvc, times(2)).summarize(failing);
+		verify(emailSummarySvc).summarize(healthy);
+		verify(emailLabelWriter).applyLabel("first@example.com", "1", "Dev Jobs");
+		verify(emailLabelWriter).applyLabel("second@example.com", "1", "General News Publications");
+	}
+
+	@Test
+	void failedLabelWritesAreRetriedInsteadOfMarkedProcessed() throws Exception {
+		// given
+		final EmailMessage email = new EmailMessage("first@example.com", "1", "Job", "jobs@example.com", "Job posting");
+		when(emailReader.readUnreadEmails()).thenReturn(List.of(email));
+		when(emailSummarySvc.summarize(email)).thenReturn("Job opportunity");
+		when(emailTagSvc.suggestTag(email, "Job opportunity")).thenReturn(Optional.of("Dev Jobs"));
+		doThrow(new java.io.IOException("Gmail unavailable")).doNothing()
+				.when(emailLabelWriter).applyLabel("first@example.com", "1", "Dev Jobs");
+
+		// when
+		final List<EmailTriageResult> firstPoll = service.processUnreadEmails();
+		final List<EmailTriageResult> retryPoll = service.processUnreadEmails();
+
+		// then
+		assertEquals(List.of(), firstPoll);
+		assertEquals(1, retryPoll.size());
+		verify(emailLabelWriter, times(2)).applyLabel("first@example.com", "1", "Dev Jobs");
+	}
 }
