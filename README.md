@@ -22,13 +22,25 @@ Credentials are stored locally under `tokens/`, separately for each email addres
 
 Unread-mail processing visits every configured account. Latest-mail analysis reads up to its requested limit **per account**. Messages and triage results include their owning account so label updates use the correct credentials. Label listing accepts an explicit account; calls without an account require exactly one configured account. Send/draft examples select the configured account matching the sender address.
 
+Inference defaults to the `deepinfra` Spring profile and reads its API key from `DEEPINFRA_API_KEY`. No key is stored in configuration. DeepInfra uses its [OpenAI-compatible chat endpoint](https://docs.deepinfra.com/chat/overview) through Spring AI; an OpenAI account or key is not needed. Requests go directly to DeepInfra; Ollama is not involved and does not need to be running.
+
+The default DeepInfra model is `meta-llama/Llama-3.3-70B-Instruct`. Set `DEEPINFRA_MODEL` to change it, or `DEEPINFRA_BASE_URL` to override the endpoint. These settings live in `src/main/resources/application-deepinfra.yml`.
+
+Switch back to Ollama with:
+
+```bash
+export SPRING_PROFILES_ACTIVE=ollama
+```
+
+Select DeepInfra explicitly with `SPRING_PROFILES_ACTIVE=deepinfra`, or leave the active profile unset to use the default. Ollama keeps its existing `OLLAMA_BASE_URL` and `OLLAMA_MODEL` settings and requires no DeepInfra key. Summary prompts, label recommendations, and mailbox processing are shared by both providers. With DeepInfra selected, inference requests send the email content to DeepInfra.
+
 Run isolated checks with:
 
 ```bash
 ./gradlew check
 ```
 
-Real Gmail/Ollama analysis remains opt-in and does not apply labels:
+Real Gmail/Ollama analysis remains opt-in, explicitly selects the `ollama` profile, and does not apply labels:
 
 ```bash
 RUN_GMAIL_OLLAMA_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.EmailTriageIntegrationTest

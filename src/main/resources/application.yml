@@ -12,7 +12,16 @@ gmail:
     client-secret: ${GMAIL_CLIENT_SECRET}
 
 spring:
+  profiles:
+    default: deepinfra
   ai:
+    model:
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
     ollama:
       base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
       chat:
