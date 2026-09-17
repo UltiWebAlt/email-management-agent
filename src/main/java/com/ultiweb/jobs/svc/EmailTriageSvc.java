@@ -39,10 +39,10 @@ public class EmailTriageSvc {
 		}
 		final String labelName = suggestedLabel.get();
 		try {
-			emailLabelWriter.applyLabel(email.id(), labelName);
+			emailLabelWriter.applyLabel(email.account(), email.id(), labelName);
 		} catch (final IOException exception) {
-			throw new EmailTriageException("Unable to apply label to message " + email.id(), exception);
+			throw new EmailTriageException("Unable to apply label to message " + email.id() + " for account " + email.account(), exception);
 		}
-		return Optional.of(new EmailTriageResult(email.id(), summary, labelName));
+		return Optional.of(new EmailTriageResult(email.account(), email.id(), summary, labelName));
 	}
 }

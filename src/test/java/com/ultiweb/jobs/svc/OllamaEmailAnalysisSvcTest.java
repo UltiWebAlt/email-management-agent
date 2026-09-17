@@ -17,7 +17,7 @@ class OllamaEmailAnalysisSvcTest {
 			return "A payment is due Friday.";
 		});
 
-		final String summary = service.summarize(new EmailMessage("id", "Invoice", "billing@example.com", "Pay by Friday."));
+		final String summary = service.summarize(new EmailMessage("owner@example.com", "id", "Invoice", "billing@example.com", "Pay by Friday."));
 
 		assertEquals("A payment is due Friday.", summary);
 		assertTrue(userPrompt.get().contains("Subject: Invoice"));
@@ -29,7 +29,7 @@ class OllamaEmailAnalysisSvcTest {
 		final OllamaEmailTagSvc service = new OllamaEmailTagSvc((system, user) -> " Dev Jobs \n");
 
 		assertEquals("Dev Jobs", service.suggestTag(
-				new EmailMessage("id", "Invoice", "billing@example.com", "Pay by Friday."),
+				new EmailMessage("owner@example.com", "id", "Invoice", "billing@example.com", "Pay by Friday."),
 				"A payment is due Friday.").orElseThrow());
 	}
 
@@ -38,7 +38,7 @@ class OllamaEmailAnalysisSvcTest {
 		final OllamaEmailTagSvc service = new OllamaEmailTagSvc((system, user) -> "NONE");
 
 		assertTrue(service.suggestTag(
-				new EmailMessage("id", "Receipt", "shop@example.com", "Thank you for your order."),
+				new EmailMessage("owner@example.com", "id", "Receipt", "shop@example.com", "Thank you for your order."),
 				"Purchase receipt").isEmpty());
 	}
 }

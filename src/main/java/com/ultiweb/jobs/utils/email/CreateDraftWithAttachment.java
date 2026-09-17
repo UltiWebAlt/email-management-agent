@@ -61,7 +61,7 @@ public static Draft createDraftMessageWithAttachment(GMailOAuth gmailOAuth,
                                                      String toEmailAddress,
                                                      File file)
 		throws MessagingException, IOException {
-	Gmail service = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_COMPOSE));
+	Gmail service = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_COMPOSE), fromEmailAddress);
 
 	// Create the email content
 	String messageSubject = "Test message";

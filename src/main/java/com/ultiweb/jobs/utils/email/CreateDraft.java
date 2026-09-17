@@ -52,7 +52,7 @@ public static Draft createDraftMessage(GMailOAuth gmailOAuth,
                                        String fromEmailAddress,
                                        String toEmailAddress)
 		throws MessagingException, IOException {
-	Gmail service = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_COMPOSE));
+	Gmail service = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_COMPOSE), fromEmailAddress);
 
 	// Create the email content
 	String messageSubject = "Test message";

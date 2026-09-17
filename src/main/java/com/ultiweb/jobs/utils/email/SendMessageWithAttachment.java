@@ -60,7 +60,7 @@ public static Message sendEmailWithAttachment(GMailOAuth gmailOAuth,
                                               String toEmailAddress,
                                               File file)
 		throws MessagingException, IOException {
-	Gmail service = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_SEND));
+	Gmail service = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_SEND), fromEmailAddress);
 
 	// Create the email content
 	String messageSubject = "Test message";

@@ -51,7 +51,7 @@ public static Message sendEmail(GMailOAuth gmailOAuth,
                                 String fromEmailAddress,
                                 String toEmailAddress)
 		throws MessagingException, IOException {
-	Gmail service = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_SEND));
+	Gmail service = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_SEND), fromEmailAddress);
 	return sendEmail(service, fromEmailAddress, toEmailAddress);
 }
 

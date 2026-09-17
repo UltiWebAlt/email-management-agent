@@ -1,62 +1,73 @@
 package com.ultiweb.jobs.svc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class EmailTriageSvcTest {
+	@Mock private EmailReader emailReader;
+	@Mock private EmailSummarySvc emailSummarySvc;
+	@Mock private EmailTagSvc emailTagSvc;
+	@Mock private EmailLabelWriter emailLabelWriter;
+	@InjectMocks private EmailTriageSvc service;
 
 	@Test
-	void processUnreadEmailsSummarizesAndAppliesTheSuggestedLabel() throws Exception {
-		final EmailMessage firstEmail = new EmailMessage("message-1", "Invoice", "billing@example.com", "Your invoice is due.");
-		final EmailMessage secondEmail = new EmailMessage("message-2", "Standup", "team@example.com", "The meeting is tomorrow.");
-		final List<String> appliedLabels = new ArrayList<>();
-		final EmailTriageSvc service = new EmailTriageSvc(
-				() -> List.of(firstEmail, secondEmail),
-				email -> "Summary of " + email.subject(),
-				(email, summary) -> Optional.of(email.id().equals("message-1") ? "Dev Jobs" : "Architect Jobs"),
-				(messageId, labelName) -> appliedLabels.add(messageId + ":" + labelName));
+	void routesIdenticalMessageIdsToTheirOwningAccounts() throws Exception {
+		// given
+		final EmailMessage first = new EmailMessage("first@example.com", "same-id", "Invoice", "billing@example.com", "Due Friday.");
+		final EmailMessage second = new EmailMessage("second@example.com", "same-id", "Standup", "team@example.com", "Tomorrow.");
+		when(emailReader.readUnreadEmails()).thenReturn(List.of(first, second));
+		when(emailSummarySvc.summarize(first)).thenReturn("Payment due");
+		when(emailSummarySvc.summarize(second)).thenReturn("Meeting tomorrow");
+		when(emailTagSvc.suggestTag(first, "Payment due")).thenReturn(Optional.of("Dev Jobs"));
+		when(emailTagSvc.suggestTag(second, "Meeting tomorrow")).thenReturn(Optional.of("Architect Jobs"));
 
+		// when
 		final List<EmailTriageResult> results = service.processUnreadEmails();
 
+		// then
 		assertEquals(List.of(
-				new EmailTriageResult("message-1", "Summary of Invoice", "Dev Jobs"),
-				new EmailTriageResult("message-2", "Summary of Standup", "Architect Jobs")), results);
-		assertEquals(List.of("message-1:Dev Jobs", "message-2:Architect Jobs"), appliedLabels);
+				new EmailTriageResult("first@example.com", "same-id", "Payment due", "Dev Jobs"),
+				new EmailTriageResult("second@example.com", "same-id", "Meeting tomorrow", "Architect Jobs")), results);
+		verify(emailLabelWriter).applyLabel("first@example.com", "same-id", "Dev Jobs");
+		verify(emailLabelWriter).applyLabel("second@example.com", "same-id", "Architect Jobs");
+		verifyNoMoreInteractions(emailLabelWriter);
 	}
 
 	@Test
 	void processUnreadEmailsDoesNothingWhenTheInboxHasNoUnreadMessages() throws Exception {
-		final EmailTriageSvc service = new EmailTriageSvc(
-				List::of,
-				email -> {
-					throw new AssertionError("A summary should not be requested");
-				},
-				(email, summary) -> {
-					throw new AssertionError("A tag should not be requested");
-				},
-				(messageId, labelName) -> {
-					throw new AssertionError("A label should not be applied");
-				});
+		// given
+		when(emailReader.readUnreadEmails()).thenReturn(List.of());
 
-		assertEquals(List.of(), service.processUnreadEmails());
+		// when
+		final List<EmailTriageResult> results = service.processUnreadEmails();
+
+		// then
+		assertEquals(List.of(), results);
+		verifyNoInteractions(emailSummarySvc, emailTagSvc, emailLabelWriter);
 	}
 
 	@Test
 	void processUnreadEmailsIgnoresEmailsWithoutAnAllowedLabel() throws Exception {
-		final EmailMessage email = new EmailMessage("message-1", "Receipt", "shop@example.com", "Thank you for your order.");
-		final EmailTriageSvc service = new EmailTriageSvc(
-				() -> List.of(email),
-				ignored -> "Purchase receipt",
-				(ignored, summary) -> Optional.empty(),
-				(messageId, labelName) -> {
-					throw new AssertionError("A label should not be applied");
-				});
+		// given
+		final EmailMessage email = new EmailMessage("first@example.com", "id", "Receipt", "shop@example.com", "Thank you.");
+		when(emailReader.readUnreadEmails()).thenReturn(List.of(email));
+		when(emailSummarySvc.summarize(email)).thenReturn("Purchase receipt");
+		when(emailTagSvc.suggestTag(email, "Purchase receipt")).thenReturn(Optional.empty());
 
-		assertEquals(List.of(), service.processUnreadEmails());
+		// when
+		final List<EmailTriageResult> results = service.processUnreadEmails();
+
+		// then
+		assertEquals(List.of(), results);
+		verifyNoInteractions(emailLabelWriter);
 	}
 }

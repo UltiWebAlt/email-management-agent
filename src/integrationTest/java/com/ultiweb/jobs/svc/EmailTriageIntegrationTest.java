@@ -3,6 +3,7 @@ package com.ultiweb.jobs.svc;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -36,10 +37,11 @@ class EmailTriageIntegrationTest {
 		for (final EmailMessage email : emails) {
 			final String summary = emailSummarySvc.summarize(email);
 			emailTagSvc.suggestTag(email, summary).ifPresent(recommendedLabel ->
-					LOGGER.info("Email id={}, from={}, subject={}, summary={}, recommendedLabel={}",
-							email.id(), email.from(), email.subject(), summary, recommendedLabel));
+					LOGGER.info("Account={}, email id={}, from={}, subject={}, summary={}, recommendedLabel={}",
+							email.account(), email.id(), email.from(), email.subject(), summary, recommendedLabel));
 		}
 
-		assertTrue(emails.size() <= EMAIL_LIMIT);
+		assertTrue(emails.stream().collect(Collectors.groupingBy(EmailMessage::account,
+				Collectors.counting())).values().stream().allMatch(count -> count <= EMAIL_LIMIT));
 	}
 }
