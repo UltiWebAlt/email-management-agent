@@ -9,3 +9,10 @@ gmail:
     callback-port: ${GMAIL_OAUTH_CALLBACK_PORT:8888}
     client-id: ${GMAIL_CLIENT_ID}
     client-secret: ${GMAIL_CLIENT_SECRET}
+
+spring:
+  ai:
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      chat:
+        model: ${OLLAMA_MODEL:llama3.2:3b}
