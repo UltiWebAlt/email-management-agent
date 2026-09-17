@@ -81,6 +81,7 @@ private static GMailOAuth gmailOAuthFromEnvironment() {
 			"https://oauth2.googleapis.com/token",
 			"https://www.googleapis.com/oauth2/v1/certs",
 			List.of("http://localhost:8888/Callback"),
+			8888,
 			requiredEnvironmentVariable("GMAIL_CLIENT_ID"),
 			requiredEnvironmentVariable("GMAIL_CLIENT_SECRET")));
 }

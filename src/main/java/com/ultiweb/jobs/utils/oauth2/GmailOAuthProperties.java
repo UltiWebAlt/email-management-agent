@@ -13,6 +13,7 @@ public record GmailOAuthProperties(
 		String tokenUri,
 		String authProviderX509CertUrl,
 		List<String> redirectUris,
+		int callbackPort,
 		String clientId,
 		String clientSecret) {
 

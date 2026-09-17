@@ -49,8 +49,8 @@ private Credential authorize(
 			.setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
 			.setAccessType("offline")
 			.build();
-	LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-	logger.info("Authorizing Gmail access through the local OAuth callback receiver on port 8888.");
+	LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(oauthProperties.callbackPort()).build();
+	logger.info("Authorizing Gmail access through the local OAuth callback receiver on port {}.", oauthProperties.callbackPort());
 	Credential credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize(userId);
 	logger.info("Gmail OAuth authorization completed.");
 	return credential;
