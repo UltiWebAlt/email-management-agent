@@ -7,12 +7,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
-class OllamaEmailAnalysisSvcTest {
+class AiEmailAnalysisSvcTest {
 
 	@Test
 	void summarizeIncludesTheEmailContentInTheAiRequest() {
 		final AtomicReference<String> userPrompt = new AtomicReference<>();
-		final OllamaEmailSummarySvc service = new OllamaEmailSummarySvc((system, user) -> {
+		final AiEmailSummarySvc service = new AiEmailSummarySvc((system, user) -> {
 			userPrompt.set(user);
 			return "A payment is due Friday.";
 		});
@@ -26,7 +26,7 @@ class OllamaEmailAnalysisSvcTest {
 
 	@Test
 	void suggestTagTrimsTheModelResponse() {
-		final OllamaEmailTagSvc service = new OllamaEmailTagSvc((system, user) -> " Dev Jobs \n");
+		final AiEmailTagSvc service = new AiEmailTagSvc((system, user) -> " Dev Jobs \n");
 
 		assertEquals("Dev Jobs", service.suggestTag(
 				new EmailMessage("owner@example.com", "id", "Invoice", "billing@example.com", "Pay by Friday."),
@@ -35,7 +35,7 @@ class OllamaEmailAnalysisSvcTest {
 
 	@Test
 	void suggestTagIgnoresAnEmailThatDoesNotMatchAnAllowedLabel() {
-		final OllamaEmailTagSvc service = new OllamaEmailTagSvc((system, user) -> "NONE");
+		final AiEmailTagSvc service = new AiEmailTagSvc((system, user) -> "NONE");
 
 		assertTrue(service.suggestTag(
 				new EmailMessage("owner@example.com", "id", "Receipt", "shop@example.com", "Thank you for your order."),

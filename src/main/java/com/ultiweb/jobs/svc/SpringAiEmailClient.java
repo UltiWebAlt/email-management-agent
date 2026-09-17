@@ -4,13 +4,13 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 /**
- * Spring AI adapter for the configured Ollama chat model.
+ * Spring AI adapter for the configured chat model (Ollama or DeepInfra).
  */
 @Service
-public class OllamaEmailAiClient implements EmailAiClient {
+public class SpringAiEmailClient implements EmailAiClient {
 	private final ChatClient chatClient;
 
-	public OllamaEmailAiClient(final ChatClient.Builder chatClientBuilder) {
+	public SpringAiEmailClient(final ChatClient.Builder chatClientBuilder) {
 		this.chatClient = chatClientBuilder.build();
 	}
 
