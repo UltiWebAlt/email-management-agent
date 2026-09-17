@@ -60,7 +60,7 @@ tasks.register('integrationTest', Test) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     shouldRunAfter tasks.named('test')
-    systemProperty 'java.awt.headless', 'false'
+    systemProperty 'java.awt.headless', 'true'
     testLogging {
         showStandardStreams = System.getenv('RUN_GMAIL_SEND_INTEGRATION_TEST') == 'true'
                 || System.getenv('RUN_GMAIL_OLLAMA_INTEGRATION_TEST') == 'true'
