@@ -83,7 +83,8 @@ private static GMailOAuth gmailOAuthFromEnvironment() {
 			List.of("http://localhost:8888/Callback"),
 			8888,
 			requiredEnvironmentVariable("GMAIL_CLIENT_ID"),
-			requiredEnvironmentVariable("GMAIL_CLIENT_SECRET")));
+			requiredEnvironmentVariable("GMAIL_CLIENT_SECRET"),
+			List.of("randall.burgess@ultiweb.com")));
 }
 
 private static String requiredEnvironmentVariable(String name) {

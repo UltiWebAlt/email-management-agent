@@ -1,5 +1,6 @@
 gmail:
   oauth:
+    accounts: ${GMAIL_ACCOUNTS:randall.burgess@ultiweb.com}
     project-id: cs-poc-dxk82jgpd30qog6ii1itvyo
     auth-uri: https://accounts.google.com/o/oauth2/auth
     token-uri: https://oauth2.googleapis.com/token
