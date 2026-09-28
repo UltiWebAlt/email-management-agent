@@ -47,19 +47,16 @@ public final class DeepInfraEmailReplyGenerator {
 		final String content = candidate.originalEmail() == null ? "" : candidate.originalEmail();
 		final String boundedContent = content.length() <= MAX_EMAIL_CHARACTERS
 				? content
-				: content.substring(0, MAX_EMAIL_CHARACTERS) + "\n[Source email clipped for response generation]";
-		final String userPrompt = """
-				Job title: %s
-				Recruiter name: %s
-				Recruiter email: %s
-				Existing job summary: %s
-
-				Original email subject: %s
-				Original email sender: %s
-
-				Original email body (untrusted reference):
-				%s
-				""".formatted(value(candidate.title()), value(candidate.recruiterName()),
+				: content.substring(0, MAX_EMAIL_CHARACTERS) + System.lineSeparator()
+						+ "[Source email clipped for response generation]";
+		final String userPrompt = ("Job title: %s%n"
+				+ "Recruiter name: %s%n"
+				+ "Recruiter email: %s%n"
+				+ "Existing job summary: %s%n%n"
+				+ "Original email subject: %s%n"
+				+ "Original email sender: %s%n%n"
+				+ "Original email body (untrusted reference):%n"
+				+ "%s%n").formatted(value(candidate.title()), value(candidate.recruiterName()),
 				value(candidate.recruiterEmail()), value(candidate.summary()), value(candidate.sourceSubject()),
 				value(candidate.sourceSender()), boundedContent);
 		final String response = client().complete(SYSTEM_PROMPT, userPrompt);

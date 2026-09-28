@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ultiweb.jobs.svc.JobOpportunityDetails;
 import com.ultiweb.jobs.svc.email.EmailMessage;
 import java.io.IOException;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +48,7 @@ public class ArchitectJobDetailsInferenceSvc {
 					text(root, "title", 255),
 					text(root, "company", 255),
 					text(root, "location", 255),
-					remote(root.get("remote")),
+					remote(root.get("remote")).orElse(null),
 					text(root, "salaryRange", 255),
 					text(root, "requirements", 4_000));
 		} catch (final IOException | IllegalArgumentException exception) {
@@ -82,22 +83,22 @@ public class ArchitectJobDetailsInferenceSvc {
 		return text.length() <= maxLength ? text : text.substring(0, maxLength).stripTrailing();
 	}
 
-	private static Boolean remote(final JsonNode value) {
+	private static Optional<Boolean> remote(final JsonNode value) {
 		if (value == null || value.isNull()) {
-			return null;
+			return Optional.empty();
 		}
 		if (value.isBoolean()) {
-			return value.booleanValue();
+			return Optional.of(value.booleanValue());
 		}
 		if (value.isTextual()) {
 			if (value.asText().equalsIgnoreCase("true")) {
-				return true;
+				return Optional.of(true);
 			}
 			if (value.asText().equalsIgnoreCase("false")) {
-				return false;
+				return Optional.of(false);
 			}
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	private static String safeHeader(final String value) {

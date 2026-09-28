@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.stereotype.Repository;
@@ -52,10 +53,11 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 	public long countJobs(final String query) {
 		final String normalizedQuery = query == null ? "" : query.strip();
 		if (normalizedQuery.isEmpty()) {
-			return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM positions", Long.class);
+			return Objects.requireNonNull(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM positions", Long.class),
+					"Position count query returned no result");
 		}
 		final String pattern = "%" + normalizedQuery.toLowerCase(java.util.Locale.ROOT) + "%";
-		return jdbcTemplate.queryForObject("""
+		return Objects.requireNonNull(jdbcTemplate.queryForObject("""
 				SELECT COUNT(*)
 				FROM positions p
 				JOIN recruiters r ON r.id = p.recruiter_id
@@ -65,7 +67,8 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 					OR LOWER(COALESCE(r.name, '')) LIKE ?
 					OR LOWER(COALESCE(r.email, '')) LIKE ?
 					OR LOWER(COALESCE(p.summary, '')) LIKE ?
-				""", Long.class, pattern, pattern, pattern, pattern, pattern, pattern);
+				""", Long.class, pattern, pattern, pattern, pattern, pattern, pattern),
+				"Filtered position count query returned no result");
 	}
 
 	@Override
