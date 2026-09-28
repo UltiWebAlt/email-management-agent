@@ -1,4 +1,4 @@
-package com.ultiweb.jobs.svc;
+package com.ultiweb.jobs.svc.email;
 
 import java.io.IOException;
 import java.util.List;

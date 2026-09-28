@@ -3,6 +3,12 @@ package com.ultiweb.jobs.svc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+import com.ultiweb.jobs.svc.ai.EmailSummarySvc;
+import com.ultiweb.jobs.svc.ai.EmailTag;
+import com.ultiweb.jobs.svc.ai.EmailTagSvc;
+import com.ultiweb.jobs.svc.email.EmailLabelWriter;
+import com.ultiweb.jobs.svc.email.EmailMessage;
+import com.ultiweb.jobs.svc.email.EmailReader;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -20,6 +26,32 @@ class EmailTriageSvcTest {
 	@InjectMocks private EmailTriageSvc service;
 
 	@Test
+	void inferenceRunsConcurrentlyOnVirtualThreadsAndDuplicateMessagesRunOnce() throws Exception {
+		// given
+		final var first = new EmailMessage("a", "1", "", "", "");
+		final var second = new EmailMessage("a", "2", "", "", "");
+		final var started = new java.util.concurrent.CountDownLatch(2);
+		when(emailReader.readUnreadEmails()).thenReturn(List.of(first, second, first));
+		when(emailSummarySvc.summarize(any())).thenAnswer(invocation -> {
+			org.junit.jupiter.api.Assertions.assertTrue(Thread.currentThread().isVirtual());
+			started.countDown();
+			org.junit.jupiter.api.Assertions.assertTrue(started.await(5, java.util.concurrent.TimeUnit.SECONDS));
+			return "A receipt";
+		});
+		when(emailTagSvc.suggestTag("A receipt")).thenReturn(Optional.of(EmailTag.RECEIPTS));
+
+		// when
+		final var results = service.processUnreadEmails();
+
+		// then
+		assertEquals(2, results.size());
+		verify(emailSummarySvc).summarize(first);
+		verify(emailSummarySvc).summarize(second);
+		verify(emailLabelWriter).applyLabel("a", "1", "Receipts");
+		verify(emailLabelWriter).applyLabel("a", "2", "Receipts");
+	}
+
+	@Test
 	void routesIdenticalMessageIdsToTheirOwningAccounts() throws Exception {
 		// given
 		final EmailMessage first = new EmailMessage("first@example.com", "same-id", "Invoice", "billing@example.com", "Due Friday.");
@@ -27,18 +59,18 @@ class EmailTriageSvcTest {
 		when(emailReader.readUnreadEmails()).thenReturn(List.of(first, second));
 		when(emailSummarySvc.summarize(first)).thenReturn("Payment due");
 		when(emailSummarySvc.summarize(second)).thenReturn("Meeting tomorrow");
-		when(emailTagSvc.suggestTag(first, "Payment due")).thenReturn(Optional.of("Dev Jobs"));
-		when(emailTagSvc.suggestTag(second, "Meeting tomorrow")).thenReturn(Optional.of("Architect Jobs"));
+		when(emailTagSvc.suggestTag("Payment due")).thenReturn(Optional.of(EmailTag.DEV_JOBS));
+		when(emailTagSvc.suggestTag("Meeting tomorrow")).thenReturn(Optional.of(EmailTag.ARCHITECT_JOBS));
 
 		// when
 		final List<EmailTriageResult> results = service.processUnreadEmails();
 
 		// then
 		assertEquals(List.of(
-				new EmailTriageResult("first@example.com", "same-id", "Payment due", "Dev Jobs"),
-				new EmailTriageResult("second@example.com", "same-id", "Meeting tomorrow", "Architect Jobs")), results);
-		verify(emailLabelWriter).applyLabel("first@example.com", "same-id", "Dev Jobs");
-		verify(emailLabelWriter).applyLabel("second@example.com", "same-id", "Architect Jobs");
+				new EmailTriageResult("first@example.com", "same-id", "Payment due", "Dev_Jobs"),
+				new EmailTriageResult("second@example.com", "same-id", "Meeting tomorrow", "Architect_Jobs")), results);
+		verify(emailLabelWriter).applyLabel("first@example.com", "same-id", "Dev_Jobs");
+		verify(emailLabelWriter).applyLabel("second@example.com", "same-id", "Architect_Jobs");
 		verifyNoMoreInteractions(emailLabelWriter);
 	}
 
@@ -61,7 +93,7 @@ class EmailTriageSvcTest {
 		final EmailMessage email = new EmailMessage("first@example.com", "id", "Receipt", "shop@example.com", "Thank you.");
 		when(emailReader.readUnreadEmails()).thenReturn(List.of(email));
 		when(emailSummarySvc.summarize(email)).thenReturn("Purchase receipt");
-		when(emailTagSvc.suggestTag(email, "Purchase receipt")).thenReturn(Optional.empty());
+		when(emailTagSvc.suggestTag("Purchase receipt")).thenReturn(Optional.empty());
 
 		// when
 		final List<EmailTriageResult> results = service.processUnreadEmails();
@@ -79,8 +111,8 @@ class EmailTriageSvcTest {
 		when(emailReader.readUnreadEmails()).thenReturn(List.of(matched, unmatched));
 		when(emailSummarySvc.summarize(matched)).thenReturn("Job opportunity");
 		when(emailSummarySvc.summarize(unmatched)).thenReturn("Purchase receipt");
-		when(emailTagSvc.suggestTag(matched, "Job opportunity")).thenReturn(Optional.of("Dev Jobs"));
-		when(emailTagSvc.suggestTag(unmatched, "Purchase receipt")).thenReturn(Optional.empty());
+		when(emailTagSvc.suggestTag("Job opportunity")).thenReturn(Optional.of(EmailTag.DEV_JOBS));
+		when(emailTagSvc.suggestTag("Purchase receipt")).thenReturn(Optional.empty());
 
 		// when
 		final List<EmailTriageResult> firstPoll = service.processUnreadEmails();
@@ -91,9 +123,9 @@ class EmailTriageSvcTest {
 		assertEquals(List.of(), secondPoll);
 		verify(emailSummarySvc).summarize(matched);
 		verify(emailSummarySvc).summarize(unmatched);
-		verify(emailTagSvc).suggestTag(matched, "Job opportunity");
-		verify(emailTagSvc).suggestTag(unmatched, "Purchase receipt");
-		verify(emailLabelWriter).applyLabel("first@example.com", "1", "Dev Jobs");
+		verify(emailTagSvc).suggestTag("Job opportunity");
+		verify(emailTagSvc).suggestTag("Purchase receipt");
+		verify(emailLabelWriter).applyLabel("first@example.com", "1", "Dev_Jobs");
 		verifyNoMoreInteractions(emailSummarySvc, emailTagSvc, emailLabelWriter);
 	}
 
@@ -106,8 +138,8 @@ class EmailTriageSvcTest {
 		when(emailSummarySvc.summarize(failing)).thenThrow(new IllegalStateException("Inference unavailable"))
 				.thenReturn("Job opportunity");
 		when(emailSummarySvc.summarize(healthy)).thenReturn("Today's news");
-		when(emailTagSvc.suggestTag(failing, "Job opportunity")).thenReturn(Optional.of("Dev Jobs"));
-		when(emailTagSvc.suggestTag(healthy, "Today's news")).thenReturn(Optional.of("General News Publications"));
+		when(emailTagSvc.suggestTag("Job opportunity")).thenReturn(Optional.of(EmailTag.DEV_JOBS));
+		when(emailTagSvc.suggestTag("Today's news")).thenReturn(Optional.of(EmailTag.GENERAL_NEWS_PUBLICATIONS));
 
 		// when
 		final List<EmailTriageResult> firstPoll = service.processUnreadEmails();
@@ -118,8 +150,8 @@ class EmailTriageSvcTest {
 		assertEquals("first@example.com", retryPoll.getFirst().account());
 		verify(emailSummarySvc, times(2)).summarize(failing);
 		verify(emailSummarySvc).summarize(healthy);
-		verify(emailLabelWriter).applyLabel("first@example.com", "1", "Dev Jobs");
-		verify(emailLabelWriter).applyLabel("second@example.com", "1", "General News Publications");
+		verify(emailLabelWriter).applyLabel("first@example.com", "1", "Dev_Jobs");
+		verify(emailLabelWriter).applyLabel("second@example.com", "1", "General_News_Publications");
 	}
 
 	@Test
@@ -128,9 +160,9 @@ class EmailTriageSvcTest {
 		final EmailMessage email = new EmailMessage("first@example.com", "1", "Job", "jobs@example.com", "Job posting");
 		when(emailReader.readUnreadEmails()).thenReturn(List.of(email));
 		when(emailSummarySvc.summarize(email)).thenReturn("Job opportunity");
-		when(emailTagSvc.suggestTag(email, "Job opportunity")).thenReturn(Optional.of("Dev Jobs"));
+		when(emailTagSvc.suggestTag("Job opportunity")).thenReturn(Optional.of(EmailTag.DEV_JOBS));
 		doThrow(new java.io.IOException("Gmail unavailable")).doNothing()
-				.when(emailLabelWriter).applyLabel("first@example.com", "1", "Dev Jobs");
+				.when(emailLabelWriter).applyLabel("first@example.com", "1", "Dev_Jobs");
 
 		// when
 		final List<EmailTriageResult> firstPoll = service.processUnreadEmails();
@@ -139,6 +171,6 @@ class EmailTriageSvcTest {
 		// then
 		assertEquals(List.of(), firstPoll);
 		assertEquals(1, retryPoll.size());
-		verify(emailLabelWriter, times(2)).applyLabel("first@example.com", "1", "Dev Jobs");
+		verify(emailLabelWriter, times(2)).applyLabel("first@example.com", "1", "Dev_Jobs");
 	}
 }

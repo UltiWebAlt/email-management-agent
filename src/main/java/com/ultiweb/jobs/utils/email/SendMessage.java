@@ -17,26 +17,26 @@ package com.ultiweb.jobs.utils.email;
 
 // [START gmail_send_message]
 
-import com.google.api.client.googleapis.json.GoogleJsonError;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Message;
 import com.ultiweb.jobs.utils.oauth2.GMailOAuth;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Properties;
 import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 
-import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /* Class to demonstrate the use of Gmail Send Message API */
-public class SendMessage {
+public final class SendMessage extends AbstractGmailMessageOperation {
+	private static final Logger LOGGER = LoggerFactory.getLogger(SendMessage.class);
+
+	private SendMessage() {
+		throw new UnsupportedOperationException("Utility class");
+	}
+
 /**
  * Send an email from the user's mailbox to its recipient.
  *
@@ -69,44 +69,9 @@ static Message sendEmail(GmailMessageSender messageSender,
                          String fromEmailAddress,
                          String toEmailAddress)
 		throws MessagingException, IOException {
-	// Create the email content
-	String messageSubject = "Test message";
-	String bodyText = "lorem ipsum.";
-
-	// Encode as MIME message
-	Properties props = new Properties();
-	Session session = Session.getDefaultInstance(props, null);
-	MimeMessage email = new MimeMessage(session);
-	email.setFrom(new InternetAddress(fromEmailAddress));
-	email.addRecipient(javax.mail.Message.RecipientType.TO,
-			new InternetAddress(toEmailAddress));
-	email.setSubject(messageSubject);
-	email.setText(bodyText);
-
-	// Encode and wrap the MIME message into a gmail message
-	ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-	email.writeTo(buffer);
-	byte[] rawMessageBytes = buffer.toByteArray();
-	String encodedEmail = Base64.encodeBase64URLSafeString(rawMessageBytes);
-	Message message = new Message();
-	message.setRaw(encodedEmail);
-
-	try {
-		// Create send message
-		message = messageSender.send(message);
-		System.out.println("Message id: " + message.getId());
-		System.out.println(message.toPrettyString());
-		return message;
-	} catch (GoogleJsonResponseException e) {
-		// TODO(developer) - handle error appropriately
-		GoogleJsonError error = e.getDetails();
-		if (error.getCode() == 403) {
-			System.err.println("Unable to send message: " + e.getDetails());
-		} else {
-			throw e;
-		}
-	}
-	return null;
+	Message message = createMessage(fromEmailAddress, toEmailAddress);
+	return execute("Sent Gmail message", "send Gmail message", LOGGER,
+			() -> messageSender.send(message), Message::getId);
 }
 
 @FunctionalInterface

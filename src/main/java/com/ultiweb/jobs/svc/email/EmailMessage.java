@@ -1,4 +1,4 @@
-package com.ultiweb.jobs.svc;
+package com.ultiweb.jobs.svc.email;
 
 /**
  * Plain-text representation of a Gmail message used by the triage workflow.

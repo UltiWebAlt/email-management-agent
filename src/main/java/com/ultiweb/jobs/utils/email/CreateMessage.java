@@ -26,7 +26,10 @@ import javax.mail.internet.MimeMessage;
 import org.apache.commons.codec.binary.Base64;
 
 /* Class to demonstrate the use of Gmail Create Message API */
-public class CreateMessage {
+public final class CreateMessage {
+	private CreateMessage() {
+		throw new UnsupportedOperationException("Utility class");
+	}
 
 /**
  * Create a message from an email.

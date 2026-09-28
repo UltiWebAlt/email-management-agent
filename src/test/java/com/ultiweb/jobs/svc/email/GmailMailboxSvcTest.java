@@ -1,4 +1,4 @@
-package com.ultiweb.jobs.svc;
+package com.ultiweb.jobs.svc.email;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,10 +65,10 @@ class GmailMailboxSvcTest {
 		// given
 		doReturn(secondGmail).when(service).gmail("second@example.com");
 		when(secondGmail.users().labels().list("me").execute()).thenReturn(new ListLabelsResponse()
-				.setLabels(List.of(new Label().setName("Dev Jobs").setId("second-label"))));
+				.setLabels(List.of(new Label().setName("Dev_Jobs").setId("second-label"))));
 
 		// when
-		service.applyLabel("second@example.com", "same-id", "Dev Jobs");
+		service.applyLabel("second@example.com", "same-id", "Dev_Jobs");
 
 		// then
 		verify(secondGmail.users().messages()).modify(eq("me"), eq("same-id"),

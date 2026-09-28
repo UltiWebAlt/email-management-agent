@@ -1,4 +1,4 @@
-package com.ultiweb.jobs.svc;
+package com.ultiweb.jobs.svc.email;
 
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
@@ -6,15 +6,12 @@ import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListLabelsResponse;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.MessagePart;
-import com.google.api.services.gmail.model.MessagePartBody;
 import com.google.api.services.gmail.model.MessagePartHeader;
 import com.google.api.services.gmail.model.ModifyMessageRequest;
 import com.ultiweb.jobs.utils.email.GmailServiceFactory;
 import com.ultiweb.jobs.utils.oauth2.GMailOAuth;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -103,8 +100,9 @@ public class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 					.setFormat("full")
 					.execute();
 			final MessagePart payload = message.getPayload();
-			return new EmailMessage(account, message.getId(), header(payload, "Subject"), header(payload, "From"), body(payload));
-		} catch (final IOException exception) {
+			return new EmailMessage(account, message.getId(), header(payload, "Subject"), header(payload, "From"),
+					new GmailMessageBodyExtractor(gmail, messageId).extract(payload));
+		} catch (final IOException | IllegalArgumentException exception) {
 			throw new EmailTriageException("Unable to read message " + messageId + " for account " + account, exception);
 		}
 	}
@@ -128,19 +126,4 @@ public class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 				.orElse("");
 	}
 
-	private static String body(final MessagePart payload) {
-		final MessagePartBody body = payload.getBody();
-		if (body != null && body.getData() != null) {
-			return new String(Base64.getUrlDecoder().decode(body.getData()), StandardCharsets.UTF_8);
-		}
-		return Optional.ofNullable(payload.getParts()).orElseGet(List::of).stream()
-				.filter(part -> "text/plain".equalsIgnoreCase(part.getMimeType()))
-				.map(GmailMailboxSvc::body)
-				.findFirst()
-				.orElseGet(() -> Optional.ofNullable(payload.getParts()).orElseGet(List::of).stream()
-						.map(GmailMailboxSvc::body)
-						.filter(content -> !content.isBlank())
-						.findFirst()
-						.orElse(""));
-	}
 }

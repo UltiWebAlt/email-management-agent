@@ -23,7 +23,8 @@ public record GmailOAuthProperties(
 		if (accounts == null || accounts.isEmpty()) {
 			throw new IllegalArgumentException("Configure gmail.oauth.accounts with at least one Google account email address");
 		}
-		accounts = accounts.stream().map(GmailOAuthProperties::normalizeAccount).distinct().toList();
+		redirectUris = redirectUris == null ? List.of() : List.copyOf(redirectUris);
+		accounts = List.copyOf(accounts.stream().map(GmailOAuthProperties::normalizeAccount).distinct().toList());
 	}
 
 	static String normalizeAccount(final String account) {

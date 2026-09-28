@@ -4,7 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.ultiweb.jobs.svc.ai.EmailSummarySvc;
+import com.ultiweb.jobs.svc.ai.EmailTag;
+import com.ultiweb.jobs.svc.ai.EmailTagSvc;
+import com.ultiweb.jobs.svc.email.EmailMessage;
+import com.ultiweb.jobs.svc.email.GmailMailboxSvc;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -35,26 +42,45 @@ class DeepInfraEmailTriageIntegrationTest {
 	}
 
 	@Test
-	void summarizesAndRecommendsLabelsForTheLatestFiftyEmailsUsingDeepInfra() throws Exception {
+	void summarizesLocallyAndRecommendsLabelsUsingDeepInfra() throws Exception {
 		// given
 		final List<EmailMessage> emails = gmailMailboxSvc.readLatestEmails(EMAIL_LIMIT);
 		assertFalse(emails.isEmpty(), "No emails were returned; the live DeepInfra test needs at least one email");
 		assertTrue(emails.stream().collect(Collectors.groupingBy(EmailMessage::account, Collectors.counting()))
 				.values().stream().allMatch(count -> count <= EMAIL_LIMIT));
 
-		for (final EmailMessage email : emails) {
-			// when
-			LOGGER.info("Requesting DeepInfra analysis for account={}, email id={}, subject={}",
-					email.account(), email.id(), email.subject());
-			final String summary = emailSummarySvc.summarize(email);
-
-			// then
-			assertNotNull(summary, "DeepInfra returned no summary for " + email.account() + "/" + email.id());
-			assertFalse(summary.isBlank(), "DeepInfra returned a blank summary for " + email.account() + "/" + email.id());
-			final String recommendedLabel = emailTagSvc.suggestTag(email, summary).orElse("NONE");
-			LOGGER.info("Account={}, email id={}, from={}, subject={}, summary={}, recommendedLabel={}",
-					email.account(), email.id(), email.from(), email.subject(), summary, recommendedLabel);
+		try (final var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+			final var analyses = emails.stream()
+					.map(email -> CompletableFuture.runAsync(() -> analyze(email), executor))
+					.toArray(CompletableFuture[]::new);
+			// Wait for every message so one failure does not hide other recommendations.
+			CompletableFuture.allOf(analyses).join();
 		}
 		LOGGER.info("Live DeepInfra analysis completed for {} emails; Gmail labels were not modified.", emails.size());
+	}
+
+	private void analyze(final EmailMessage email) {
+		// when
+		LOGGER.info("Requesting local Ollama summary for account={}, email id={}, bodyCharacters={}",
+				email.account(), email.id(), email.body().length());
+		final String summary = emailSummarySvc.summarize(email);
+
+		// then
+		assertNotNull(summary, "Ollama returned no summary for " + email.account() + "/" + email.id());
+		assertFalse(summary.isBlank(), "Ollama returned a blank summary for " + email.account() + "/" + email.id());
+		LOGGER.info("Sending local summary to DeepInfra for account={}, email id={}", email.account(), email.id());
+		final String recommendedLabel = emailTagSvc.suggestTag(summary).map(EmailTag::labelName).orElse("NONE");
+		LOGGER.info("Account={}, email id={}, subject={}, summary={}, recommendedLabel={}",
+				email.account(), email.id(), boundedLogText(email.subject(), 300), boundedLogText(summary, 1_000), recommendedLabel);
+	}
+
+	private static String boundedLogText(final String value, final int maximumLength) {
+		if (value == null) {
+			return "";
+		}
+		final String normalized = value.replaceAll("[\\p{Cntrl}\\s]+", " ").strip();
+		return normalized.length() <= maximumLength
+				? normalized
+				: normalized.substring(0, maximumLength - 3) + "...";
 	}
 }

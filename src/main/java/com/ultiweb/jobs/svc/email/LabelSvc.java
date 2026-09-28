@@ -1,4 +1,4 @@
-package com.ultiweb.jobs.svc;
+package com.ultiweb.jobs.svc.email;
 
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;

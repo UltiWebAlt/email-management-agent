@@ -28,7 +28,7 @@ final class AccountAuthorizationCodeInstalledApp extends AuthorizationCodeInstal
 			super.onAuthorization(authorizationUrl);
 		} catch (final AWTError | NoClassDefFoundError exception) {
 			LOGGER.warn("Browser launch unavailable for account {} ({}). Open this URL manually: {}",
-					account, exception.toString(), authorizationUrl.build());
+					account, exception, authorizationUrl.build());
 		}
 		LOGGER.info("Waiting for OAuth approval for account {} at {}. Complete consent in your browser to continue.",
 				account, authorizationUrl.getRedirectUri());

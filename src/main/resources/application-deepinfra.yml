@@ -1,9 +1,21 @@
 spring:
   ai:
+    retry:
+      max-attempts: 2
+      on-http-codes: [429]
+      backoff:
+        initial-interval: 2s
+        multiplier: 2
+        max-interval: 10s
     model:
       chat: openai
     openai:
       base-url: ${DEEPINFRA_BASE_URL:https://api.deepinfra.com/v1/openai}
       api-key: ${DEEPINFRA_API_KEY:}
       chat:
+        temperature: 0.0
         model: ${DEEPINFRA_MODEL:meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo}
+
+email:
+  inference:
+    deepinfra-max-concurrent-requests: ${DEEPINFRA_MAX_CONCURRENT_REQUESTS:8}

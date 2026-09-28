@@ -16,14 +16,24 @@ package com.ultiweb.jobs.utils.email;
 
 // [START gmail_create_email]
 
+import java.io.File;
 import java.util.Properties;
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
 import javax.mail.MessagingException;
+import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 
 /* Class to demonstrate the use of Gmail Create Email API  */
-public class CreateEmail {
+public final class CreateEmail {
+	private CreateEmail() {
+		throw new UnsupportedOperationException("Utility class");
+	}
 
 /**
  * Create a MimeMessage using the parameters provided.
@@ -40,16 +50,53 @@ public static MimeMessage createEmail(String toEmailAddress,
                                       String subject,
                                       String bodyText)
 		throws MessagingException {
+	MimeMessage email = createEmail(toEmailAddress, fromEmailAddress, subject);
+	email.setText(bodyText);
+	return email;
+}
+
+/**
+ * Create a MimeMessage with a file attachment.
+ *
+ * @param toEmailAddress   email address of the receiver
+ * @param fromEmailAddress email address of the sender, the mailbox account
+ * @param subject          subject of the email
+ * @param bodyText         body text of the email
+ * @param file             file to attach
+ * @return the MimeMessage to be used to send email
+ * @throws MessagingException if the message cannot be assembled
+ */
+public static MimeMessage createEmailWithAttachment(String toEmailAddress,
+                                                     String fromEmailAddress,
+                                                     String subject,
+                                                     String bodyText,
+                                                     File file)
+		throws MessagingException {
+	MimeMessage email = createEmail(toEmailAddress, fromEmailAddress, subject);
+	MimeBodyPart bodyPart = new MimeBodyPart();
+	bodyPart.setContent(bodyText, "text/plain");
+	MimeBodyPart attachmentPart = new MimeBodyPart();
+	DataSource source = new FileDataSource(file);
+	attachmentPart.setDataHandler(new DataHandler(source));
+	attachmentPart.setFileName(file.getName());
+	Multipart multipart = new MimeMultipart();
+	multipart.addBodyPart(bodyPart);
+	multipart.addBodyPart(attachmentPart);
+	email.setContent(multipart);
+	return email;
+}
+
+private static MimeMessage createEmail(String toEmailAddress,
+                                       String fromEmailAddress,
+                                       String subject)
+		throws MessagingException {
 	Properties props = new Properties();
 	Session session = Session.getDefaultInstance(props, null);
-
 	MimeMessage email = new MimeMessage(session);
-
 	email.setFrom(new InternetAddress(fromEmailAddress));
 	email.addRecipient(javax.mail.Message.RecipientType.TO,
 			new InternetAddress(toEmailAddress));
 	email.setSubject(subject);
-	email.setText(bodyText);
 	return email;
 }
 }
