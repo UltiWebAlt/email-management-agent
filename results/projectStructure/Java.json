@@ -1,0 +1,20 @@
+{
+  "modules": [
+    {
+      "name": "email-management-agent",
+      "languageLevel": 21
+    },
+    {
+      "name": "email-management-agent.integrationTest",
+      "languageLevel": 21
+    },
+    {
+      "name": "email-management-agent.main",
+      "languageLevel": 21
+    },
+    {
+      "name": "email-management-agent.test",
+      "languageLevel": 21
+    }
+  ]
+}
