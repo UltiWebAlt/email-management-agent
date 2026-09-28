@@ -6,7 +6,7 @@ plugins {
     id 'jacoco'
     id 'org.springframework.boot' version '4.1.0'
     id 'com.github.spotbugs' version '6.5.11'
-    id 'org.sonarqube' version '7.3.1.8318'
+    id 'org.sonarqube' version '7.5.0.8588'
 }
 
 group = 'com.ultiweb.jobs'
