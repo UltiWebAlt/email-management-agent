@@ -4,7 +4,7 @@ import com.github.spotbugs.snom.SpotBugsTask
 plugins {
     id 'java'
     id 'jacoco'
-    id 'org.springframework.boot' version '4.1.0'
+    id 'org.springframework.boot' version '4.1.1'
     id 'com.github.spotbugs' version '6.5.11'
     id 'org.sonarqube' version '7.3.1.8318'
 }
@@ -44,8 +44,8 @@ configurations {
 }
 
 dependencies {
-    implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.0')
-    implementation platform('org.springframework.ai:spring-ai-bom:2.0.0')
+    implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.1')
+    implementation platform('org.springframework.ai:spring-ai-bom:2.0.1')
     implementation platform('org.ow2.asm:asm-bom:9.10.1')
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
