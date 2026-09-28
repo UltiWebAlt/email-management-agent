@@ -2,6 +2,9 @@ gmail:
   polling:
     enabled: false
 
+dashboard:
+  email-import-enabled: true
+
 spring:
   datasource:
     url: "jdbc:sqlite:data/job-search-dev.db"

@@ -26,6 +26,10 @@ public final class JobSearchDatabaseInitializer {
 		addPositionColumn("source_sender", "TEXT");
 		addPositionColumn("source_received_at", "TEXT");
 		addPositionColumn("summary", "TEXT");
+		addPositionColumn("respond_to", "INTEGER NOT NULL DEFAULT 0");
+		addResponseColumn("response_status", "TEXT NOT NULL DEFAULT 'RECORDED'");
+		addResponseColumn("gmail_draft_id", "TEXT");
+		addResponseColumn("updated_at", "TEXT");
 		createIndexes();
 	}
 
@@ -60,6 +64,7 @@ public final class JobSearchDatabaseInitializer {
 					source_sender TEXT,
 					source_received_at TEXT,
 					summary TEXT,
+					respond_to INTEGER NOT NULL DEFAULT 0,
 					FOREIGN KEY (recruiter_id) REFERENCES recruiters(id)
 				)
 				""");
@@ -71,6 +76,9 @@ public final class JobSearchDatabaseInitializer {
 					response_content TEXT,
 					response_type VARCHAR(255) CHECK (response_type IN (
 						'INITIAL_RESPONSE', 'FOLLOW_UP', 'INTERVIEW_CONFIRMATION', 'THANK_YOU', 'DECLINED')),
+					response_status TEXT NOT NULL DEFAULT 'RECORDED',
+					gmail_draft_id TEXT,
+					updated_at TEXT,
 					sent_at TIMESTAMP,
 					position_id BIGINT NOT NULL,
 					recruiter_id BIGINT NOT NULL,
@@ -86,8 +94,19 @@ public final class JobSearchDatabaseInitializer {
 		}
 	}
 
+	private void addResponseColumn(final String name, final String definition) {
+		if (!responseColumns().contains(name)) {
+			jdbcTemplate.execute("ALTER TABLE responses ADD COLUMN " + name + " " + definition);
+		}
+	}
+
 	private Set<String> positionColumns() {
 		return jdbcTemplate.query("PRAGMA table_info(positions)",
+				(resultSet, rowNumber) -> resultSet.getString("name")).stream().collect(Collectors.toUnmodifiableSet());
+	}
+
+	private Set<String> responseColumns() {
+		return jdbcTemplate.query("PRAGMA table_info(responses)",
 				(resultSet, rowNumber) -> resultSet.getString("name")).stream().collect(Collectors.toUnmodifiableSet());
 	}
 
@@ -98,7 +117,10 @@ public final class JobSearchDatabaseInitializer {
 				WHERE source_account IS NOT NULL AND source_message_id IS NOT NULL
 				""");
 		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_positions_date_posted ON positions(date_posted)");
+		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_positions_created_at ON positions(created_at)");
+		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_positions_respond_to ON positions(respond_to)");
 		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_positions_recruiter_id ON positions(recruiter_id)");
 		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_responses_position_id ON responses(position_id)");
+		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_responses_status ON responses(response_status)");
 	}
 }

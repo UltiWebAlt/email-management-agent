@@ -7,6 +7,7 @@ import java.util.Locale;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -16,16 +17,24 @@ public class ArchitectJobPersistenceSvc {
 	private static final int MAX_TITLE_LENGTH = 255;
 
 	private final ArchitectJobRepository repository;
+	private final ApplicationEventPublisher eventPublisher;
 	private final Clock clock;
 
 	@Autowired
-	public ArchitectJobPersistenceSvc(final ArchitectJobRepository repository) {
-		this(repository, Clock.systemUTC());
+	public ArchitectJobPersistenceSvc(final ArchitectJobRepository repository,
+			final ApplicationEventPublisher eventPublisher) {
+		this(repository, eventPublisher, Clock.systemUTC());
+	}
+
+	ArchitectJobPersistenceSvc(final ArchitectJobRepository repository,
+			final ApplicationEventPublisher eventPublisher, final Clock clock) {
+		this.repository = repository;
+		this.eventPublisher = eventPublisher;
+		this.clock = clock;
 	}
 
 	ArchitectJobPersistenceSvc(final ArchitectJobRepository repository, final Clock clock) {
-		this.repository = repository;
-		this.clock = clock;
+		this(repository, event -> { }, clock);
 	}
 
 	public boolean isPersisted(final EmailMessage email) {
@@ -37,7 +46,7 @@ public class ArchitectJobPersistenceSvc {
 		Assert.hasText(summary, "An architect job summary is required");
 		final RecruiterIdentity recruiter = recruiter(email);
 		final Instant createdAt = clock.instant();
-		return repository.saveIfAbsent(new ArchitectJobRecord(
+		final boolean inserted = repository.saveIfAbsent(new ArchitectJobRecord(
 				email.account(),
 				email.id(),
 				email.subject(),
@@ -49,6 +58,10 @@ public class ArchitectJobPersistenceSvc {
 				recruiter.email(),
 				recruiter.name(),
 				createdAt));
+		if (inserted) {
+			eventPublisher.publishEvent(new ArchitectOpportunityAddedEvent());
+		}
+		return inserted;
 	}
 
 	private static RecruiterIdentity recruiter(final EmailMessage email) {

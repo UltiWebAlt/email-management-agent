@@ -1,0 +1,26 @@
+package com.ultiweb.jobs.svc.dashboard;
+
+import java.time.Instant;
+
+public record DashboardJobDetails(
+		long id,
+		String title,
+		String company,
+		String recruiterName,
+		String recruiterEmail,
+		String location,
+		Boolean remote,
+		Instant receivedAt,
+		Instant savedAt,
+		String summary,
+		String description,
+		String requirements,
+		String salaryRange,
+		String sourceAccount,
+		String sourceSubject,
+		String sourceSender,
+		long responseCount,
+		String responseStatus,
+		String responseContent,
+		String gmailDraftId) {
+}

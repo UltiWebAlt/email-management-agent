@@ -55,6 +55,12 @@ public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 				"Checking manually tagged architect emails for account {}.");
 	}
 
+	/** Reads architect-labeled messages without changing Gmail labels, for explicit development imports. */
+	public List<EmailMessage> readArchitectLabeledEmailsForDevelopment() throws IOException {
+		return readEmails("label:" + EmailTag.ARCHITECT_JOBS.labelName(),
+				"Reading architect-labeled messages for development import from account {}.");
+	}
+
 	private List<EmailMessage> readEmails(final String query, final String logMessage) throws IOException {
 		final List<EmailMessage> emails = new ArrayList<>();
 		for (final String account : gmailOAuth.accounts()) {
