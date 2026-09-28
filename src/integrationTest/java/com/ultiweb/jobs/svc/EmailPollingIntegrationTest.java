@@ -20,6 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 				"spring.profiles.active=deepinfra",
 				"gmail.polling.enabled=true",
 				"gmail.polling.interval=50ms",
+				"spring.datasource.url=jdbc:sqlite::memory:",
 				"GMAIL_CLIENT_ID=test-client",
 				"GMAIL_CLIENT_SECRET=test-secret",
 				"DEEPINFRA_API_KEY=test-key"
@@ -37,11 +38,12 @@ class EmailPollingIntegrationTest {
 		final EmailMessage email = new EmailMessage("first@example.com", "id", "Developer job", "jobs@example.com", "A job opening.");
 		when(summaryClient.complete(startsWith("Summarize"), anyString())).thenReturn("Developer job opportunity.");
 		when(tagClient.complete(startsWith("Classify"), anyString())).thenReturn("Dev_Jobs");
-		when(mailbox.readUnreadEmails()).thenReturn(List.of(email));
+		when(mailbox.readArchitectEmailsPendingPersistence()).thenReturn(List.of());
+		when(mailbox.readEmailsForTriage()).thenReturn(List.of(email));
 
 		// when / then: the real application scheduler invokes the complete triage workflow
 		verify(mailbox, timeout(5000)).applyLabel("first@example.com", "id", "Dev_Jobs");
-		verify(mailbox, timeout(5000).atLeast(3)).readUnreadEmails();
+		verify(mailbox, timeout(5000).atLeast(3)).readEmailsForTriage();
 		verify(summaryClient, after(250).times(1)).complete(anyString(), anyString());
 		verify(tagClient, times(1)).complete(anyString(), anyString());
 		verify(mailbox, times(1)).applyLabel("first@example.com", "id", "Dev_Jobs");

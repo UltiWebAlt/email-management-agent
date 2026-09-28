@@ -22,7 +22,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
-		properties = {"gmail.polling.enabled=false", "spring.ai.model.chat=openai"})
+		properties = {"gmail.polling.enabled=false", "spring.ai.model.chat=openai",
+				"spring.datasource.url=jdbc:sqlite::memory:"})
 @ActiveProfiles("deepinfra")
 @EnabledIfEnvironmentVariable(named = "RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST", matches = "true")
 class DeepInfraEmailTriageIntegrationTest {

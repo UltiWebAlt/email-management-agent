@@ -8,9 +8,11 @@ import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.MessagePart;
 import com.google.api.services.gmail.model.MessagePartHeader;
 import com.google.api.services.gmail.model.ModifyMessageRequest;
+import com.ultiweb.jobs.svc.ai.EmailTag;
 import com.ultiweb.jobs.utils.email.GmailServiceFactory;
 import com.ultiweb.jobs.utils.oauth2.GMailOAuth;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,25 +24,44 @@ import org.springframework.stereotype.Service;
  * Gmail API implementation for retrieving unread email and applying user labels.
  */
 @Service
-public class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
+public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GmailMailboxSvc.class);
 	private static final String USER_ID = "me";
 	private static final List<String> GMAIL_SCOPES = List.of(GmailScopes.GMAIL_MODIFY);
 
 	private final GMailOAuth gmailOAuth;
+	private final int initialLookbackDays;
 
-	public GmailMailboxSvc(final GMailOAuth gmailOAuth) {
+	public GmailMailboxSvc(final GMailOAuth gmailOAuth,
+			@org.springframework.beans.factory.annotation.Value("${gmail.polling.initial-lookback-days:14}")
+			final int initialLookbackDays) {
+		if (initialLookbackDays < 1 || initialLookbackDays > 365) {
+			throw new IllegalArgumentException("Initial Gmail lookback must be between 1 and 365 days");
+		}
 		this.gmailOAuth = gmailOAuth;
+		this.initialLookbackDays = initialLookbackDays;
 	}
 
 	@Override
-	public List<EmailMessage> readUnreadEmails() throws IOException {
+	public List<EmailMessage> readEmailsForTriage() throws IOException {
+		return readEmails("in:inbox newer_than:" + initialLookbackDays + "d -label:" + EmailWorkflowLabels.PROCESSED,
+				"Checking emails pending triage for account {}.");
+	}
+
+	@Override
+	public List<EmailMessage> readArchitectEmailsPendingPersistence() throws IOException {
+		return readEmails("label:" + EmailTag.ARCHITECT_JOBS.labelName()
+				+ " -label:" + EmailWorkflowLabels.ARCHITECT_PERSISTED,
+				"Checking manually tagged architect emails for account {}.");
+	}
+
+	private List<EmailMessage> readEmails(final String query, final String logMessage) throws IOException {
 		final List<EmailMessage> emails = new ArrayList<>();
 		for (final String account : gmailOAuth.accounts()) {
-			LOGGER.info("Checking unread emails for account {}.", account);
+			LOGGER.info(logMessage, account);
 			try {
 				final Gmail gmail = gmail(account);
-				final var request = gmail.users().messages().list(USER_ID).setQ("is:unread");
+				final var request = gmail.users().messages().list(USER_ID).setQ(query);
 				String nextPage;
 				do {
 					final ListMessagesResponse response = request.execute();
@@ -100,8 +121,9 @@ public class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 					.setFormat("full")
 					.execute();
 			final MessagePart payload = message.getPayload();
+			final Instant receivedAt = message.getInternalDate() == null ? null : Instant.ofEpochMilli(message.getInternalDate());
 			return new EmailMessage(account, message.getId(), header(payload, "Subject"), header(payload, "From"),
-					new GmailMessageBodyExtractor(gmail, messageId).extract(payload));
+					new GmailMessageBodyExtractor(gmail, messageId).extract(payload), receivedAt);
 		} catch (final IOException | IllegalArgumentException exception) {
 			throw new EmailTriageException("Unable to read message " + messageId + " for account " + account, exception);
 		}

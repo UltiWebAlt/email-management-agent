@@ -23,7 +23,7 @@ class EmailPollingConfigurationTest {
 	void pollsAtStartupAndRepeatsEvenAfterAFailedPoll() throws Exception {
 		// given
 		final CountDownLatch polls = new CountDownLatch(2);
-		when(triageService.processUnreadEmails()).thenAnswer(invocation -> {
+		when(triageService.processEmails()).thenAnswer(invocation -> {
 			polls.countDown();
 			if (polls.getCount() == 1) {
 				throw new IOException("Temporary Gmail failure");
@@ -40,7 +40,7 @@ class EmailPollingConfigurationTest {
 			// then
 			assertThat(context).hasNotFailed().hasSingleBean(EmailPollingJob.class);
 			assertThat(polls.await(3, TimeUnit.SECONDS)).isTrue();
-			verify(triageService, atLeast(2)).processUnreadEmails();
+			verify(triageService, atLeast(2)).processEmails();
 		});
 	}
 

@@ -4,5 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface EmailReader {
-	List<EmailMessage> readUnreadEmails() throws IOException;
+	List<EmailMessage> readEmailsForTriage() throws IOException;
+
+	List<EmailMessage> readArchitectEmailsPendingPersistence() throws IOException;
 }

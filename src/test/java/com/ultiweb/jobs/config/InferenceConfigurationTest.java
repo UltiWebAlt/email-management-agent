@@ -17,7 +17,8 @@ class InferenceConfigurationTest {
 				new ConfigDataApplicationContextInitializer().initialize(context);
 			})
 			.withUserConfiguration(EmailManagementAgent.class)
-			.withPropertyValues("gmail.polling.enabled=false", "GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret");
+			.withPropertyValues("gmail.polling.enabled=false", "spring.datasource.url=jdbc:sqlite::memory:",
+					"GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret");
 
 	@Test
 	void usesLocalOllamaForSummariesAndDeepInfraForClassification() {

@@ -20,7 +20,7 @@ When mailbox access runs, accounts are authorized sequentially. The console iden
 
 Credentials are stored locally under `tokens/`, separately for each email address and permission set. Existing anonymous `user` / `user-*` token entries are left untouched and are not reused: each configured account needs consent on its first access after this change. Subsequent runs reuse its credentials and refresh tokens. Email identity permission is requested alongside Gmail permissions to verify the selected account.
 
-Unread-mail processing visits every configured account. Latest-mail analysis reads up to its requested limit **per account**. Messages and triage results include their owning account so label updates use the correct credentials. Label listing accepts an explicit account; calls without an account require exactly one configured account. Send/draft examples select the configured account matching the sender address.
+Mail processing visits every configured account. Latest-mail analysis reads up to its requested limit **per account**. Messages and triage results include their owning account so label updates use the correct credentials. Label listing accepts an explicit account; calls without an account require exactly one configured account. Send/draft examples select the configured account matching the sender address.
 
 The default `deepinfra` Spring profile uses local Ollama for summarization and DeepInfra for classification. DeepInfra reads its API key from `DEEPINFRA_API_KEY`. No key is stored in configuration. DeepInfra uses its [OpenAI-compatible chat endpoint](https://docs.deepinfra.com/chat/overview) through Spring AI; an OpenAI account or key is not needed. Email subject, sender, and normalized visible body text go to Ollama at `OLLAMA_BASE_URL` (default `http://localhost:11434`) for summarization. HTML mail is converted to bounded plain text while preserving links, lists, image alternative text, and table cell relationships; scripts, styles, hidden elements, tracking query strings, attachments, and markup are excluded. Only the resulting summary is sent directly to DeepInfra for classification; the original email and metadata are not included in that request.
 
@@ -44,16 +44,21 @@ The exact Gmail labels are `Dev_Jobs`, `Architect_Jobs`, `Management_Jobs`, `Mis
 
 Start the web application with `./gradlew bootRun`. It stays running with an embedded HTTP server on port 8080 and logs startup to the console. Set `SERVER_PORT` to change the port; stop it with Ctrl+C. No frontend routes have been added yet, so `/` returns HTTP 404.
 
-On startup, a background job checks unread Gmail messages for every configured account, summarizes new messages locally and sends the summaries to the configured classifier for label recommendations, and applies matching Gmail labels. It starts immediately and waits five minutes after each completed poll before starting another; polls do not overlap. The console logs account checks, inference requests, content lengths, applied labels, skipped messages, and failures without logging complete bodies or summaries. A failed account or message is retried on the next poll while other work continues.
+On startup, a background job checks inbox messages from the last 14 days that do not have the internal `Email_Management_Processed` label. It summarizes them locally, sends the summaries to the configured classifier, applies matching convenience labels, and finally applies the processed label. This durable Gmail marker prevents repeat inference after an application restart, including for messages classified as `NONE`. A failure before the processed marker is applied leaves the message eligible for retry. The job starts immediately and waits five minutes after each completed poll before starting another; polls do not overlap. The console logs account checks, inference requests, content lengths, applied labels, skipped messages, and failures without logging complete bodies or summaries.
+
+Only `Architect_Jobs` messages are stored in SQLite. The database is `data/job-search.db` by default and can be overridden with `JOB_SEARCH_DATABASE_URL`, for example `jdbc:sqlite:/absolute/path/job-search.db`. Stored positions retain their source account/message identity, subject, sender, received time, classifier summary, and complete normalized visible email text. The `(source_account, source_message_id)` key prevents duplicates, and persistence never deletes existing job, recruiter, or response information. SQLite uses WAL mode and a busy timeout so the future dashboard can read while ingestion writes.
+
+Manually applying `Architect_Jobs` in Gmail also schedules that message for persistence, regardless of age or its earlier AI classification. The agent searches for `Architect_Jobs` messages without the internal `Architect_Jobs_Persisted` marker, summarizes and stores any missing position, and then applies the persistence and processed markers. Existing database records are retained if labels are later removed or classifications change.
 
 Configure polling in `gmail.polling` or through these environment variables:
 
 ```bash
 export GMAIL_POLL_INTERVAL=PT5M
 export GMAIL_POLLING_ENABLED=true
+export GMAIL_INITIAL_LOOKBACK_DAYS=14
 ```
 
-Use `GMAIL_POLLING_ENABLED=false` to run only the web server. Successfully analyzed messages (including those with no matching label) are remembered by account and message ID for the life of this process. They remain unread but are not sent for inference again during later polls. This tracking is in memory: restarting the app allows unread messages to be analyzed again. Normal tests explicitly disable real polling; scheduling tests use mocks.
+Use `GMAIL_POLLING_ENABLED=false` to run only the web server. `GMAIL_INITIAL_LOOKBACK_DAYS` accepts 1–365 days and controls the initial catch-up window; the processed Gmail label makes later polls incremental. Normal tests explicitly disable real polling or use mocks and in-memory SQLite databases.
 
 Run isolated checks with:
 

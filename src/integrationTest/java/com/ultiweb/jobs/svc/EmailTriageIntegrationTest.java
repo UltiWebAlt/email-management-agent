@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(properties = "gmail.polling.enabled=false")
+@SpringBootTest(properties = {"gmail.polling.enabled=false", "spring.datasource.url=jdbc:sqlite::memory:"})
 @ActiveProfiles("ollama")
 @EnabledIfEnvironmentVariable(named = "RUN_GMAIL_OLLAMA_INTEGRATION_TEST", matches = "true")
 class EmailTriageIntegrationTest {

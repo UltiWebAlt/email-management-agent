@@ -63,6 +63,7 @@ class DeepInfraInferenceIntegrationTest {
 					})
 					.withUserConfiguration(EmailManagementAgent.class)
 					.withPropertyValues("gmail.polling.enabled=false", "GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret",
+							"spring.datasource.url=jdbc:sqlite::memory:",
 							"OLLAMA_BASE_URL=" + baseUrl, "OLLAMA_MODEL=local-test-model",
 							"DEEPINFRA_API_KEY=test-deepinfra-key", "DEEPINFRA_MODEL=test/model",
 							"DEEPINFRA_BASE_URL=" + baseUrl + "/v1/openai",

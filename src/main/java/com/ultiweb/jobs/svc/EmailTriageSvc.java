@@ -6,6 +6,8 @@ import com.ultiweb.jobs.svc.ai.EmailTagSvc;
 import com.ultiweb.jobs.svc.email.EmailLabelWriter;
 import com.ultiweb.jobs.svc.email.EmailMessage;
 import com.ultiweb.jobs.svc.email.EmailReader;
+import com.ultiweb.jobs.svc.email.EmailWorkflowLabels;
+import com.ultiweb.jobs.svc.persistence.ArchitectJobPersistenceSvc;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,25 +35,28 @@ public class EmailTriageSvc {
 	private final EmailSummarySvc emailSummarySvc;
 	private final EmailTagSvc emailTagSvc;
 	private final EmailLabelWriter emailLabelWriter;
+	private final ArchitectJobPersistenceSvc architectJobPersistenceSvc;
 
 	public EmailTriageSvc(final EmailReader emailReader, final EmailSummarySvc emailSummarySvc,
-			final EmailTagSvc emailTagSvc, final EmailLabelWriter emailLabelWriter) {
+			final EmailTagSvc emailTagSvc, final EmailLabelWriter emailLabelWriter,
+			final ArchitectJobPersistenceSvc architectJobPersistenceSvc) {
 		this.emailReader = emailReader;
 		this.emailSummarySvc = emailSummarySvc;
 		this.emailTagSvc = emailTagSvc;
 		this.emailLabelWriter = emailLabelWriter;
+		this.architectJobPersistenceSvc = architectJobPersistenceSvc;
 	}
 
-	public List<EmailTriageResult> processUnreadEmails() throws IOException {
+	public List<EmailTriageResult> processEmails() throws IOException {
 		pollLock.lock();
 		try (final var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-			final List<EmailMessage> emails = emailReader.readUnreadEmails();
-			final var pending = new LinkedHashMap<MessageKey, CompletableFuture<Optional<EmailTriageResult>>>();
-			final List<EmailTriageResult> results = new ArrayList<>();
+			final List<EmailTriageResult> results = new ArrayList<>(persistManuallyTaggedArchitectJobs());
+			final List<EmailMessage> emails = emailReader.readEmailsForTriage();
+			final var pending = new LinkedHashMap<MessageKey, CompletableFuture<EmailAnalysis>>();
 			int skipped = 0;
 			int analyzed = 0;
 			int failed = 0;
-			LOGGER.info("Retrieved {} unread emails for triage.", emails.size());
+			LOGGER.info("Retrieved {} emails pending triage.", emails.size());
 			for (final EmailMessage email : emails) {
 				final MessageKey key = new MessageKey(email.account(), email.id());
 				if (processedMessages.contains(key) || pending.containsKey(key)) {
@@ -63,15 +68,11 @@ public class EmailTriageSvc {
 			for (final var entry : pending.entrySet()) {
 				final MessageKey key = entry.getKey();
 				try {
-					final var result = entry.getValue().join();
-					if (result.isPresent()) {
-						final var recommendation = result.get();
-						// Keep Gmail writes serial to avoid racing label creation and OAuth access.
-						emailLabelWriter.applyLabel(key.account(), key.messageId(), recommendation.labelName());
-						results.add(recommendation);
-						LOGGER.info("Applied label: account={}, message={}, label={}",
-								key.account(), key.messageId(), recommendation.labelName());
-					}
+					final EmailAnalysis analysis = entry.getValue().join();
+					persistArchitectJob(analysis);
+					applyWorkflowLabels(analysis);
+					analysis.tag().map(tag -> new EmailTriageResult(analysis.email().account(), analysis.email().id(),
+							analysis.summary(), tag.labelName())).ifPresent(results::add);
 					processedMessages.add(key);
 					analyzed++;
 				} catch (final RuntimeException | IOException exception) {
@@ -88,7 +89,32 @@ public class EmailTriageSvc {
 		}
 	}
 
-	private Optional<EmailTriageResult> analyzeEmail(final EmailMessage email) {
+	private List<EmailTriageResult> persistManuallyTaggedArchitectJobs() throws IOException {
+		final List<EmailMessage> emails = emailReader.readArchitectEmailsPendingPersistence();
+		final List<EmailTriageResult> results = new ArrayList<>();
+		LOGGER.info("Retrieved {} manually tagged architect emails pending persistence.", emails.size());
+		for (final EmailMessage email : emails) {
+			final MessageKey key = new MessageKey(email.account(), email.id());
+			try {
+				if (!architectJobPersistenceSvc.isPersisted(email)) {
+					final String summary = emailSummarySvc.summarize(email);
+					architectJobPersistenceSvc.persist(email, summary);
+					results.add(new EmailTriageResult(email.account(), email.id(), summary,
+							EmailTag.ARCHITECT_JOBS.labelName()));
+				}
+				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.ARCHITECT_PERSISTED);
+				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.PROCESSED);
+				processedMessages.add(key);
+				LOGGER.info("Persisted manually tagged architect email: account={}, message={}", email.account(), email.id());
+			} catch (final RuntimeException | IOException exception) {
+				LOGGER.error("Unable to persist manually tagged architect email: account={}, message={}; retrying next poll.",
+						email.account(), email.id(), exception);
+			}
+		}
+		return results;
+	}
+
+	private EmailAnalysis analyzeEmail(final EmailMessage email) {
 		LOGGER.info("Requesting AI summary for account={}, message={}, bodyCharacters={}",
 				email.account(), email.id(), email.body().length());
 		final String summary = emailSummarySvc.summarize(email);
@@ -96,9 +122,31 @@ public class EmailTriageSvc {
 		final Optional<EmailTag> suggestedLabel = emailTagSvc.suggestTag(summary);
 		LOGGER.info("Analyzed account={}, message={}, recommendedLabel={}",
 				email.account(), email.id(), suggestedLabel.map(EmailTag::labelName).orElse("NONE"));
-		return suggestedLabel.map(label -> new EmailTriageResult(email.account(), email.id(), summary, label.labelName()));
+		return new EmailAnalysis(email, summary, suggestedLabel);
+	}
+
+	private void persistArchitectJob(final EmailAnalysis analysis) {
+		if (analysis.tag().filter(EmailTag.ARCHITECT_JOBS::equals).isPresent()) {
+			architectJobPersistenceSvc.persist(analysis.email(), analysis.summary());
+		}
+	}
+
+	private void applyWorkflowLabels(final EmailAnalysis analysis) throws IOException {
+		final EmailMessage email = analysis.email();
+		if (analysis.tag().isPresent()) {
+			final EmailTag tag = analysis.tag().get();
+			emailLabelWriter.applyLabel(email.account(), email.id(), tag.labelName());
+			LOGGER.info("Applied label: account={}, message={}, label={}", email.account(), email.id(), tag.labelName());
+			if (tag == EmailTag.ARCHITECT_JOBS) {
+				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.ARCHITECT_PERSISTED);
+			}
+		}
+		emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.PROCESSED);
 	}
 
 	private record MessageKey(String account, String messageId) {
+	}
+
+	private record EmailAnalysis(EmailMessage email, String summary, Optional<EmailTag> tag) {
 	}
 }

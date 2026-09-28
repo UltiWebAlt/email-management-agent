@@ -19,7 +19,7 @@ public class EmailPollingJob {
 	public void poll() {
 		LOGGER.info("Starting unread-email poll for the configured Gmail accounts.");
 		try {
-			final var results = triageService.processUnreadEmails();
+			final var results = triageService.processEmails();
 			LOGGER.info("Unread-email poll finished: {} labels applied. Waiting for the next polling interval.", results.size());
 		} catch (final Exception exception) {
 			LOGGER.error("Unread-email poll failed; it will retry at the next polling interval.", exception);

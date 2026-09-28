@@ -2,6 +2,7 @@ gmail:
   polling:
     enabled: ${GMAIL_POLLING_ENABLED:true}
     interval: ${GMAIL_POLL_INTERVAL:PT5M}
+    initial-lookback-days: ${GMAIL_INITIAL_LOOKBACK_DAYS:14}
   oauth:
     accounts: ${GMAIL_ACCOUNTS:randall.burgess@ultiweb.com}
     project-id: cs-poc-dxk82jgpd30qog6ii1itvyo
@@ -17,6 +18,15 @@ gmail:
 spring:
   profiles:
     default: deepinfra
+  datasource:
+    url: ${JOB_SEARCH_DATABASE_URL:jdbc:sqlite:data/job-search.db}
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 1
+      connection-init-sql: PRAGMA foreign_keys=ON
+  sql:
+    init:
+      mode: never
   ai:
     chat:
       client:
