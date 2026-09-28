@@ -1,0 +1,72 @@
+version: 2
+
+updates:
+  # Gradle / Java dependencies
+  - package-ecosystem: "gradle"
+    directory: "/"
+
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/New_York"
+
+    open-pull-requests-limit: 10
+
+    cooldown:
+      default-days: 3
+
+    groups:
+      spring:
+        patterns:
+          - "org.springframework*"
+
+      google:
+        patterns:
+          - "com.google*"
+
+      testing:
+        patterns:
+          - "org.junit*"
+          - "org.hamcrest*"
+
+      static-analysis:
+        patterns:
+          - "com.github.spotbugs*"
+          - "org.sonarqube*"
+
+    labels:
+      - "dependencies"
+      - "java"
+
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:15"
+      timezone: "America/New_York"
+
+    open-pull-requests-limit: 5
+
+    cooldown:
+      default-days: 3
+
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+    commit-message:
+      prefix: "ci"
+      include: "scope"
