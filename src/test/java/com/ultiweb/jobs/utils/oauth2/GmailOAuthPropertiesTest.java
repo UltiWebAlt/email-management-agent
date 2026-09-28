@@ -58,6 +58,22 @@ class GmailOAuthPropertiesTest {
 				() -> properties.accounts().add("second@example.com"));
 	}
 
+	@Test
+	void mapsOAuthConfigurationToInstalledApplicationSecrets() {
+		// given
+		final GmailOAuthProperties properties = properties(List.of("first@example.com"));
+
+		// when
+		final var secrets = properties.toClientSecrets();
+
+		// then
+		assertEquals("test-client", secrets.getInstalled().getClientId());
+		assertEquals("test-secret", secrets.getInstalled().getClientSecret());
+		assertEquals("https://accounts.google.com/o/oauth2/auth", secrets.getInstalled().getAuthUri());
+		assertEquals("https://oauth2.googleapis.com/token", secrets.getInstalled().getTokenUri());
+		assertEquals(List.of("http://localhost:8888/Callback"), secrets.getInstalled().getRedirectUris());
+	}
+
 	static GmailOAuthProperties properties(final List<String> accounts) {
 		return new GmailOAuthProperties("project", "https://accounts.google.com/o/oauth2/auth",
 				"https://oauth2.googleapis.com/token", "https://www.googleapis.com/oauth2/v1/certs",

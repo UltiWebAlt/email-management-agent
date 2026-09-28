@@ -20,6 +20,8 @@ final class GmailMessageBodyExtractor {
 	private static final int MAX_BODY_CHARACTERS = 5_000;
 	private static final String TRUNCATION_MARKER = "\n\n[Email body shortened for summarization]";
 	private static final Pattern CHARSET_PATTERN = Pattern.compile("(?i)charset\\s*=\\s*[\\\"']?([^;\\s\\\"']+)");
+	private static final Pattern HTML_PREFIX_PATTERN = Pattern.compile(
+			"(?is)^\\s*(?:<!doctype\\s+html\\b|<html\\b|<body\\b|<(?:article|div|footer|h[1-6]|header|main|ol|p|section|table|ul)\\b)");
 
 	private final Gmail gmail;
 	private final String messageId;
@@ -168,9 +170,7 @@ final class GmailMessageBodyExtractor {
 	}
 
 	private static boolean looksLikeHtml(final String value) {
-		final String prefix = value.stripLeading().toLowerCase(Locale.ROOT);
-		return prefix.startsWith("<!doctype html") || prefix.startsWith("<html") || prefix.startsWith("<body")
-				|| prefix.startsWith("<table") || prefix.startsWith("<div");
+		return HTML_PREFIX_PATTERN.matcher(value).find();
 	}
 
 	private record BodyContent(String text, boolean html) {

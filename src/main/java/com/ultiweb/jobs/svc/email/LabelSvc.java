@@ -28,8 +28,12 @@ public class LabelSvc {
 	}
 
 	public List<Label> listLabels(final String account) throws IOException {
-		final Gmail service = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_LABELS), account);
+		final Gmail service = gmail(account);
 		final ListLabelsResponse listResponse = service.users().labels().list(USER_ID).execute();
 		return listResponse.getLabels() == null ? List.of() : listResponse.getLabels();
+	}
+
+	Gmail gmail(final String account) throws IOException {
+		return GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_LABELS), account);
 	}
 }

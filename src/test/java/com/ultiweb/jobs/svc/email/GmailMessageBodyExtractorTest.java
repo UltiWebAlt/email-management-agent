@@ -101,6 +101,22 @@ class GmailMessageBodyExtractorTest {
 		assertTrue(body.length() <= 5_000);
 	}
 
+	@Test
+	void recognizesHtmlWhenAMailProviderUsesANonstandardTextMimeType() throws Exception {
+		// given
+		final MessagePart payload = textPart("text/x-custom",
+				"<section><h2>Interview request</h2><a href='https://example.com/schedule'>Choose a time</a></section>",
+				StandardCharsets.UTF_8);
+
+		// when
+		final String body = new GmailMessageBodyExtractor(gmail, "message-id").extract(payload);
+
+		// then
+		assertTrue(body.contains("Interview request"));
+		assertTrue(body.contains("Choose a time (https://example.com/schedule)"));
+		assertFalse(body.contains("<section>"));
+	}
+
 	private static MessagePart textPart(final String mimeType, final String text, final Charset charset) {
 		return new MessagePart()
 				.setMimeType(mimeType)

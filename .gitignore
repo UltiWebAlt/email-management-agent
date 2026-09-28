@@ -4,6 +4,11 @@ out/
 tokens/
 .idea/
 *.log
+*.sarif
+*.sarif.json
+data/job-search-dev.db*
+data/*.db-shm
+data/*.db-wal
 
 !gradle.properties
 !gradle/wrapper/gradle-wrapper.properties

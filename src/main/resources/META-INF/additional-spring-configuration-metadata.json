@@ -1,0 +1,34 @@
+{
+	"properties": [
+		{
+			"name": "email.inference.deepinfra-max-concurrent-requests",
+			"type": "java.lang.Integer",
+			"description": "Maximum number of concurrent DeepInfra inference requests."
+		},
+		{
+			"name": "email.inference.local-max-concurrent-requests",
+			"type": "java.lang.Integer",
+			"description": "Maximum number of concurrent local inference requests."
+		},
+		{
+			"name": "email.inference.tag-system-prompt-location",
+			"type": "org.springframework.core.io.Resource",
+			"description": "Classpath or filesystem location of the email tagging system prompt."
+		},
+		{
+			"name": "gmail.polling.enabled",
+			"type": "java.lang.Boolean",
+			"description": "Whether scheduled Gmail polling is enabled."
+		},
+		{
+			"name": "gmail.polling.initial-lookback-days",
+			"type": "java.lang.Integer",
+			"description": "Number of days to scan when no completed polling checkpoint exists."
+		},
+		{
+			"name": "gmail.polling.interval",
+			"type": "java.time.Duration",
+			"description": "Delay between completed Gmail polling runs."
+		}
+	]
+}
