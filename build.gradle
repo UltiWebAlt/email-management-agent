@@ -110,7 +110,7 @@ tasks.named('sonar') {
 
 spotbugs {
     toolVersion = '4.10.4'
-    ignoreFailures = true
+    ignoreFailures = false
 }
 
 //tasks.withType(SpotBugsTask).configureEach { SpotBugsTask spotBugsTask ->
