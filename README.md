@@ -22,7 +22,7 @@ Credentials are stored locally under `tokens/`, separately for each email addres
 
 Mail processing visits every configured account. Latest-mail analysis reads up to its requested limit **per account**. Messages and triage results include their owning account so label updates use the correct credentials. Label listing accepts an explicit account; calls without an account require exactly one configured account. Send/draft examples select the configured account matching the sender address.
 
-The default `deepinfra` Spring profile uses local Ollama for summarization and DeepInfra for classification. DeepInfra reads its API key from `DEEPINFRA_API_KEY`. No key is stored in configuration. DeepInfra uses its [OpenAI-compatible chat endpoint](https://docs.deepinfra.com/chat/overview) through Spring AI; an OpenAI account or key is not needed. Email subject, sender, and normalized visible body text go to Ollama at `OLLAMA_BASE_URL` (default `http://localhost:11434`) for summarization. HTML mail is converted to bounded plain text while preserving links, lists, image alternative text, and table cell relationships; scripts, styles, hidden elements, tracking query strings, attachments, and markup are excluded. Only the resulting summary is sent directly to DeepInfra for classification; the original email and metadata are not included in that request.
+The `production` Spring profile uses local Ollama for summarization and DeepInfra for classification. DeepInfra reads its API key from `DEEPINFRA_API_KEY`. No key is stored in configuration. DeepInfra uses its [OpenAI-compatible chat endpoint](https://docs.deepinfra.com/chat/overview) through Spring AI; an OpenAI account or key is not needed. Email subject, sender, and normalized visible body text go to Ollama at `OLLAMA_BASE_URL` (default `http://localhost:11434`) for summarization. HTML mail is converted to bounded plain text while preserving links, lists, image alternative text, and table cell relationships; scripts, styles, hidden elements, tracking query strings, attachments, and markup are excluded. Only the resulting summary is sent directly to DeepInfra for classification; the original email and metadata are not included in that request.
 
 The default DeepInfra classification model is `meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo`. Set `DEEPINFRA_MODEL` to change it, or `DEEPINFRA_BASE_URL` to override the endpoint. These settings live in `src/main/resources/application-deepinfra.yml`.
 
@@ -32,21 +32,33 @@ Ollama must be running locally with the configured `OLLAMA_MODEL` (default `llam
 ollama pull llama3.2:3b
 ```
 
-To use Ollama for both summarization and classification:
+The safe default profile is `dev`: polling is disabled, all inference uses Ollama, and persistence uses `data/job-search-dev.db`. Start it with:
 
 ```bash
-export SPRING_PROFILES_ACTIVE=ollama
+./gradlew bootRun
 ```
 
-Select the local-summary/DeepInfra-classification pipeline explicitly with `SPRING_PROFILES_ACTIVE=deepinfra`, or leave the active profile unset to use the default. The all-Ollama profile requires no DeepInfra key. Both profiles use the same classification categories and prompts.
+Production must be selected explicitly. It enables Gmail polling, writes `data/job-search.db`, and activates the `deepinfra` provider profile:
+
+```bash
+SPRING_PROFILES_ACTIVE=production ./gradlew bootRun
+```
+
+To run the production workflow while keeping both inference stages local:
+
+```bash
+SPRING_PROFILES_ACTIVE=local-production ./gradlew bootRun
+```
+
+The `test` profile disables polling and uses in-memory SQLite. The lower-level `ollama` and `deepinfra` profiles only select the classifier provider and are composed by the runtime profiles; they do not independently enable production behavior. All profiles use the same classification categories and prompts. Credentials remain environment variables rather than profile-file values.
 
 The exact Gmail labels are `Dev_Jobs`, `Architect_Jobs`, `Management_Jobs`, `Misc_Jobs`, `Tech_News_Publications`, `General_News_Publications`, `Promotions_Commercial`, `Receipts`, `Delivery_Notification`, `Security_Alert`, `Personal`, and `Social_Media`. `EmailTag` is the source of truth for these names. The classification prompt lives in `src/main/resources/prompts/email-tag-system-prompt.txt`; its required `{{SUPPORTED_LABELS}}` placeholder is expanded from the enum at startup. Set `EMAIL_TAG_SYSTEM_PROMPT_LOCATION` to another Spring resource location such as `file:/path/to/email-tag-prompt.txt` to edit the prompt outside the application, retaining that placeholder. The prompt includes definitions, synthetic examples, and unmatched examples. Job labels require explicit recruitment evidence: `Management_Jobs` covers explicit technology/product delivery management, while other concrete occupations use `Misc_Jobs`. Delivery-only updates and account-security notices have their own labels. `NONE` leaves unsupported, ambiguous, or insufficiently described mail unlabeled. Responses may end with a plain, quoted, Markdown-wrapped, or explicitly prefixed label (for example, `Recommended tag: Receipts`); conflicting labels are rejected. Recommendations are logged as `recommendedLabel` before Gmail writes, including `NONE`. Invalid model outputs fail for retry rather than silently marking an email processed. Existing Gmail labels with older names are not renamed or removed.
 
-Start the web application with `./gradlew bootRun`. It stays running with an embedded HTTP server on port 8080 and logs startup to the console. Set `SERVER_PORT` to change the port; stop it with Ctrl+C. No frontend routes have been added yet, so `/` returns HTTP 404.
+The application stays running with an embedded HTTP server on port 8080 and logs startup to the console. Set `SERVER_PORT` to change the port; stop it with Ctrl+C. No frontend routes have been added yet, so `/` returns HTTP 404.
 
 On startup, a background job checks inbox messages from the last 14 days that do not have the internal `Email_Management_Processed` label. It summarizes them locally, sends the summaries to the configured classifier, applies matching convenience labels, and finally applies the processed label. This durable Gmail marker prevents repeat inference after an application restart, including for messages classified as `NONE`. A failure before the processed marker is applied leaves the message eligible for retry. The job starts immediately and waits five minutes after each completed poll before starting another; polls do not overlap. The console logs account checks, inference requests, content lengths, applied labels, skipped messages, and failures without logging complete bodies or summaries.
 
-Only `Architect_Jobs` messages are stored in SQLite. The database is `data/job-search.db` by default and can be overridden with `JOB_SEARCH_DATABASE_URL`, for example `jdbc:sqlite:/absolute/path/job-search.db`. Stored positions retain their source account/message identity, subject, sender, received time, classifier summary, and complete normalized visible email text. The `(source_account, source_message_id)` key prevents duplicates, and persistence never deletes existing job, recruiter, or response information. SQLite uses WAL mode and a busy timeout so the future dashboard can read while ingestion writes.
+Only `Architect_Jobs` messages are stored in SQLite. Production uses `data/job-search.db`, which can be overridden with `JOB_SEARCH_DATABASE_URL`, for example `jdbc:sqlite:/absolute/path/job-search.db`; development uses the ignored `data/job-search-dev.db`. Stored positions retain their source account/message identity, subject, sender, received time, classifier summary, and complete normalized visible email text. The `(source_account, source_message_id)` key prevents duplicates, and persistence never deletes existing job, recruiter, or response information. SQLite uses WAL mode and a busy timeout so the future dashboard can read while ingestion writes.
 
 Manually applying `Architect_Jobs` in Gmail also schedules that message for persistence, regardless of age or its earlier AI classification. The agent searches for `Architect_Jobs` messages without the internal `Architect_Jobs_Persisted` marker, summarizes and stores any missing position, and then applies the persistence and processed markers. Existing database records are retained if labels are later removed or classifications change.
 

@@ -17,7 +17,7 @@ class InferenceConfigurationTest {
 				new ConfigDataApplicationContextInitializer().initialize(context);
 			})
 			.withUserConfiguration(EmailManagementAgent.class)
-			.withPropertyValues("gmail.polling.enabled=false", "spring.datasource.url=jdbc:sqlite::memory:",
+			.withPropertyValues("spring.profiles.active=test,deepinfra",
 					"GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret");
 
 	@Test
@@ -50,7 +50,7 @@ class InferenceConfigurationTest {
 	@Test
 	void ollamaWorksWithoutADeepInfraKeyAndRetainsItsSettings() {
 		// given / when
-		runner.withPropertyValues("spring.profiles.active=ollama", "OLLAMA_BASE_URL=http://localhost:11434",
+		runner.withPropertyValues("spring.profiles.active=test,ollama", "OLLAMA_BASE_URL=http://localhost:11434",
 				"OLLAMA_MODEL=llama3.2:3b").run(context -> {
 			// then
 			assertThat(context).hasNotFailed().hasBean("summaryAiClient").hasBean("tagAiClient");

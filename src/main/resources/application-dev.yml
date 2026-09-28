@@ -1,0 +1,7 @@
+gmail:
+  polling:
+    enabled: false
+
+spring:
+  datasource:
+    url: "jdbc:sqlite:data/job-search-dev.db"

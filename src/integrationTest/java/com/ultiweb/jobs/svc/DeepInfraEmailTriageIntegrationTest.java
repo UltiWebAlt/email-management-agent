@@ -17,14 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestConstructor;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
-		properties = {"gmail.polling.enabled=false", "spring.ai.model.chat=openai",
-				"spring.datasource.url=jdbc:sqlite::memory:"})
-@ActiveProfiles("deepinfra")
+		properties = {"gmail.polling.enabled=false", "spring.ai.model.chat=openai"})
+@ActiveProfiles({"test", "deepinfra"})
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @EnabledIfEnvironmentVariable(named = "RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST", matches = "true")
 class DeepInfraEmailTriageIntegrationTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DeepInfraEmailTriageIntegrationTest.class);
@@ -34,7 +34,6 @@ class DeepInfraEmailTriageIntegrationTest {
 	private final EmailSummarySvc emailSummarySvc;
 	private final EmailTagSvc emailTagSvc;
 
-	@Autowired
 	DeepInfraEmailTriageIntegrationTest(final GmailMailboxSvc gmailMailboxSvc,
 			final EmailSummarySvc emailSummarySvc, final EmailTagSvc emailTagSvc) {
 		this.gmailMailboxSvc = gmailMailboxSvc;

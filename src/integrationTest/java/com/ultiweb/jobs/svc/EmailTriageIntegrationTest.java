@@ -14,12 +14,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestConstructor;
 
-@SpringBootTest(properties = {"gmail.polling.enabled=false", "spring.datasource.url=jdbc:sqlite::memory:"})
-@ActiveProfiles("ollama")
+@SpringBootTest(properties = "gmail.polling.enabled=false")
+@ActiveProfiles({"test", "ollama"})
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @EnabledIfEnvironmentVariable(named = "RUN_GMAIL_OLLAMA_INTEGRATION_TEST", matches = "true")
 class EmailTriageIntegrationTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(EmailTriageIntegrationTest.class);
@@ -29,7 +30,6 @@ class EmailTriageIntegrationTest {
 	private final EmailSummarySvc emailSummarySvc;
 	private final EmailTagSvc emailTagSvc;
 
-	@Autowired
 	EmailTriageIntegrationTest(final GmailMailboxSvc gmailMailboxSvc, final EmailSummarySvc emailSummarySvc,
 			final EmailTagSvc emailTagSvc) {
 		this.gmailMailboxSvc = gmailMailboxSvc;

@@ -1,6 +1,6 @@
 gmail:
   polling:
-    enabled: ${GMAIL_POLLING_ENABLED:true}
+    enabled: false
     interval: ${GMAIL_POLL_INTERVAL:PT5M}
     initial-lookback-days: ${GMAIL_INITIAL_LOOKBACK_DAYS:14}
   oauth:
@@ -17,9 +17,15 @@ gmail:
 
 spring:
   profiles:
-    default: deepinfra
+    default: dev
+    group:
+      dev:
+        - ollama
+      production:
+        - deepinfra
+      local-production:
+        - ollama
   datasource:
-    url: ${JOB_SEARCH_DATABASE_URL:jdbc:sqlite:data/job-search.db}
     driver-class-name: org.sqlite.JDBC
     hikari:
       maximum-pool-size: 1

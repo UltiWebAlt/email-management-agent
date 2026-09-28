@@ -1,0 +1,7 @@
+gmail:
+  polling:
+    enabled: ${GMAIL_POLLING_ENABLED:true}
+
+spring:
+  datasource:
+    url: "${JOB_SEARCH_DATABASE_URL:jdbc:sqlite:data/job-search.db}"
