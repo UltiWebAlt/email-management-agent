@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.ultiweb.jobs.svc.email.EmailMessage;
+import com.ultiweb.jobs.svc.JobOpportunityDetails;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -38,12 +39,14 @@ class ArchitectJobPersistenceSvcTest {
 		final var repository = new JdbcArchitectJobRepository(jdbcTemplate);
 		final Instant now = Instant.parse("2026-09-27T18:00:00Z");
 		final var service = new ArchitectJobPersistenceSvc(repository, Clock.fixed(now, ZoneOffset.UTC));
-		final var email = new EmailMessage("owner@example.com", "gmail-id", "Principal Solutions Architect",
+		final var email = new EmailMessage("owner@example.com", "gmail-id", "Architect position",
 				"Taylor Recruiter <Taylor.Recruiter@Example.com>", "Role description and requirements.",
-				Instant.parse("2026-09-26T12:30:00Z"));
+				Instant.parse("2026-09-26T12:30:00Z"), "<p>Formatted role description</p>");
+		final var details = new JobOpportunityDetails("Principal Solutions Architect", "Example Design Co",
+				"Boston, MA", true, "$150K-$180K", "Architecture leadership");
 
 		// when
-		final boolean firstInsert = service.persist(email, "A principal solutions architect opportunity.");
+		final boolean firstInsert = service.persist(email, "A principal solutions architect opportunity.", details);
 		final boolean duplicateInsert = service.persist(email, "A duplicate summary must not create another row.");
 
 		// then
@@ -56,6 +59,13 @@ class ArchitectJobPersistenceSvcTest {
 				jdbcTemplate.queryForObject("SELECT email FROM recruiters", String.class));
 		assertEquals("Principal Solutions Architect",
 				jdbcTemplate.queryForObject("SELECT title FROM positions", String.class));
+		assertEquals("Example Design Co", jdbcTemplate.queryForObject("SELECT company FROM positions", String.class));
+		assertEquals("Boston, MA", jdbcTemplate.queryForObject("SELECT location FROM positions", String.class));
+		assertEquals(1, jdbcTemplate.queryForObject("SELECT is_remote FROM positions", Integer.class));
+		assertEquals("$150K-$180K", jdbcTemplate.queryForObject("SELECT salary_range FROM positions", String.class));
+		assertEquals("Architecture leadership", jdbcTemplate.queryForObject("SELECT requirements FROM positions", String.class));
+		assertEquals("<p>Formatted role description</p>",
+				jdbcTemplate.queryForObject("SELECT html_body FROM positions", String.class));
 		assertEquals("Role description and requirements.",
 				jdbcTemplate.queryForObject("SELECT description FROM positions", String.class));
 		assertEquals("A principal solutions architect opportunity.",
@@ -97,5 +107,46 @@ class ArchitectJobPersistenceSvcTest {
 				(resultSet, rowNumber) -> resultSet.getString("name")).stream().collect(Collectors.toSet());
 		assertTrue(columns.containsAll(Set.of("source_account", "source_message_id", "source_subject",
 				"source_sender", "source_received_at", "summary")));
+	}
+
+	@Test
+	void enrichesAnExistingPositionWithoutReplacingItsOriginalEmailText() {
+		// given
+		new JobSearchDatabaseInitializer(jdbcTemplate).initialize();
+		final var service = new ArchitectJobPersistenceSvc(new JdbcArchitectJobRepository(jdbcTemplate),
+				Clock.fixed(Instant.parse("2026-09-27T18:00:00Z"), ZoneOffset.UTC));
+		final var email = new EmailMessage("owner@example.com", "old-message", "Architect opening",
+				"Taylor Recruiter <taylor@example.com>", "Original plain text email");
+		service.persist(email, "Original summary");
+		final var inferred = new JobOpportunityDetails("Senior Design Architect", "Example Studio",
+				"Chicago, IL", false, "$140K-$170K", "Portfolio and team leadership");
+
+		// when
+		assertTrue(service.needsEnrichment(email));
+		service.enrichExisting(email, inferred);
+
+		// then
+		assertEquals("Senior Design Architect", jdbcTemplate.queryForObject(
+				"SELECT title FROM positions WHERE source_message_id = 'old-message'", String.class));
+		assertEquals("Example Studio", jdbcTemplate.queryForObject(
+				"SELECT company FROM positions WHERE source_message_id = 'old-message'", String.class));
+		assertEquals("Original plain text email", jdbcTemplate.queryForObject(
+				"SELECT description FROM positions WHERE source_message_id = 'old-message'", String.class));
+	}
+
+	@Test
+	void initializerRemovesUnwantedSummaryIntroductionFromExistingRows() {
+		// given
+		new JobSearchDatabaseInitializer(jdbcTemplate).initialize();
+		jdbcTemplate.update("INSERT INTO recruiters (id, email) VALUES (1, ?)", "recruiter@example.com");
+		jdbcTemplate.update("INSERT INTO positions (id, title, recruiter_id, summary) VALUES (1, ?, 1, ?)",
+				"Architect", "Here is a summary of the email in three concise sentences: The role is remote.");
+
+		// when
+		new JobSearchDatabaseInitializer(jdbcTemplate).initialize();
+
+		// then
+		assertEquals("The role is remote.", jdbcTemplate.queryForObject(
+				"SELECT summary FROM positions WHERE id = 1", String.class));
 	}
 }

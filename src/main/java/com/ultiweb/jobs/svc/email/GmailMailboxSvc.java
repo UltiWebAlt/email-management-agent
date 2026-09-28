@@ -58,10 +58,21 @@ public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 	/** Reads architect-labeled messages without changing Gmail labels, for explicit development imports. */
 	public List<EmailMessage> readArchitectLabeledEmailsForDevelopment() throws IOException {
 		return readEmails("label:" + EmailTag.ARCHITECT_JOBS.labelName(),
-				"Reading architect-labeled messages for development import from account {}.");
+				"Reading architect-labeled messages for development import from account {}.", true);
+	}
+
+	/** Reads recent inbox mail for explicit development classification without modifying Gmail. */
+	public List<EmailMessage> readRecentInboxEmailsForDevelopment() throws IOException {
+		return readEmails("in:inbox newer_than:" + initialLookbackDays + "d",
+				"Reading recent inbox messages for development import from account {}.", true);
 	}
 
 	private List<EmailMessage> readEmails(final String query, final String logMessage) throws IOException {
+		return readEmails(query, logMessage, false);
+	}
+
+	private List<EmailMessage> readEmails(final String query, final String logMessage,
+			final boolean failOnAccountError) throws IOException {
 		final List<EmailMessage> emails = new ArrayList<>();
 		for (final String account : gmailOAuth.accounts()) {
 			LOGGER.info(logMessage, account);
@@ -76,6 +87,9 @@ public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 					request.setPageToken(nextPage);
 				} while (nextPage != null && !nextPage.isBlank());
 			} catch (final IOException | RuntimeException exception) {
+				if (failOnAccountError) {
+					throw new IOException("Unable to read Gmail messages for development import", exception);
+				}
 				LOGGER.error("Unable to read account {}; continuing other accounts and retrying on the next poll.", account, exception);
 			}
 		}
@@ -128,8 +142,9 @@ public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 					.execute();
 			final MessagePart payload = message.getPayload();
 			final Instant receivedAt = message.getInternalDate() == null ? null : Instant.ofEpochMilli(message.getInternalDate());
+			final ExtractedEmailBody body = new GmailMessageBodyExtractor(gmail, messageId).extractContent(payload);
 			return new EmailMessage(account, message.getId(), header(payload, "Subject"), header(payload, "From"),
-					new GmailMessageBodyExtractor(gmail, messageId).extract(payload), receivedAt);
+					body.text(), receivedAt, body.html());
 		} catch (final IOException | IllegalArgumentException exception) {
 			throw new EmailTriageException("Unable to read message " + messageId + " for account " + account, exception);
 		}

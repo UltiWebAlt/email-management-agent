@@ -9,7 +9,7 @@ public interface JobDashboardRepository {
 
 	long countJobs(String query);
 
-	List<JobDashboardRow> findJobs(String query, int offset, int limit);
+	List<JobDashboardRow> findJobs(String query, JobSortOrder sortOrder, int offset, int limit);
 
 	Optional<JobDashboardDetailsRow> findById(long id);
 }

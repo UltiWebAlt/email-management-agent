@@ -5,6 +5,10 @@ gmail:
 dashboard:
   email-import-enabled: true
 
+logging:
+  level:
+    com.ultiweb.jobs.svc: DEBUG
+
 spring:
   datasource:
     url: "jdbc:sqlite:data/job-search-dev.db"

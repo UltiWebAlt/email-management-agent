@@ -50,4 +50,24 @@ class HtmlEmailTextExtractorTest {
 		assertTrue(text.contains("[Image: Register now]"));
 		assertTrue(text.contains("https://example.com/register"));
 	}
+
+	@Test
+	void sanitizesRenderedHtmlWhilePreservingLinksListsAndTables() {
+		// given
+		final String html = "<script>alert('x')</script><p onclick='steal()'>Role details</p>"
+				+ "<ul><li>Design systems</li></ul><table><tr><th>Location</th><td>Boston</td></tr></table>"
+				+ "<a href='https://example.com/job'>Full posting</a><img src='https://example.com/pixel' alt='Job logo'>";
+
+		// when
+		final String safeHtml = HtmlEmailTextExtractor.sanitizeForDisplay(html);
+
+		// then
+		assertTrue(safeHtml.contains("<li>Design systems</li>"));
+		assertTrue(safeHtml.contains("<table>"));
+		assertTrue(safeHtml.contains("href=\"https://example.com/job\""));
+		assertTrue(safeHtml.contains("[Image: Job logo]"));
+		assertFalse(safeHtml.contains("<script"));
+		assertFalse(safeHtml.contains("onclick"));
+		assertFalse(safeHtml.contains("pixel"));
+	}
 }

@@ -3,6 +3,7 @@ package com.ultiweb.jobs.svc.dashboard;
 import com.ultiweb.jobs.svc.persistence.JobDashboardDetailsRow;
 import com.ultiweb.jobs.svc.persistence.JobDashboardRepository;
 import com.ultiweb.jobs.svc.persistence.JobDashboardRow;
+import com.ultiweb.jobs.svc.persistence.JobSortOrder;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -37,8 +38,14 @@ public final class JobDashboardSvc {
 	}
 
 	public DashboardSnapshot dashboard(final String query, final int requestedPage, final int requestedPageSize) {
+		return dashboard(query, requestedPage, requestedPageSize, "newest");
+	}
+
+	public DashboardSnapshot dashboard(final String query, final int requestedPage, final int requestedPageSize,
+			final String requestedSortOrder) {
 		final Instant now = clock.instant();
 		final String normalizedQuery = normalizeQuery(query);
+		final JobSortOrder sortOrder = JobSortOrder.fromValue(requestedSortOrder);
 		final int pageSize = Math.max(1, Math.min(requestedPageSize, MAX_PAGE_SIZE));
 		final long totalResults = repository.countJobs(normalizedQuery);
 		final long totalPages = Math.max(1, (totalResults + pageSize - 1) / pageSize);
@@ -54,7 +61,7 @@ public final class JobDashboardSvc {
 				emailImportEnabled,
 				new DashboardMetrics(metricsRow.totalJobs(), metricsRow.recentJobs(), metricsRow.recruiters(),
 						metricsRow.followUps(), metricsRow.lastSavedAt()),
-				repository.findJobs(normalizedQuery, page * pageSize, pageSize).stream()
+				repository.findJobs(normalizedQuery, sortOrder, page * pageSize, pageSize).stream()
 						.map(JobDashboardSvc::job).toList());
 	}
 
@@ -75,12 +82,12 @@ public final class JobDashboardSvc {
 	private static DashboardJob job(final JobDashboardRow row) {
 		return new DashboardJob(row.id(), row.title(), row.company(), row.recruiterName(), row.recruiterEmail(),
 				row.location(), row.remote(), row.receivedAt(), row.savedAt(), row.summary(),
-				row.selectedForResponse(), row.responseStatus());
+				row.selectedForResponse(), row.responseStatus(), row.responseContent());
 	}
 
 	private static DashboardJobDetails details(final JobDashboardDetailsRow row) {
 		return new DashboardJobDetails(row.id(), row.title(), row.company(), row.recruiterName(), row.recruiterEmail(),
-				row.location(), row.remote(), row.receivedAt(), row.savedAt(), row.summary(), row.description(),
+				row.location(), row.remote(), row.receivedAt(), row.savedAt(), row.summary(), row.description(), row.htmlBody(),
 				row.requirements(), row.salaryRange(), row.sourceAccount(), row.sourceSubject(), row.sourceSender(),
 				row.responseCount(), row.responseStatus(), row.responseContent(), row.gmailDraftId());
 	}

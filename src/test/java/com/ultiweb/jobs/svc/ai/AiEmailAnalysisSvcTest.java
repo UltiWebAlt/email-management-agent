@@ -60,6 +60,43 @@ class AiEmailAnalysisSvcTest {
 		assertEquals("Concise summary.", summary);
 	}
 
+	@Test
+	void summaryPromptPreservesStructuredJobDetailsForTheJobRecord() {
+		// given
+		final var summarizer = new AiEmailSummarySvc(localClient);
+		final var email = new EmailMessage("owner", "id", "Subject", "Sender", "Body");
+		final ArgumentCaptor<String> systemPrompt = ArgumentCaptor.forClass(String.class);
+		when(localClient.complete(systemPrompt.capture(), anyString())).thenReturn("Job summary.");
+
+		// when
+		summarizer.summarize(email);
+
+		// then
+		assertTrue(systemPrompt.getValue().contains("hiring company"));
+		assertTrue(systemPrompt.getValue().contains("location or geographic restrictions"));
+		assertTrue(systemPrompt.getValue().contains("remote/hybrid/on-site arrangement"));
+		assertTrue(systemPrompt.getValue().contains("salary or rate"));
+		assertTrue(systemPrompt.getValue().contains("qualifications or responsibilities"));
+		assertTrue(systemPrompt.getValue().contains("not merely"));
+		assertTrue(systemPrompt.getValue().contains("up to five concise sentences"));
+		assertTrue(systemPrompt.getValue().contains("do not omit useful facts merely to save a sentence"));
+	}
+
+	@Test
+	void removesTheUnwantedSummaryIntroduction() {
+		// given
+		final var summarizer = new AiEmailSummarySvc(localClient);
+		final var email = new EmailMessage("owner", "id", "Subject", "Sender", "Body");
+		when(localClient.complete(anyString(), anyString())).thenReturn(
+				"Here is a summary of the email in three concise sentences:\nA concise role summary.");
+
+		// when
+		final String summary = summarizer.summarize(email);
+
+		// then
+		assertEquals("A concise role summary.", summary);
+	}
+
 	@ParameterizedTest
 	@NullAndEmptySource
 	@ValueSource(strings = {" "})

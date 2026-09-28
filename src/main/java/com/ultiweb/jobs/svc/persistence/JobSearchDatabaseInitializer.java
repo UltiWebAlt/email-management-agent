@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public final class JobSearchDatabaseInitializer {
+	private static final String SUMMARY_INTRO = "Here is a summary of the email in three concise sentences:";
 	private final JdbcOperations jdbcTemplate;
 
 	public JobSearchDatabaseInitializer(final JdbcOperations jdbcTemplate) {
@@ -26,11 +27,28 @@ public final class JobSearchDatabaseInitializer {
 		addPositionColumn("source_sender", "TEXT");
 		addPositionColumn("source_received_at", "TEXT");
 		addPositionColumn("summary", "TEXT");
+		addPositionColumn("html_body", "TEXT");
 		addPositionColumn("respond_to", "INTEGER NOT NULL DEFAULT 0");
 		addResponseColumn("response_status", "TEXT NOT NULL DEFAULT 'RECORDED'");
 		addResponseColumn("gmail_draft_id", "TEXT");
 		addResponseColumn("updated_at", "TEXT");
+		removeSummaryIntroductions();
 		createIndexes();
+	}
+
+	private void removeSummaryIntroductions() {
+		final var rows = jdbcTemplate.query("""
+				SELECT id, summary FROM positions
+				WHERE summary IS NOT NULL AND LOWER(LTRIM(summary)) LIKE LOWER(?)
+				""", (resultSet, rowNumber) -> new SummaryRow(
+				resultSet.getLong("id"), resultSet.getString("summary")), SUMMARY_INTRO + "%");
+		for (final SummaryRow row : rows) {
+			final String summary = row.summary().stripLeading();
+			if (summary.regionMatches(true, 0, SUMMARY_INTRO, 0, SUMMARY_INTRO.length())) {
+				jdbcTemplate.update("UPDATE positions SET summary = ? WHERE id = ?",
+					summary.substring(SUMMARY_INTRO.length()).stripLeading(), row.id());
+			}
+		}
 	}
 
 	private void createBaseTables() {
@@ -64,6 +82,7 @@ public final class JobSearchDatabaseInitializer {
 					source_sender TEXT,
 					source_received_at TEXT,
 					summary TEXT,
+					html_body TEXT,
 					respond_to INTEGER NOT NULL DEFAULT 0,
 					FOREIGN KEY (recruiter_id) REFERENCES recruiters(id)
 				)
@@ -122,5 +141,8 @@ public final class JobSearchDatabaseInitializer {
 		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_positions_recruiter_id ON positions(recruiter_id)");
 		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_responses_position_id ON responses(position_id)");
 		jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_responses_status ON responses(response_status)");
+	}
+
+	private record SummaryRow(long id, String summary) {
 	}
 }

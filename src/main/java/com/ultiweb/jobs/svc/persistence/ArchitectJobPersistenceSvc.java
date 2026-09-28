@@ -1,6 +1,7 @@
 package com.ultiweb.jobs.svc.persistence;
 
 import com.ultiweb.jobs.svc.email.EmailMessage;
+import com.ultiweb.jobs.svc.JobOpportunityDetails;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Locale;
@@ -41,27 +42,58 @@ public class ArchitectJobPersistenceSvc {
 		return repository.existsBySource(email.account(), email.id());
 	}
 
+	public boolean needsEnrichment(final EmailMessage email) {
+		return repository.needsEnrichment(email.account(), email.id());
+	}
+
 	@Transactional
 	public boolean persist(final EmailMessage email, final String summary) {
+		return persist(email, summary, JobOpportunityDetails.empty());
+	}
+
+	@Transactional
+	public boolean persist(final EmailMessage email, final String summary, final JobOpportunityDetails details) {
 		Assert.hasText(summary, "An architect job summary is required");
+		Assert.notNull(details, "Inferred architect job details are required");
+		final ArchitectJobRecord record = record(email, summary, details, true);
+		final boolean inserted = repository.saveIfAbsent(record);
+		if (inserted) {
+			eventPublisher.publishEvent(new ArchitectOpportunityAddedEvent());
+		} else {
+			repository.enrichExisting(record(email, summary, details, false));
+			eventPublisher.publishEvent(new ArchitectOpportunityUpdatedEvent());
+		}
+		return inserted;
+	}
+
+	@Transactional
+	public void enrichExisting(final EmailMessage email, final JobOpportunityDetails details) {
+		repository.enrichExisting(record(email, "", details, false));
+		eventPublisher.publishEvent(new ArchitectOpportunityUpdatedEvent());
+	}
+
+	private ArchitectJobRecord record(final EmailMessage email, final String summary,
+			final JobOpportunityDetails details, final boolean fallbackTitle) {
 		final RecruiterIdentity recruiter = recruiter(email);
 		final Instant createdAt = clock.instant();
-		final boolean inserted = repository.saveIfAbsent(new ArchitectJobRecord(
+		return new ArchitectJobRecord(
 				email.account(),
 				email.id(),
 				email.subject(),
 				email.from(),
 				email.receivedAt(),
-				summary.strip(),
+				summary == null ? "" : summary.strip(),
 				email.body(),
-				title(email.subject()),
+				email.htmlBody(),
+				fallbackTitle ? firstNonBlank(details.title(), title(email.subject())) : blankToNull(details.title()),
+				details.company(),
+				details.location(),
+				details.remote(),
+				details.salaryRange(),
+				details.requirements(),
 				recruiter.email(),
 				recruiter.name(),
-				createdAt));
-		if (inserted) {
-			eventPublisher.publishEvent(new ArchitectOpportunityAddedEvent());
-		}
-		return inserted;
+				createdAt);
 	}
 
 	private static RecruiterIdentity recruiter(final EmailMessage email) {
@@ -88,6 +120,10 @@ public class ArchitectJobPersistenceSvc {
 
 	private static String blankToNull(final String value) {
 		return value == null || value.isBlank() ? null : value.strip();
+	}
+
+	private static String firstNonBlank(final String value, final String fallback) {
+		return value == null || value.isBlank() ? fallback : value.strip();
 	}
 
 	private record RecruiterIdentity(String email, String name) {

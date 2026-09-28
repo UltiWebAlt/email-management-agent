@@ -77,13 +77,25 @@
 							placeholder="Search title, recruiter, location, or summary" autocomplete="off">
 					<button type="submit">Search</button>
 				</form>
+				<div class="sort-row">
+					<label for="sort-order">Sort opportunities</label>
+					<select id="sort-order" name="sort-order">
+						<option value="newest">Newest first</option>
+						<option value="oldest">Oldest first</option>
+						<option value="title_asc">Title A–Z</option>
+						<option value="title_desc">Title Z–A</option>
+						<option value="company_asc">Company A–Z</option>
+						<option value="company_desc">Company Z–A</option>
+					</select>
+				</div>
 				<div class="selection-toolbar">
 					<div class="selection-actions">
-						<button class="secondary-button hidden" id="import-emails" type="button">Import architect emails from Gmail</button>
+						<button class="secondary-button hidden" id="import-emails" type="button">Import recent Gmail emails</button>
 						<button class="primary-button" id="save-selections" type="button">Save selections &amp; prepare replies</button>
 					</div>
 					<span class="selection-status" id="selection-status" aria-live="polite">Select opportunities to prepare responses.</span>
 				</div>
+				<div class="workflow-notice hidden" id="import-notice" role="status" aria-live="polite" aria-atomic="true"></div>
 				<div class="notice hidden" id="error-message" role="alert"></div>
 				<div class="job-list" id="job-list" aria-live="polite"></div>
 				<div class="empty-state hidden" id="empty-state">
@@ -139,6 +151,10 @@
 					<span class="job-meta"></span>
 				</button>
 				<span class="response-status hidden"></span>
+				<div class="response-preview hidden">
+					<strong>Prepared response</strong>
+					<p class="response-preview-text"></p>
+				</div>
 			</div>
 		</article>
 	</template>

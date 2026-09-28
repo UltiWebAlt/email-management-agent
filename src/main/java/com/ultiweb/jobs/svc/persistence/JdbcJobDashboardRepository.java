@@ -15,7 +15,7 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 	private static final String JOB_COLUMNS = """
 			p.id, p.title, p.company, r.name AS recruiter_name, r.email AS recruiter_email,
 			p.location, p.is_remote, p.source_received_at, p.created_at, p.summary, p.respond_to,
-			latest_response.response_status
+			latest_response.response_status, latest_response.response_content
 			""";
 	private static final String JOB_FROM = """
 			FROM positions p
@@ -69,15 +69,17 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 	}
 
 	@Override
-	public List<JobDashboardRow> findJobs(final String query, final int offset, final int limit) {
+	public List<JobDashboardRow> findJobs(final String query, final JobSortOrder sortOrder,
+			final int offset, final int limit) {
 		final String normalizedQuery = query == null ? "" : query.strip();
 		if (normalizedQuery.isEmpty()) {
 			return jdbcTemplate.query("""
 					SELECT ${columns}
 					${from}
-					ORDER BY COALESCE(p.source_received_at, p.created_at) DESC, p.id DESC
+					ORDER BY ${sortOrder}
 					LIMIT ? OFFSET ?
-					""".replace("${columns}", JOB_COLUMNS).replace("${from}", JOB_FROM),
+					""".replace("${columns}", JOB_COLUMNS).replace("${from}", JOB_FROM)
+					.replace("${sortOrder}", sortOrder.sqlOrderBy()),
 					JdbcJobDashboardRepository::jobRow, limit, offset);
 		}
 		final String pattern = "%" + normalizedQuery.toLowerCase(java.util.Locale.ROOT) + "%";
@@ -90,16 +92,17 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 					OR LOWER(COALESCE(r.name, '')) LIKE ?
 					OR LOWER(COALESCE(r.email, '')) LIKE ?
 					OR LOWER(COALESCE(p.summary, '')) LIKE ?
-				ORDER BY COALESCE(p.source_received_at, p.created_at) DESC, p.id DESC
+				ORDER BY ${sortOrder}
 				LIMIT ? OFFSET ?
-				""".replace("${columns}", JOB_COLUMNS).replace("${from}", JOB_FROM), JdbcJobDashboardRepository::jobRow,
+				""".replace("${columns}", JOB_COLUMNS).replace("${from}", JOB_FROM)
+				.replace("${sortOrder}", sortOrder.sqlOrderBy()), JdbcJobDashboardRepository::jobRow,
 				pattern, pattern, pattern, pattern, pattern, pattern, limit, offset);
 	}
 
 	@Override
 	public Optional<JobDashboardDetailsRow> findById(final long id) {
 		return jdbcTemplate.query("""
-				SELECT ${columns}, p.description, p.requirements, p.salary_range, p.source_account,
+				SELECT ${columns}, p.description, p.html_body, p.requirements, p.salary_range, p.source_account,
 					p.source_subject, p.source_sender,
 					(SELECT COUNT(*) FROM responses response WHERE response.position_id = p.id) AS response_count,
 					latest_response.response_content, latest_response.gmail_draft_id
@@ -120,6 +123,7 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 				instant(resultSet.getString("created_at")),
 				resultSet.getString("summary"),
 				resultSet.getString("description"),
+				resultSet.getString("html_body"),
 				resultSet.getString("requirements"),
 				resultSet.getString("salary_range"),
 				resultSet.getString("source_account"),
@@ -144,7 +148,8 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 				instant(resultSet.getString("created_at")),
 				resultSet.getString("summary"),
 				resultSet.getBoolean("respond_to"),
-				resultSet.getString("response_status"));
+				resultSet.getString("response_status"),
+				resultSet.getString("response_content"));
 	}
 
 	private static Boolean nullableBoolean(final ResultSet resultSet, final String column) throws SQLException {

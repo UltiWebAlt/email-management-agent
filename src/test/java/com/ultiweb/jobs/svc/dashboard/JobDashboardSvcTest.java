@@ -9,6 +9,7 @@ import com.ultiweb.jobs.svc.persistence.JobDashboardDetailsRow;
 import com.ultiweb.jobs.svc.persistence.JobDashboardMetricsRow;
 import com.ultiweb.jobs.svc.persistence.JobDashboardRepository;
 import com.ultiweb.jobs.svc.persistence.JobDashboardRow;
+import com.ultiweb.jobs.svc.persistence.JobSortOrder;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -32,9 +33,10 @@ class JobDashboardSvcTest {
 		when(repository.metrics(Instant.parse("2026-09-21T12:00:00Z")))
 				.thenReturn(new JobDashboardMetricsRow(4, 2, 3, 1, NOW.minusSeconds(60)));
 		when(repository.countJobs("cloud architect")).thenReturn(1L);
-		when(repository.findJobs("cloud architect", 0, 20)).thenReturn(List.of(new JobDashboardRow(
+		when(repository.findJobs("cloud architect", JobSortOrder.NEWEST, 0, 20)).thenReturn(List.of(new JobDashboardRow(
 				7, "Cloud architect", "Example", "Pat", "pat@example.com", "Remote", true,
-				NOW.minusSeconds(120), NOW.minusSeconds(60), "A cloud platform role.", true, "SAVED_FOR_REVIEW")));
+				NOW.minusSeconds(120), NOW.minusSeconds(60), "A cloud platform role.", true,
+				"SAVED_FOR_REVIEW", "Hello recruiter")));
 
 		// when
 		final DashboardSnapshot result = service.dashboard("  cloud\narchitect  ", 0, 20);
@@ -47,6 +49,7 @@ class JobDashboardSvcTest {
 		assertEquals(1, result.totalPages());
 		assertEquals(1, result.jobs().size());
 		assertEquals("Cloud architect", result.jobs().getFirst().title());
+		assertEquals("Hello recruiter", result.jobs().getFirst().responseContent());
 	}
 
 	@Test
@@ -55,7 +58,7 @@ class JobDashboardSvcTest {
 		final var service = new JobDashboardSvc(repository, Clock.fixed(NOW, ZoneOffset.UTC));
 		when(repository.findById(7)).thenReturn(Optional.of(new JobDashboardDetailsRow(
 				7, "Enterprise architect", null, "Pat", "pat@example.com", null, null,
-				NOW, NOW, "Summary", "Email body", null, null, "owner@example.com",
+				NOW, NOW, "Summary", "Email body", "<p>Email</p>", null, null, "owner@example.com",
 				"Architect opening", "Pat <pat@example.com>", 2, "DRAFT_CREATED", "Reply body", "draft-1")));
 		when(repository.findById(99)).thenReturn(Optional.empty());
 

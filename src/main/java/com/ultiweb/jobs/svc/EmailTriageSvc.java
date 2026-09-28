@@ -1,6 +1,7 @@
 package com.ultiweb.jobs.svc;
 
 import com.ultiweb.jobs.svc.ai.EmailSummarySvc;
+import com.ultiweb.jobs.svc.ai.ArchitectJobDetailsInferenceSvc;
 import com.ultiweb.jobs.svc.ai.EmailTag;
 import com.ultiweb.jobs.svc.ai.EmailTagSvc;
 import com.ultiweb.jobs.svc.email.EmailLabelWriter;
@@ -8,6 +9,7 @@ import com.ultiweb.jobs.svc.email.EmailMessage;
 import com.ultiweb.jobs.svc.email.EmailReader;
 import com.ultiweb.jobs.svc.email.EmailWorkflowLabels;
 import com.ultiweb.jobs.svc.persistence.ArchitectJobPersistenceSvc;
+import com.ultiweb.jobs.svc.JobOpportunityDetails;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,15 +38,18 @@ public class EmailTriageSvc {
 	private final EmailTagSvc emailTagSvc;
 	private final EmailLabelWriter emailLabelWriter;
 	private final ArchitectJobPersistenceSvc architectJobPersistenceSvc;
+	private final ArchitectJobDetailsInferenceSvc jobDetailsInferenceSvc;
 
 	public EmailTriageSvc(final EmailReader emailReader, final EmailSummarySvc emailSummarySvc,
 			final EmailTagSvc emailTagSvc, final EmailLabelWriter emailLabelWriter,
-			final ArchitectJobPersistenceSvc architectJobPersistenceSvc) {
+			final ArchitectJobPersistenceSvc architectJobPersistenceSvc,
+			final ArchitectJobDetailsInferenceSvc jobDetailsInferenceSvc) {
 		this.emailReader = emailReader;
 		this.emailSummarySvc = emailSummarySvc;
 		this.emailTagSvc = emailTagSvc;
 		this.emailLabelWriter = emailLabelWriter;
 		this.architectJobPersistenceSvc = architectJobPersistenceSvc;
+		this.jobDetailsInferenceSvc = jobDetailsInferenceSvc;
 	}
 
 	public List<EmailTriageResult> processEmails() throws IOException {
@@ -98,9 +103,11 @@ public class EmailTriageSvc {
 			try {
 				if (!architectJobPersistenceSvc.isPersisted(email)) {
 					final String summary = emailSummarySvc.summarize(email);
-					architectJobPersistenceSvc.persist(email, summary);
+					architectJobPersistenceSvc.persist(email, summary, inferJobDetails(email));
 					results.add(new EmailTriageResult(email.account(), email.id(), summary,
 							EmailTag.ARCHITECT_JOBS.labelName()));
+				} else if (architectJobPersistenceSvc.needsEnrichment(email)) {
+					architectJobPersistenceSvc.enrichExisting(email, inferJobDetails(email));
 				}
 				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.ARCHITECT_PERSISTED);
 				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.PROCESSED);
@@ -127,7 +134,17 @@ public class EmailTriageSvc {
 
 	private void persistArchitectJob(final EmailAnalysis analysis) {
 		if (analysis.tag().filter(EmailTag.ARCHITECT_JOBS::equals).isPresent()) {
-			architectJobPersistenceSvc.persist(analysis.email(), analysis.summary());
+			architectJobPersistenceSvc.persist(analysis.email(), analysis.summary(), inferJobDetails(analysis.email()));
+		}
+	}
+
+	private JobOpportunityDetails inferJobDetails(final EmailMessage email) {
+		try {
+			return jobDetailsInferenceSvc.infer(email);
+		} catch (final RuntimeException exception) {
+			LOGGER.warn("Job detail inference failed for account={}, message={} ({}); storing available email data.",
+					email.account(), email.id(), exception.getClass().getSimpleName());
+			return JobOpportunityDetails.empty();
 		}
 	}
 

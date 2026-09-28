@@ -50,6 +50,10 @@ spring:
         model: ${OLLAMA_MODEL:llama3.2:3b}
         temperature: 0.0
 
+logging:
+  level:
+    root: INFO
+
 email:
   inference:
     local-max-concurrent-requests: ${OLLAMA_MAX_CONCURRENT_REQUESTS:2}

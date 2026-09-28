@@ -38,7 +38,10 @@ class JobDashboardRepositoryIntegrationTest {
 
 		// when
 		final JobDashboardMetricsRow metrics = repository.metrics(Instant.parse("2026-09-21T12:00:00Z"));
-		final var jobs = repository.findJobs("cloud", 0, 20);
+		final var jobs = repository.findJobs("cloud", JobSortOrder.NEWEST, 0, 20);
+		final var newestFirst = repository.findJobs("", JobSortOrder.NEWEST, 0, 20);
+		final var oldestFirst = repository.findJobs("", JobSortOrder.OLDEST, 0, 20);
+		final var titleAZ = repository.findJobs("", JobSortOrder.TITLE_ASC, 0, 20);
 		final var details = repository.findById(1);
 
 		// then
@@ -49,10 +52,45 @@ class JobDashboardRepositoryIntegrationTest {
 		assertEquals(1, repository.countJobs("cloud"));
 		assertEquals(1, jobs.size());
 		assertEquals("Cloud architect", jobs.getFirst().title());
+		assertEquals("Cloud architect", newestFirst.getFirst().title());
+		assertEquals("Data architect", oldestFirst.getFirst().title());
+		assertEquals("Cloud architect", titleAZ.getFirst().title());
+		assertEquals("Follow up", jobs.getFirst().responseContent());
 		assertTrue(details.isPresent());
 		assertEquals("Complete stored email", details.orElseThrow().description());
+		assertEquals("<p>Formatted source</p>", details.orElseThrow().htmlBody());
 		assertEquals(1, details.orElseThrow().responseCount());
 		assertEquals("RECORDED", details.orElseThrow().responseStatus());
+	}
+
+	@Test
+	void persistsPreparedResponsesForDevelopmentAndProductionDraftFlows() {
+		// given
+		insertRecruiter();
+		insertPosition(1, "Dev architect", "Example Corp", "2026-09-27T12:00:00Z", "Dev role");
+		insertPosition(2, "Production architect", "Example Corp", "2026-09-28T12:00:00Z", "Production role");
+		jdbcTemplate.update("UPDATE positions SET respond_to = 1");
+		final var responseRepository = new JdbcJobResponseRepository(jdbcTemplate);
+		final Instant now = Instant.parse("2026-09-28T12:00:00Z");
+
+		// when
+		responseRepository.claimResponse(1, now).orElseThrow();
+		responseRepository.saveGeneratedResponse(1, "Development reply", "SAVED_FOR_REVIEW", now);
+		responseRepository.claimResponse(2, now).orElseThrow();
+		responseRepository.saveGeneratedResponse(2, "Production reply", "GENERATED", now);
+		responseRepository.saveDraftId(2, "gmail-draft-2", now);
+
+		// then
+		assertEquals("Development reply", jdbcTemplate.queryForObject(
+				"SELECT response_content FROM responses WHERE position_id = 1", String.class));
+		assertEquals("SAVED_FOR_REVIEW", jdbcTemplate.queryForObject(
+				"SELECT response_status FROM responses WHERE position_id = 1", String.class));
+		assertEquals("Production reply", jdbcTemplate.queryForObject(
+				"SELECT response_content FROM responses WHERE position_id = 2", String.class));
+		assertEquals("DRAFT_CREATED", jdbcTemplate.queryForObject(
+				"SELECT response_status FROM responses WHERE position_id = 2", String.class));
+		assertEquals("gmail-draft-2", jdbcTemplate.queryForObject(
+				"SELECT gmail_draft_id FROM responses WHERE position_id = 2", String.class));
 	}
 
 	private void insertRecruiter() {
@@ -66,9 +104,9 @@ class JobDashboardRepositoryIntegrationTest {
 			final String createdAt, final String summary) {
 		jdbcTemplate.update("""
 				INSERT INTO positions (id, company, created_at, description, title, recruiter_id,
-					source_account, source_message_id, source_subject, source_sender, source_received_at, summary)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+					source_account, source_message_id, source_subject, source_sender, source_received_at, summary, html_body)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 				""", id, company, createdAt, "Complete stored email", title, 1, "owner@example.com",
-				"message-" + id, title, "Pat <pat@example.com>", createdAt, summary);
+				"message-" + id, title, "Pat <pat@example.com>", createdAt, summary, "<p>Formatted source</p>");
 	}
 }

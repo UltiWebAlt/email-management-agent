@@ -39,8 +39,9 @@ public final class JobDashboardController {
 	@GetMapping
 	public DashboardSnapshot dashboard(@RequestParam(defaultValue = "") final String query,
 			@RequestParam(defaultValue = "0") final int page,
-			@RequestParam(defaultValue = "20") final int pageSize) {
-		return dashboardSvc.dashboard(query, page, pageSize);
+			@RequestParam(defaultValue = "20") final int pageSize,
+			@RequestParam(defaultValue = "newest") final String sort) {
+		return dashboardSvc.dashboard(query, page, pageSize, sort);
 	}
 
 	@GetMapping("/jobs/{id}")

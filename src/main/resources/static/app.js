@@ -12,6 +12,7 @@ const elements = {
 	error: document.querySelector("#error-message"),
 	searchForm: document.querySelector("#search-form"),
 	searchInput: document.querySelector("#search-input"),
+	sortOrder: document.querySelector("#sort-order"),
 	refresh: document.querySelector("#refresh"),
 	template: document.querySelector("#job-template"),
 	dialog: document.querySelector("#job-dialog"),
@@ -21,6 +22,7 @@ const elements = {
 	saveSelections: document.querySelector("#save-selections"),
 	selectionStatus: document.querySelector("#selection-status"),
 	importEmails: document.querySelector("#import-emails"),
+	importNotice: document.querySelector("#import-notice"),
 	pagination: document.querySelector("#pagination"),
 	pageDescription: document.querySelector("#page-description"),
 	previousPage: document.querySelector("#previous-page"),
@@ -128,6 +130,11 @@ function renderJob(job) {
 		updateSelectionStatus();
 	});
 	fragment.querySelector(".job-open").addEventListener("click", () => openDetails(job.id));
+	const responsePreview = fragment.querySelector(".response-preview");
+	if (job.responseContent) {
+		fragment.querySelector(".response-preview-text").textContent = job.responseContent;
+		responsePreview.classList.remove("hidden");
+	}
 	const status = fragment.querySelector(".response-status");
 	const statusLabel = responseStatusLabel(job.responseStatus);
 	if (statusLabel) {
@@ -183,11 +190,12 @@ function renderDashboard(data) {
 	updateSelectionStatus();
 }
 
-async function loadDashboard(query = elements.searchInput.value, page = currentPage) {
+async function loadDashboard(query = elements.searchInput.value, page = currentPage, sort = elements.sortOrder.value) {
 	elements.error.classList.add("hidden");
 	elements.resultCount.textContent = "Loading…";
+	elements.sortOrder.value = sort;
 	try {
-		const response = await fetch(`/api/dashboard?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`, {
+		const response = await fetch(`/api/dashboard?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}&sort=${encodeURIComponent(sort)}`, {
 			headers: { Accept: "application/json" }
 		});
 		if (!response.ok) {
@@ -237,7 +245,10 @@ async function saveSelections() {
 
 async function importArchitectEmails() {
 	elements.importEmails.disabled = true;
-	elements.selectionStatus.textContent = "Reading architect-labeled email into the development database…";
+	elements.importEmails.textContent = "Importing emails…";
+	elements.importNotice.textContent = "Classifying recent inbox emails and manually tagged architect emails. The import stops after saving 10 new architect opportunities.";
+	elements.importNotice.classList.remove("hidden", "is-error");
+	elements.importNotice.classList.add("is-loading");
 	elements.error.classList.add("hidden");
 	try {
 		const response = await fetch("/api/dashboard/dev/import-architect-emails", { method: "POST" });
@@ -245,13 +256,20 @@ async function importArchitectEmails() {
 		if (!response.ok) {
 			throw new Error(result.message || "Gmail import failed");
 		}
-		workflowMessage = `Imported ${result.imported}; skipped ${result.skipped}; failed ${result.failed}. Gmail labels were not changed.`;
+		const summary = result.scanned === 0
+			? "Import complete. No recent inbox or manually tagged architect emails were found."
+			: `Import complete. Scanned ${result.scanned}; added ${result.imported}; enriched ${result.enriched} existing opportunities; already complete ${result.skipped}; not architect jobs ${result.notArchitectJobs}; failed ${result.failed}.`;
+		workflowMessage = `${summary} Gmail labels were not changed.`;
+		elements.importNotice.textContent = `${workflowMessage} You can import again after tagging more emails.`;
+		elements.importNotice.classList.remove("is-loading");
 		await loadDashboard(elements.searchInput.value, 0);
 	} catch (error) {
-		elements.error.textContent = error.message || "The development import could not complete.";
-		elements.error.classList.remove("hidden");
+		elements.importNotice.textContent = error.message || "The development import could not complete. Please try again.";
+		elements.importNotice.classList.remove("is-loading");
+		elements.importNotice.classList.add("is-error");
 	} finally {
 		elements.importEmails.disabled = false;
+		elements.importEmails.textContent = "Import recent Gmail emails";
 	}
 }
 
@@ -277,6 +295,28 @@ function detailSection(title, value) {
 	return section;
 }
 
+function originalEmailSection(job) {
+	const section = document.createElement("section");
+	section.className = "detail-section email-content-section";
+	const heading = document.createElement("h3");
+	heading.textContent = "Original email";
+	if (job.htmlBody) {
+		const frame = document.createElement("iframe");
+		frame.className = "email-html-frame";
+		frame.title = "Formatted original email content";
+		frame.setAttribute("sandbox", "");
+		frame.setAttribute("referrerpolicy", "no-referrer");
+		frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font:14px/1.55 system-ui,sans-serif;color:#253047;margin:16px;overflow-wrap:anywhere}img{max-width:100%;height:auto}table{max-width:100%;border-collapse:collapse}td,th{padding:5px;border:1px solid #d8deea}a{color:#3158a8}</style></head><body>${job.htmlBody}</body></html>`;
+		section.append(heading, frame);
+	} else {
+		const content = document.createElement("pre");
+		content.className = "email-plain-fallback";
+		content.textContent = valueOrFallback(job.description, "No email body was stored.");
+		section.append(heading, content);
+	}
+	return section;
+}
+
 function renderDetails(job) {
 	elements.dialogTitle.textContent = valueOrFallback(job.title, "Architect opportunity");
 	const grid = document.createElement("div");
@@ -293,12 +333,12 @@ function renderDetails(job) {
 	);
 	elements.dialogBody.replaceChildren(
 		grid,
-		detailSection("AI summary", job.summary),
+		detailSection("Email Summary", job.summary),
 		detailSection("Response status", responseStatusLabel(job.responseStatus) || "Not selected"),
 		...(job.responseContent ? [detailSection("Prepared response", job.responseContent)] : []),
 		...(job.gmailDraftId ? [detailSection("Gmail draft ID", job.gmailDraftId)] : []),
 		detailSection("Requirements", job.requirements),
-		detailSection("Original email text", job.description)
+		originalEmailSection(job)
 	);
 }
 
@@ -320,10 +360,11 @@ async function openDetails(id) {
 
 elements.searchForm.addEventListener("submit", event => {
 	event.preventDefault();
-	loadDashboard();
+	loadDashboard(elements.searchInput.value, 0);
 });
 
 elements.refresh.addEventListener("click", () => loadDashboard());
+elements.sortOrder.addEventListener("change", () => loadDashboard(elements.searchInput.value, 0));
 elements.saveSelections.addEventListener("click", saveSelections);
 elements.importEmails.addEventListener("click", importArchitectEmails);
 elements.previousPage.addEventListener("click", () => loadDashboard(elements.searchInput.value, Math.max(0, currentPage - 1)));
@@ -335,8 +376,16 @@ elements.dialog.addEventListener("click", event => {
 	}
 });
 
+let dashboardStreamConnected = false;
 const dashboardEvents = new EventSource("/api/dashboard/events");
-dashboardEvents.addEventListener("connected", () => loadDashboard(elements.searchInput.value, currentPage));
+dashboardEvents.addEventListener("connected", () => {
+	if (dashboardStreamConnected) {
+		loadDashboard(elements.searchInput.value, currentPage);
+	}
+	dashboardStreamConnected = true;
+});
 dashboardEvents.addEventListener("opportunity-added", () => loadDashboard(elements.searchInput.value, currentPage));
+dashboardEvents.addEventListener("opportunity-updated", () => loadDashboard(elements.searchInput.value, currentPage));
+dashboardEvents.addEventListener("response-updated", () => loadDashboard(elements.searchInput.value, currentPage));
 
 loadDashboard();

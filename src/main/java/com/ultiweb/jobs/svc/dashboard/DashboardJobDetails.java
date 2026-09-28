@@ -14,6 +14,7 @@ public record DashboardJobDetails(
 		Instant savedAt,
 		String summary,
 		String description,
+		String htmlBody,
 		String requirements,
 		String salaryRange,
 		String sourceAccount,

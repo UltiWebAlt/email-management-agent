@@ -10,7 +10,13 @@ public record ArchitectJobRecord(
 		Instant sourceReceivedAt,
 		String summary,
 		String description,
+		String htmlBody,
 		String title,
+		String company,
+		String location,
+		Boolean remote,
+		String salaryRange,
+		String requirements,
 		String recruiterEmail,
 		String recruiterName,
 		Instant createdAt) {

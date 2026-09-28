@@ -14,5 +14,6 @@ public record DashboardJob(
 		Instant savedAt,
 		String summary,
 		boolean selectedForResponse,
-		String responseStatus) {
+		String responseStatus,
+		String responseContent) {
 }

@@ -47,6 +47,25 @@ class GmailMessageBodyExtractorTest {
 	}
 
 	@Test
+	void retainsSafeFormattedHtmlAlongsideNormalizedText() throws Exception {
+		// given
+		final String html = "<html><body><h2>Architect opening</h2><ul><li>Design leadership</li></ul>"
+				+ "<script>doNotRun()</script><a href='https://example.com/job'>Job details</a></body></html>";
+
+		// when
+		final ExtractedEmailBody body = new GmailMessageBodyExtractor(gmail, "message-id")
+				.extractContent(textPart("text/html", html, StandardCharsets.UTF_8));
+
+		// then
+		assertTrue(body.text().contains("Architect opening"));
+		assertTrue(body.html().contains("<h2>Architect opening</h2>"));
+		assertTrue(body.html().contains("<li>Design leadership</li>"));
+		assertTrue(body.html().contains("href=\"https://example.com/job\""));
+		assertFalse(body.html().contains("<script"));
+		assertFalse(body.html().contains("doNotRun"));
+	}
+
+	@Test
 	void prefersRichHtmlInANestedAlternativeAndSkipsHtmlAttachments() throws Exception {
 		// given
 		final MessagePart plain = textPart("text/plain", "Fallback text without the destination.", StandardCharsets.UTF_8);

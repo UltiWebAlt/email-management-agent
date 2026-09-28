@@ -40,13 +40,13 @@ class JobDashboardControllerTest {
 	void returnsDashboardAsJson() throws Exception {
 		// given
 		final Instant now = Instant.parse("2026-09-28T12:00:00Z");
-		when(dashboardSvc.dashboard("cloud", 0, 20)).thenReturn(new DashboardSnapshot(now, "cloud", 0, 20, 1, 1, false,
+		when(dashboardSvc.dashboard("cloud", 0, 20, "newest")).thenReturn(new DashboardSnapshot(now, "cloud", 0, 20, 1, 1, false,
 				new DashboardMetrics(1, 1, 1, 0, now),
 				List.of(new DashboardJob(7, "Cloud architect", "Example", "Pat", "pat@example.com",
-						"Remote", true, now, now, "Summary", false, null))));
+						"Remote", true, now, now, "Summary", false, null, null))));
 
 		// when / then
-		mockMvc.perform(get("/api/dashboard").queryParam("query", "cloud"))
+		mockMvc.perform(get("/api/dashboard").queryParam("query", "cloud").queryParam("sort", "newest"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.metrics.totalJobs").value(1))
 				.andExpect(jsonPath("$.jobs[0].title").value("Cloud architect"));

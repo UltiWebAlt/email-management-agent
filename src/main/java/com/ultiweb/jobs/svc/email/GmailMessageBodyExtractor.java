@@ -32,7 +32,17 @@ final class GmailMessageBodyExtractor {
 	}
 
 	String extract(final MessagePart payload) throws IOException {
-		return limit(content(payload).text());
+		return extractContent(payload).text();
+	}
+
+	ExtractedEmailBody extractContent(final MessagePart payload) throws IOException {
+		final BodyContent content = content(payload);
+		final String text = limit(content.text());
+		String html = content.htmlBody();
+		if (html.length() > 100_000) {
+			html = HtmlEmailTextExtractor.plainTextAsHtml(text);
+		}
+		return new ExtractedEmailBody(text, html);
 	}
 
 	private BodyContent content(final MessagePart part) throws IOException {
@@ -41,10 +51,13 @@ final class GmailMessageBodyExtractor {
 		}
 		final String mimeType = mimeType(part);
 		if ("text/plain".equals(mimeType)) {
-			return new BodyContent(normalizePlainText(decode(part)), false);
+			final String text = normalizePlainText(decode(part));
+			return new BodyContent(text, false, HtmlEmailTextExtractor.plainTextAsHtml(text));
 		}
 		if ("text/html".equals(mimeType)) {
-			return new BodyContent(HtmlEmailTextExtractor.extract(decode(part)), true);
+			final String html = decode(part);
+			return new BodyContent(HtmlEmailTextExtractor.extract(html), true,
+					HtmlEmailTextExtractor.sanitizeForDisplay(html));
 		}
 		final List<MessagePart> parts = Optional.ofNullable(part.getParts()).orElseGet(List::of);
 		if (!parts.isEmpty()) {
@@ -62,9 +75,12 @@ final class GmailMessageBodyExtractor {
 		}
 		if ((mimeType.isBlank() || mimeType.startsWith("text/")) && hasBodyData(part.getBody())) {
 			final String decoded = decode(part);
-			return looksLikeHtml(decoded)
-					? new BodyContent(HtmlEmailTextExtractor.extract(decoded), true)
-					: new BodyContent(normalizePlainText(decoded), false);
+			if (looksLikeHtml(decoded)) {
+				return new BodyContent(HtmlEmailTextExtractor.extract(decoded), true,
+						HtmlEmailTextExtractor.sanitizeForDisplay(decoded));
+			}
+			final String text = normalizePlainText(decoded);
+			return new BodyContent(text, false, HtmlEmailTextExtractor.plainTextAsHtml(text));
 		}
 		return BodyContent.empty();
 	}
@@ -109,6 +125,7 @@ final class GmailMessageBodyExtractor {
 
 	private static BodyContent combine(final List<BodyContent> candidates) {
 		final var output = new StringBuilder();
+		final var htmlOutput = new StringBuilder();
 		final Set<String> included = new HashSet<>();
 		boolean html = false;
 		for (final BodyContent candidate : candidates) {
@@ -120,9 +137,12 @@ final class GmailMessageBodyExtractor {
 				output.append("\n\n");
 			}
 			output.append(text);
+			if (!candidate.htmlBody().isBlank()) {
+				htmlOutput.append("<div>").append(candidate.htmlBody()).append("</div>");
+			}
 			html |= candidate.html();
 		}
-		return new BodyContent(output.toString(), html);
+		return new BodyContent(output.toString(), html, htmlOutput.toString());
 	}
 
 	private static String normalizePlainText(final String text) {
@@ -173,9 +193,9 @@ final class GmailMessageBodyExtractor {
 		return HTML_PREFIX_PATTERN.matcher(value).find();
 	}
 
-	private record BodyContent(String text, boolean html) {
+	private record BodyContent(String text, boolean html, String htmlBody) {
 		private static BodyContent empty() {
-			return new BodyContent("", false);
+			return new BodyContent("", false, "");
 		}
 	}
 }

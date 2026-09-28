@@ -1,11 +1,13 @@
 package com.ultiweb.jobs.svc.dashboard;
 
 import com.ultiweb.jobs.svc.persistence.ArchitectOpportunityAddedEvent;
+import com.ultiweb.jobs.svc.persistence.ArchitectOpportunityUpdatedEvent;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -36,6 +38,16 @@ public final class DashboardEventStream {
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void opportunityAdded(final ArchitectOpportunityAddedEvent event) {
 		emit("opportunity-added");
+	}
+
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void opportunityUpdated(final ArchitectOpportunityUpdatedEvent event) {
+		emit("opportunity-updated");
+	}
+
+	@EventListener
+	public void responseUpdated(final DashboardResponseUpdatedEvent event) {
+		emit("response-updated");
 	}
 
 	private void emit(final String eventName) {

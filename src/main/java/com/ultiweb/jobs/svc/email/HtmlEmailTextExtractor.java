@@ -8,6 +8,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
+import org.jsoup.safety.Safelist;
 import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
 
@@ -33,6 +34,44 @@ final class HtmlEmailTextExtractor {
 		final var output = new StringBuilder();
 		NodeTraversor.traverse(new SemanticTextVisitor(output), document.body());
 		return normalize(output.toString());
+	}
+
+	static String sanitizeForDisplay(final String html) {
+		if (html == null || html.isBlank()) {
+			return "";
+		}
+		final var document = Jsoup.parseBodyFragment(html);
+		document.select("head, script, style, noscript, template, iframe, object, embed, form, button, input, textarea, select, svg, canvas, video, audio, source, meta, link, base, [hidden], [aria-hidden=true]")
+				.remove();
+		document.select("[style]").stream()
+				.filter(element -> isHidden(element.attr("style")))
+				.toList()
+				.forEach(Element::remove);
+		document.select("img").forEach(image -> {
+			final String alt = image.attr("alt").strip();
+			if (alt.isBlank()) {
+				image.remove();
+			} else {
+				image.replaceWith(new TextNode("[Image: " + alt + "]"));
+			}
+		});
+		final Safelist safelist = Safelist.relaxed()
+				.addTags("table", "thead", "tbody", "tfoot", "tr", "td", "th", "colgroup", "col")
+				.addAttributes(":all", "style")
+				.addAttributes("table", "border", "cellpadding", "cellspacing", "width", "align", "bgcolor")
+				.addAttributes("td", "colspan", "rowspan", "width", "align", "valign", "bgcolor")
+				.addAttributes("th", "colspan", "rowspan", "width", "align", "valign", "bgcolor")
+				.addAttributes("a", "target", "rel");
+		return Jsoup.clean(document.body().html(), "", safelist);
+	}
+
+	static String plainTextAsHtml(final String text) {
+		if (text == null || text.isBlank()) {
+			return "";
+		}
+		final String escaped = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+				.replace("\"", "&quot;").replace("'", "&#39;");
+		return "<p>" + escaped.replaceAll("\\n{2,}", "</p><p>").replace("\n", "<br>") + "</p>";
 	}
 
 	private static boolean isHidden(final String style) {

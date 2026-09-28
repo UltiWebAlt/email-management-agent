@@ -10,7 +10,9 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
@@ -27,23 +29,34 @@ public class ResponsePreparationWorkflowSvc {
 	private final Executor executor;
 	private final Clock clock;
 	private final boolean developmentMode;
+	private final ApplicationEventPublisher eventPublisher;
 
+	@Autowired
 	public ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
 			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
-			@Qualifier("responseExecutor") final Executor executor, final Environment environment) {
+			@Qualifier("responseExecutor") final Executor executor, final Environment environment,
+			final ApplicationEventPublisher eventPublisher) {
 		this(repository, replyGenerator, gmailDraftSvc, executor, Clock.systemUTC(),
-			environment.acceptsProfiles(Profiles.of("dev")));
+			environment.acceptsProfiles(Profiles.of("dev")), eventPublisher);
 	}
 
 	ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
 			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
 			final Executor executor, final Clock clock, final boolean developmentMode) {
+		this(repository, replyGenerator, gmailDraftSvc, executor, clock, developmentMode, event -> { });
+	}
+
+	ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
+			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
+			final Executor executor, final Clock clock, final boolean developmentMode,
+			final ApplicationEventPublisher eventPublisher) {
 		this.repository = repository;
 		this.replyGenerator = replyGenerator;
 		this.gmailDraftSvc = gmailDraftSvc;
 		this.executor = executor;
 		this.clock = clock;
 		this.developmentMode = developmentMode;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional
@@ -83,6 +96,7 @@ public class ResponsePreparationWorkflowSvc {
 			}
 			if (developmentMode) {
 				repository.saveGeneratedResponse(positionId, body, "SAVED_FOR_REVIEW", clock.instant());
+				notifyResponseUpdated();
 				LOGGER.info("Stored generated response in the development database for position {}.", positionId);
 				return;
 			}
@@ -94,12 +108,18 @@ public class ResponsePreparationWorkflowSvc {
 			final String draftId = gmailDraftSvc.createDraft(job.sourceAccount(), job.recruiterEmail(),
 					replySubject(job.sourceSubject()), body);
 			repository.saveDraftId(positionId, draftId, clock.instant());
+			notifyResponseUpdated();
 			LOGGER.info("Created Gmail draft for position {}.", positionId);
 		} catch (final Exception exception) {
 			repository.markResponseFailed(positionId, clock.instant());
+			notifyResponseUpdated();
 			LOGGER.error("Unable to prepare response for position {} ({}).", positionId,
 					exception.getClass().getSimpleName());
 		}
+	}
+
+	private void notifyResponseUpdated() {
+		eventPublisher.publishEvent(new DashboardResponseUpdatedEvent());
 	}
 
 	private static String replySubject(final String sourceSubject) {

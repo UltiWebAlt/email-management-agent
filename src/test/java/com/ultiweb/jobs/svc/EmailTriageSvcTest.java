@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.ultiweb.jobs.svc.ai.EmailSummarySvc;
 import com.ultiweb.jobs.svc.ai.EmailTag;
 import com.ultiweb.jobs.svc.ai.EmailTagSvc;
+import com.ultiweb.jobs.svc.ai.ArchitectJobDetailsInferenceSvc;
 import com.ultiweb.jobs.svc.email.EmailLabelWriter;
 import com.ultiweb.jobs.svc.email.EmailMessage;
 import com.ultiweb.jobs.svc.email.EmailReader;
@@ -26,7 +27,13 @@ class EmailTriageSvcTest {
 	@Mock private EmailTagSvc emailTagSvc;
 	@Mock private EmailLabelWriter emailLabelWriter;
 	@Mock private ArchitectJobPersistenceSvc architectJobPersistenceSvc;
+	@Mock private ArchitectJobDetailsInferenceSvc jobDetailsInferenceSvc;
 	@InjectMocks private EmailTriageSvc service;
+
+	@org.junit.jupiter.api.BeforeEach
+	void setUp() {
+		lenient().when(jobDetailsInferenceSvc.infer(any())).thenReturn(JobOpportunityDetails.empty());
+	}
 
 	@Test
 	void inferenceRunsConcurrentlyOnVirtualThreadsAndDuplicateMessagesRunOnce() throws Exception {
@@ -79,7 +86,7 @@ class EmailTriageSvcTest {
 		verify(emailLabelWriter).applyLabel("second@example.com", "same-id", "Architect_Jobs");
 		verify(emailLabelWriter).applyLabel("second@example.com", "same-id", EmailWorkflowLabels.ARCHITECT_PERSISTED);
 		verify(emailLabelWriter).applyLabel("second@example.com", "same-id", EmailWorkflowLabels.PROCESSED);
-		verify(architectJobPersistenceSvc).persist(second, "Meeting tomorrow");
+		verify(architectJobPersistenceSvc).persist(second, "Meeting tomorrow", JobOpportunityDetails.empty());
 		verifyNoMoreInteractions(emailLabelWriter);
 	}
 
@@ -197,7 +204,8 @@ class EmailTriageSvcTest {
 		when(emailReader.readEmailsForTriage()).thenReturn(List.of());
 		when(architectJobPersistenceSvc.isPersisted(email)).thenReturn(false);
 		when(emailSummarySvc.summarize(email)).thenReturn("A solutions architect opportunity.");
-		when(architectJobPersistenceSvc.persist(email, "A solutions architect opportunity.")).thenReturn(true);
+		when(architectJobPersistenceSvc.persist(email, "A solutions architect opportunity.", JobOpportunityDetails.empty()))
+				.thenReturn(true);
 
 		// when
 		final List<EmailTriageResult> results = service.processEmails();
@@ -208,7 +216,8 @@ class EmailTriageSvcTest {
 		verifyNoInteractions(emailTagSvc);
 		final var inOrder = inOrder(architectJobPersistenceSvc, emailLabelWriter);
 		inOrder.verify(architectJobPersistenceSvc).isPersisted(email);
-		inOrder.verify(architectJobPersistenceSvc).persist(email, "A solutions architect opportunity.");
+		inOrder.verify(architectJobPersistenceSvc).persist(email, "A solutions architect opportunity.",
+				JobOpportunityDetails.empty());
 		inOrder.verify(emailLabelWriter).applyLabel("first@example.com", "historic-id",
 				EmailWorkflowLabels.ARCHITECT_PERSISTED);
 		inOrder.verify(emailLabelWriter).applyLabel("first@example.com", "historic-id", EmailWorkflowLabels.PROCESSED);
