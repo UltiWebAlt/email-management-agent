@@ -1,5 +1,5 @@
 {
-  "gradleJvm": "21 (2)",
+  "gradleJvm": "21",
   "libraries": [
     {
       "ideaName": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.1",
