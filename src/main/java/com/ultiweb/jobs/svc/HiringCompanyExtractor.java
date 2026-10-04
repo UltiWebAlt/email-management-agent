@@ -20,9 +20,17 @@ public final class HiringCompanyExtractor {
 		if (!matcher.find()) {
 			return null;
 		}
-		final String company = matcher.group(1).replaceAll("[.,;:]+$", "").strip();
+		final String company = stripTrailingPunctuation(matcher.group(1)).strip();
 		return company.matches("(?i)(?:our company|our team|the company|the team|this company)")
 				? null
 				: company;
 	}
+	private static String stripTrailingPunctuation(final String value) {
+		int end = value.length();
+		while (end > 0 && ".,;:".indexOf(value.charAt(end - 1)) >= 0) {
+			end--;
+		}
+		return value.substring(0, end);
+	}
+
 }

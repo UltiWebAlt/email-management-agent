@@ -20,8 +20,7 @@ final class GmailMessageBodyExtractor {
 	private static final int MAX_BODY_CHARACTERS = 5_000;
 	private static final String TRUNCATION_MARKER = "\n\n[Email body shortened for summarization]";
 	private static final Pattern CHARSET_PATTERN = Pattern.compile("(?i)charset\\s*=\\s*[\\\"']?([^;\\s\\\"']+)");
-	private static final Pattern HTML_PREFIX_PATTERN = Pattern.compile(
-			"(?is)^\\s*(?:<!doctype\\s+html\\b|<!--|<(?:html|head|body|a|article|blockquote|br|div|footer|h[1-6]|header|hr|li|main|ol|p|section|span|table|td|th|tr|ul)\\b)");
+
 
 	private final Gmail gmail;
 	private final String messageId;
@@ -51,12 +50,7 @@ final class GmailMessageBodyExtractor {
 		}
 		final String mimeType = mimeType(part);
 		if ("text/plain".equals(mimeType)) {
-			final String decoded = decode(part);
-			if (looksLikeHtml(decoded)) {
-				return htmlContent(decoded);
-			}
-			final String text = normalizePlainText(decoded);
-			return new BodyContent(text, false, HtmlEmailTextExtractor.plainTextAsHtml(text));
+			return textContent(decode(part));
 		}
 		if ("text/html".equals(mimeType)) {
 			return htmlContent(decode(part));
@@ -76,12 +70,7 @@ final class GmailMessageBodyExtractor {
 			return combine(candidates);
 		}
 		if ((mimeType.isBlank() || mimeType.startsWith("text/")) && hasBodyData(part.getBody())) {
-			final String decoded = decode(part);
-			if (looksLikeHtml(decoded)) {
-				return htmlContent(decoded);
-			}
-			final String text = normalizePlainText(decoded);
-			return new BodyContent(text, false, HtmlEmailTextExtractor.plainTextAsHtml(text));
+			return textContent(decode(part));
 		}
 		return BodyContent.empty();
 	}
@@ -102,6 +91,14 @@ final class GmailMessageBodyExtractor {
 			return "";
 		}
 		return new String(Base64.getUrlDecoder().decode(data), charset(part));
+	}
+
+	private static BodyContent textContent(final String decoded) {
+		if (looksLikeHtml(decoded)) {
+			return htmlContent(decoded);
+		}
+		final String text = normalizePlainText(decoded);
+		return new BodyContent(text, false, HtmlEmailTextExtractor.plainTextAsHtml(text));
 	}
 
 	private static BodyContent htmlContent(final String html) {
@@ -156,7 +153,7 @@ final class GmailMessageBodyExtractor {
 				.replace('\r', '\n')
 				.replace('\u00a0', ' ')
 				.replaceAll("[\\t\\x0B\\f ]+", " ")
-				.replaceAll(" *\\n *", "\n")
+				.lines().map(String::strip).collect(java.util.stream.Collectors.joining("\n"))
 				.replaceAll("\\n{3,}", "\n\n")
 				.strip();
 	}
@@ -196,7 +193,7 @@ final class GmailMessageBodyExtractor {
 	}
 
 	private static boolean looksLikeHtml(final String value) {
-		return HTML_PREFIX_PATTERN.matcher(value).find();
+		return EmailHtmlMarkup.startsWithMarkup(value);
 	}
 
 	private record BodyContent(String text, boolean html, String htmlBody) {

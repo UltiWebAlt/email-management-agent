@@ -15,7 +15,7 @@ import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
 
 final class HtmlEmailTextExtractor {
-	private static final Pattern PLAIN_TEXT_LINK = Pattern.compile("([^\\n()]*)\\s*\\((https?://[^\\s)]+)\\)");
+	private static final Pattern PLAIN_TEXT_LINK = Pattern.compile("\\(https?://[^\\s)]++\\)");
 	private static final Set<String> BLOCK_TAGS = Set.of(
 			"address", "article", "aside", "blockquote", "div", "footer", "h1", "h2", "h3", "h4", "h5", "h6",
 			"header", "main", "nav", "p", "section");
@@ -77,9 +77,13 @@ final class HtmlEmailTextExtractor {
 		final StringBuilder html = new StringBuilder();
 		int position = 0;
 		while (matcher.find()) {
-			html.append(escapeHtml(text.substring(position, matcher.start())));
-			final String label = matcher.group(1).strip();
-			final String url = matcher.group(2);
+			int labelStart = matcher.start();
+			while (labelStart > position && "\n()".indexOf(text.charAt(labelStart - 1)) < 0) {
+				labelStart--;
+			}
+			html.append(escapeHtml(text.substring(position, labelStart)));
+			final String label = text.substring(labelStart, matcher.start()).strip();
+			final String url = matcher.group().substring(1, matcher.group().length() - 1);
 			final String linkText = label.isBlank() ? url : label;
 			html.append("<a href=\"").append(escapeHtml(url)).append("\" target=\"_blank\" rel=\"noopener noreferrer\">")
 					.append(escapeHtml(linkText)).append("</a>");
@@ -102,7 +106,7 @@ final class HtmlEmailTextExtractor {
 	private static String normalize(final String text) {
 		return text.replace('\u00a0', ' ')
 				.replaceAll("[\\t\\x0B\\f ]+", " ")
-				.replaceAll(" *\\n *", "\n")
+				.lines().map(String::strip).collect(java.util.stream.Collectors.joining("\n"))
 				.replaceAll("\\n{3,}", "\n\n")
 				.strip();
 	}
