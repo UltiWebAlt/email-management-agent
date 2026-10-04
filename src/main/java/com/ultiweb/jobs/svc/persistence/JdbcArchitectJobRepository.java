@@ -10,14 +10,14 @@ public class JdbcArchitectJobRepository implements ArchitectJobRepository {
 			INSERT INTO recruiters (company, created_at, email, name)
 			VALUES (?, ?, ?, ?)
 			ON CONFLICT(email) DO UPDATE SET
-				company = COALESCE(recruiters.company, excluded.company),
-				name = COALESCE(recruiters.name, excluded.name)
+			company = COALESCE(recruiters.company, excluded.company),
+			name = COALESCE(recruiters.name, excluded.name)
 			""";
 	private static final String INSERT_POSITION = """
 			INSERT INTO positions (
-				company, created_at, date_posted, description, is_remote, location, requirements,
-				salary_range, title, recruiter_id, source_account, source_message_id, source_subject,
-				source_sender, source_received_at, summary, html_body)
+			company, created_at, date_posted, description, is_remote, location, requirements,
+			salary_range, title, recruiter_id, source_account, source_message_id, source_subject,
+			source_sender, source_received_at, summary, html_body)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(source_account, source_message_id)
 			WHERE source_account IS NOT NULL AND source_message_id IS NOT NULL
@@ -34,7 +34,7 @@ public class JdbcArchitectJobRepository implements ArchitectJobRepository {
 	public boolean existsBySource(final String account, final String messageId) {
 		final Integer exists = jdbcTemplate.queryForObject("""
 				SELECT EXISTS(
-					SELECT 1 FROM positions WHERE source_account = ? AND source_message_id = ?
+				SELECT 1 FROM positions WHERE source_account = ? AND source_message_id = ?
 				)
 				""", Integer.class, account, messageId);
 		return Integer.valueOf(1).equals(exists);
@@ -45,9 +45,9 @@ public class JdbcArchitectJobRepository implements ArchitectJobRepository {
 		final Integer needed = jdbcTemplate.queryForObject("""
 				SELECT EXISTS(SELECT 1 FROM positions WHERE source_account = ?
 				AND source_message_id = ? AND (
-					html_body IS NULL
-					OR (NULLIF(TRIM(company), '') IS NULL
-						AND LOWER(COALESCE(description, '')) LIKE '% is hiring%')
+				html_body IS NULL
+				OR (NULLIF(TRIM(company), '') IS NULL
+				AND LOWER(COALESCE(description, '')) LIKE '% is hiring%')
 				))
 				""", Integer.class, account, messageId);
 		return Integer.valueOf(1).equals(needed);
@@ -57,13 +57,13 @@ public class JdbcArchitectJobRepository implements ArchitectJobRepository {
 	public void enrichExisting(final ArchitectJobRecord job) {
 		jdbcTemplate.update("""
 				UPDATE positions SET
-					title = COALESCE(NULLIF(?, ''), title),
-					company = COALESCE(NULLIF(company, ''), ?),
-					location = COALESCE(NULLIF(location, ''), ?),
-					is_remote = COALESCE(is_remote, ?),
-					salary_range = COALESCE(NULLIF(salary_range, ''), ?),
-					requirements = COALESCE(NULLIF(requirements, ''), ?),
-					html_body = COALESCE(NULLIF(html_body, ''), ?)
+				title = COALESCE(NULLIF(?, ''), title),
+				company = COALESCE(NULLIF(company, ''), ?),
+				location = COALESCE(NULLIF(location, ''), ?),
+				is_remote = COALESCE(is_remote, ?),
+				salary_range = COALESCE(NULLIF(salary_range, ''), ?),
+				requirements = COALESCE(NULLIF(requirements, ''), ?),
+				html_body = COALESCE(NULLIF(html_body, ''), ?)
 				WHERE source_account = ? AND source_message_id = ?
 				""", job.title(), job.company(), job.location(), job.remote(), job.salaryRange(),
 				job.requirements(), job.htmlBody(), job.sourceAccount(), job.sourceMessageId());

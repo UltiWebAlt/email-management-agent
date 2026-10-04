@@ -48,31 +48,35 @@ public class ArchitectJobPersistenceSvc {
 
 	@Transactional
 	public boolean persist(final EmailMessage email, final String summary) {
-		return persist(email, summary, JobOpportunityDetails.empty());
+		return saveOpportunity(email, summary, JobOpportunityDetails.empty());
 	}
 
 	@Transactional
 	public boolean persist(final EmailMessage email, final String summary, final JobOpportunityDetails details) {
+		return saveOpportunity(email, summary, details);
+	}
+
+	private boolean saveOpportunity(final EmailMessage email, final String summary, final JobOpportunityDetails details) {
 		Assert.hasText(summary, "An architect job summary is required");
 		Assert.notNull(details, "Inferred architect job details are required");
-		final ArchitectJobRecord record = record(email, summary, details, true);
-		final boolean inserted = repository.saveIfAbsent(record);
+		final ArchitectJobRecord jobRecord = jobRecord(email, summary, details, true);
+		final boolean inserted = repository.saveIfAbsent(jobRecord);
 		if (inserted) {
-			eventPublisher.publishEvent(new ArchitectOpportunityAddedEvent());
+			eventPublisher.publishEvent(new ArchitectOpportunityAddedEvent(email.id()));
 		} else {
-			repository.enrichExisting(record(email, summary, details, false));
-			eventPublisher.publishEvent(new ArchitectOpportunityUpdatedEvent());
+			repository.enrichExisting(jobRecord(email, summary, details, false));
+			eventPublisher.publishEvent(new ArchitectOpportunityUpdatedEvent(email.id()));
 		}
 		return inserted;
 	}
 
 	@Transactional
 	public void enrichExisting(final EmailMessage email, final JobOpportunityDetails details) {
-		repository.enrichExisting(record(email, "", details, false));
-		eventPublisher.publishEvent(new ArchitectOpportunityUpdatedEvent());
+		repository.enrichExisting(jobRecord(email, "", details, false));
+		eventPublisher.publishEvent(new ArchitectOpportunityUpdatedEvent(email.id()));
 	}
 
-	private ArchitectJobRecord record(final EmailMessage email, final String summary,
+	private ArchitectJobRecord jobRecord(final EmailMessage email, final String summary,
 			final JobOpportunityDetails details, final boolean fallbackTitle) {
 		final RecruiterIdentity recruiter = recruiter(email);
 		final Instant createdAt = clock.instant();

@@ -33,10 +33,10 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 				FROM positions p
 				WHERE p.respond_to = 1
 				AND NOT EXISTS (
-					SELECT 1 FROM responses r
-					WHERE r.position_id = p.id
-					AND r.response_type = 'INITIAL_RESPONSE'
-					AND r.response_status <> 'FAILED')
+				SELECT 1 FROM responses r
+				WHERE r.position_id = p.id
+				AND r.response_type = 'INITIAL_RESPONSE'
+				AND r.response_status <> 'FAILED')
 				ORDER BY p.id
 				""", Long.class);
 	}
@@ -56,7 +56,7 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 				FROM positions p
 				WHERE p.id = ? AND p.respond_to = 1
 				AND NOT EXISTS (
-					SELECT 1 FROM responses r WHERE r.position_id = p.id AND r.response_type = 'INITIAL_RESPONSE')
+				SELECT 1 FROM responses r WHERE r.position_id = p.id AND r.response_type = 'INITIAL_RESPONSE')
 				""", now.toString(), now.toString(), positionId);
 		boolean claimed = inserted == 1;
 		if (!claimed) {
@@ -71,7 +71,7 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 		}
 		return jdbcTemplate.query("""
 				SELECT p.id, p.recruiter_id, p.source_account, p.source_subject, p.source_sender,
-					p.description, p.summary, p.title, r.email AS recruiter_email, r.name AS recruiter_name
+				p.description, p.summary, p.title, r.email AS recruiter_email, r.name AS recruiter_name
 				FROM positions p
 				JOIN recruiters r ON r.id = p.recruiter_id
 				JOIN responses response ON response.position_id = p.id

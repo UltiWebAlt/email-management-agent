@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class JdbcJobDashboardRepository implements JobDashboardRepository {
+	private static final String COLUMNS_PLACEHOLDER = "${columns}";
 	private static final String JOB_COLUMNS = """
 			p.id, p.title, p.company, r.name AS recruiter_name, r.email AS recruiter_email,
 			p.location, p.is_remote, p.source_received_at, p.created_at, p.summary, p.respond_to,
@@ -22,7 +23,7 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 			FROM positions p
 			JOIN recruiters r ON r.id = p.recruiter_id
 			LEFT JOIN responses latest_response ON latest_response.id = (
-				SELECT MAX(response.id) FROM responses response WHERE response.position_id = p.id)
+			SELECT MAX(response.id) FROM responses response WHERE response.position_id = p.id)
 			""";
 
 	private final JdbcOperations jdbcTemplate;
@@ -35,11 +36,11 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 	public JobDashboardMetricsRow metrics(final Instant recentSince) {
 		return jdbcTemplate.queryForObject("""
 				SELECT
-					COUNT(*) AS total_jobs,
-					SUM(CASE WHEN datetime(p.created_at) >= datetime(?) THEN 1 ELSE 0 END) AS recent_jobs,
-					COUNT(DISTINCT p.recruiter_id) AS recruiters,
-					(SELECT COUNT(*) FROM responses WHERE follow_up_needed = 1) AS follow_ups,
-					MAX(p.created_at) AS last_saved_at
+				COUNT(*) AS total_jobs,
+				SUM(CASE WHEN datetime(p.created_at) >= datetime(?) THEN 1 ELSE 0 END) AS recent_jobs,
+				COUNT(DISTINCT p.recruiter_id) AS recruiters,
+				(SELECT COUNT(*) FROM responses WHERE follow_up_needed = 1) AS follow_ups,
+				MAX(p.created_at) AS last_saved_at
 				FROM positions p
 				""", (resultSet, rowNumber) -> new JobDashboardMetricsRow(
 				resultSet.getLong("total_jobs"),
@@ -62,11 +63,11 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 				FROM positions p
 				JOIN recruiters r ON r.id = p.recruiter_id
 				WHERE LOWER(COALESCE(p.title, '')) LIKE ?
-					OR LOWER(COALESCE(p.company, '')) LIKE ?
-					OR LOWER(COALESCE(p.location, '')) LIKE ?
-					OR LOWER(COALESCE(r.name, '')) LIKE ?
-					OR LOWER(COALESCE(r.email, '')) LIKE ?
-					OR LOWER(COALESCE(p.summary, '')) LIKE ?
+				OR LOWER(COALESCE(p.company, '')) LIKE ?
+				OR LOWER(COALESCE(p.location, '')) LIKE ?
+				OR LOWER(COALESCE(r.name, '')) LIKE ?
+				OR LOWER(COALESCE(r.email, '')) LIKE ?
+				OR LOWER(COALESCE(p.summary, '')) LIKE ?
 				""", Long.class, pattern, pattern, pattern, pattern, pattern, pattern),
 				"Filtered position count query returned no result");
 	}
@@ -81,7 +82,7 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 					${from}
 					ORDER BY ${sortOrder}
 					LIMIT ? OFFSET ?
-					""".replace("${columns}", JOB_COLUMNS).replace("${from}", JOB_FROM)
+					""".replace(COLUMNS_PLACEHOLDER, JOB_COLUMNS).replace("${from}", JOB_FROM)
 					.replace("${sortOrder}", sortOrder.sqlOrderBy()),
 					JdbcJobDashboardRepository::jobRow, limit, offset);
 		}
@@ -90,14 +91,14 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 				SELECT ${columns}
 				${from}
 				WHERE LOWER(COALESCE(p.title, '')) LIKE ?
-					OR LOWER(COALESCE(p.company, '')) LIKE ?
-					OR LOWER(COALESCE(p.location, '')) LIKE ?
-					OR LOWER(COALESCE(r.name, '')) LIKE ?
-					OR LOWER(COALESCE(r.email, '')) LIKE ?
-					OR LOWER(COALESCE(p.summary, '')) LIKE ?
+				OR LOWER(COALESCE(p.company, '')) LIKE ?
+				OR LOWER(COALESCE(p.location, '')) LIKE ?
+				OR LOWER(COALESCE(r.name, '')) LIKE ?
+				OR LOWER(COALESCE(r.email, '')) LIKE ?
+				OR LOWER(COALESCE(p.summary, '')) LIKE ?
 				ORDER BY ${sortOrder}
 				LIMIT ? OFFSET ?
-				""".replace("${columns}", JOB_COLUMNS).replace("${from}", JOB_FROM)
+				""".replace(COLUMNS_PLACEHOLDER, JOB_COLUMNS).replace("${from}", JOB_FROM)
 				.replace("${sortOrder}", sortOrder.sqlOrderBy()), JdbcJobDashboardRepository::jobRow,
 				pattern, pattern, pattern, pattern, pattern, pattern, limit, offset);
 	}
@@ -106,15 +107,15 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 	public Optional<JobDashboardDetailsRow> findById(final long id) {
 		return jdbcTemplate.query("""
 				SELECT ${columns}, p.description, p.html_body, p.requirements, p.salary_range, p.source_account,
-					p.source_subject, p.source_sender,
-					(SELECT COUNT(*) FROM responses response WHERE response.position_id = p.id) AS response_count,
-					latest_response.response_content, latest_response.gmail_draft_id
+				p.source_subject, p.source_sender,
+				(SELECT COUNT(*) FROM responses response WHERE response.position_id = p.id) AS response_count,
+				latest_response.response_content, latest_response.gmail_draft_id
 				FROM positions p
 				JOIN recruiters r ON r.id = p.recruiter_id
 				LEFT JOIN responses latest_response ON latest_response.id = (
-					SELECT MAX(response.id) FROM responses response WHERE response.position_id = p.id)
+				SELECT MAX(response.id) FROM responses response WHERE response.position_id = p.id)
 				WHERE p.id = ?
-				""".replace("${columns}", JOB_COLUMNS), (resultSet, rowNumber) -> new JobDashboardDetailsRow(
+				""".replace(COLUMNS_PLACEHOLDER, JOB_COLUMNS), (resultSet, rowNumber) -> new JobDashboardDetailsRow(
 				resultSet.getLong("id"),
 				resultSet.getString("title"),
 				resultSet.getString("company"),
