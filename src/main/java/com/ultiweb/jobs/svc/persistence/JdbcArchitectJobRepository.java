@@ -44,7 +44,11 @@ public class JdbcArchitectJobRepository implements ArchitectJobRepository {
 	public boolean needsEnrichment(final String account, final String messageId) {
 		final Integer needed = jdbcTemplate.queryForObject("""
 				SELECT EXISTS(SELECT 1 FROM positions WHERE source_account = ?
-				AND source_message_id = ? AND html_body IS NULL)
+				AND source_message_id = ? AND (
+					html_body IS NULL
+					OR (NULLIF(TRIM(company), '') IS NULL
+						AND LOWER(COALESCE(description, '')) LIKE '% is hiring%')
+				))
 				""", Integer.class, account, messageId);
 		return Integer.valueOf(1).equals(needed);
 	}

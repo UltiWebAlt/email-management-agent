@@ -35,4 +35,41 @@ class ArchitectJobDetailsInferenceSvcTest {
 		assertEquals("$150,000-$180,000", details.salaryRange());
 		assertEquals("Design leadership", details.requirements());
 	}
+
+	@Test
+	void preservesCompanyExplicitlyNamedAsHiringEvenWhenModelOmitsIt() {
+		// given
+		final var service = new ArchitectJobDetailsInferenceSvc(emailAiClient);
+		final var email = new EmailMessage("owner", "id", "Architect role", "Recruiter",
+				"Berkley Technology Services is hiring a Senior Solutions Architect.");
+		when(emailAiClient.complete(anyString(), anyString())).thenReturn("""
+				{"title":"Senior Solutions Architect","company":null,"location":null,
+				"remote":null,"salaryRange":null,"requirements":null}
+				""");
+
+		// when
+		final var details = service.infer(email);
+
+		// then
+		assertEquals("Berkley Technology Services", details.company());
+	}
+
+	@Test
+	void extractsHiringCompanyFromSubjectWhenBodyDoesNotRepeatIt() {
+		// given
+		final var service = new ArchitectJobDetailsInferenceSvc(emailAiClient);
+		final var email = new EmailMessage("owner", "id",
+				"GE Vernova is hiring a Lead Systems/Data Architect - Power Product Management Strategist",
+				"Recruiter", "View the opportunity details.");
+		when(emailAiClient.complete(anyString(), anyString())).thenReturn("""
+				{"title":"Lead Systems/Data Architect","company":null,"location":null,
+				"remote":null,"salaryRange":null,"requirements":null}
+				""");
+
+		// when
+		final var details = service.infer(email);
+
+		// then
+		assertEquals("GE Vernova", details.company());
+	}
 }

@@ -2,6 +2,7 @@ package com.ultiweb.jobs.svc.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ultiweb.jobs.svc.HiringCompanyExtractor;
 import com.ultiweb.jobs.svc.JobOpportunityDetails;
 import com.ultiweb.jobs.svc.email.EmailMessage;
 import java.io.IOException;
@@ -44,9 +45,11 @@ public class ArchitectJobDetailsInferenceSvc {
 		try {
 			final String json = extractJsonObject(response.strip());
 			final JsonNode root = OBJECT_MAPPER.readTree(json);
+			final String explicitHiringCompany = firstNonBlank(
+					HiringCompanyExtractor.extract(email.subject()), HiringCompanyExtractor.extract(body));
 			return new JobOpportunityDetails(
 					text(root, "title", 255),
-					text(root, "company", 255),
+					firstNonBlank(explicitHiringCompany, text(root, "company", 255)),
 					text(root, "location", 255),
 					remote(root.get("remote")).orElse(null),
 					text(root, "salaryRange", 255),
@@ -54,6 +57,10 @@ public class ArchitectJobDetailsInferenceSvc {
 		} catch (final IOException | IllegalArgumentException exception) {
 			throw new IllegalStateException("Job detail inference returned invalid structured data", exception);
 		}
+	}
+
+	private static String firstNonBlank(final String preferred, final String fallback) {
+		return preferred == null || preferred.isBlank() ? fallback : preferred;
 	}
 
 	private static String extractJsonObject(final String response) {

@@ -72,4 +72,21 @@ class JobDashboardSvcTest {
 		assertThrows(DashboardJobNotFoundException.class, () -> service.details(99));
 		verify(repository).findById(7);
 	}
+
+	@Test
+	void showsCompanyFromHiringSubjectWhenLegacyRecordHasNoCompany() {
+		// given
+		final var service = new JobDashboardSvc(repository, Clock.fixed(NOW, ZoneOffset.UTC));
+		when(repository.findById(9)).thenReturn(Optional.of(new JobDashboardDetailsRow(
+				9, "GE Vernova is hiring a Lead Systems Architect", null, null, null, null, null,
+				NOW, NOW, "Summary", "Original", null, null, null, "owner@example.com",
+				"GE Vernova is hiring a Lead Systems Architect", "Recruiter", 0, null, null, null)));
+
+		// when
+		final DashboardJobDetails details = service.details(9);
+
+		// then
+		assertEquals("GE Vernova", details.company());
+	}
+
 }

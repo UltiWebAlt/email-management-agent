@@ -4,6 +4,7 @@ import com.ultiweb.jobs.svc.persistence.JobDashboardDetailsRow;
 import com.ultiweb.jobs.svc.persistence.JobDashboardRepository;
 import com.ultiweb.jobs.svc.persistence.JobDashboardRow;
 import com.ultiweb.jobs.svc.persistence.JobSortOrder;
+import com.ultiweb.jobs.svc.HiringCompanyExtractor;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -80,15 +81,21 @@ public final class JobDashboardSvc {
 	}
 
 	private static DashboardJob job(final JobDashboardRow row) {
-		return new DashboardJob(row.id(), row.title(), row.company(), row.recruiterName(), row.recruiterEmail(),
+		return new DashboardJob(row.id(), row.title(), firstNonBlank(row.company(), HiringCompanyExtractor.extract(row.title())),
+				row.recruiterName(), row.recruiterEmail(),
 				row.location(), row.remote(), row.receivedAt(), row.savedAt(), row.summary(),
 				row.selectedForResponse(), row.responseStatus(), row.responseContent());
 	}
 
 	private static DashboardJobDetails details(final JobDashboardDetailsRow row) {
-		return new DashboardJobDetails(row.id(), row.title(), row.company(), row.recruiterName(), row.recruiterEmail(),
+		return new DashboardJobDetails(row.id(), row.title(), firstNonBlank(row.company(), HiringCompanyExtractor.extract(row.title())),
+				row.recruiterName(), row.recruiterEmail(),
 				row.location(), row.remote(), row.receivedAt(), row.savedAt(), row.summary(), row.description(), row.htmlBody(),
 				row.requirements(), row.salaryRange(), row.sourceAccount(), row.sourceSubject(), row.sourceSender(),
 				row.responseCount(), row.responseStatus(), row.responseContent(), row.gmailDraftId());
+	}
+
+	private static String firstNonBlank(final String preferred, final String fallback) {
+		return preferred == null || preferred.isBlank() ? fallback : preferred;
 	}
 }

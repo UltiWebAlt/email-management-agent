@@ -135,6 +135,28 @@ class ArchitectJobPersistenceSvcTest {
 	}
 
 	@Test
+	void rechecksAnExistingHtmlEmailWhenItsDescriptionNamesTheHiringCompany() {
+		// given
+		new JobSearchDatabaseInitializer(jdbcTemplate).initialize();
+		final var service = new ArchitectJobPersistenceSvc(new JdbcArchitectJobRepository(jdbcTemplate),
+				Clock.fixed(Instant.parse("2026-09-27T18:00:00Z"), ZoneOffset.UTC));
+		final var email = new EmailMessage("owner@example.com", "berkley-message", "Architect opening",
+				"Taylor Recruiter <taylor@example.com>", "Berkley Technology Services is hiring a Solutions Architect.",
+				null, "<p>Berkley Technology Services is hiring a Solutions Architect.</p>");
+		service.persist(email, "Berkley Technology Services is hiring a Solutions Architect.");
+
+		// when
+		final boolean needsEnrichment = service.needsEnrichment(email);
+		service.enrichExisting(email, new JobOpportunityDetails(null, "Berkley Technology Services",
+				null, null, null, null));
+
+		// then
+		assertTrue(needsEnrichment);
+		assertEquals("Berkley Technology Services", jdbcTemplate.queryForObject(
+				"SELECT company FROM positions WHERE source_message_id = 'berkley-message'", String.class));
+	}
+
+	@Test
 	void initializerRemovesUnwantedSummaryIntroductionFromExistingRows() {
 		// given
 		new JobSearchDatabaseInitializer(jdbcTemplate).initialize();
