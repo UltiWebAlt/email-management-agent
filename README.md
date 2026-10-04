@@ -1,5 +1,7 @@
 # Email Management Agent
 
+SonarQube analysis uses a local SonarQube server at `http://localhost:9000`. With that server running and `SONAR_TOKEN` set in your environment, run `./gradlew sonar`. The task runs unit and integration tests and generates JaCoCo coverage before analysis. For a different self-hosted server address, use `./gradlew sonar -Dsonar.host.url=http://your-server:9000`. SonarQube analysis is opt-in and is not run by the GitHub workflows or the normal `check` task.
+
 Configure the Gmail accounts in `src/main/resources/application.yml` using a comma-separated list:
 
 ```yaml
