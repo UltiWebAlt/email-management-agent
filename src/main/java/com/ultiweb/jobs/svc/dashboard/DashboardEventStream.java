@@ -45,15 +45,23 @@ public final class DashboardEventStream {
 		emit("opportunity-updated");
 	}
 
+	public void importStateChanged(final boolean running) {
+		emit("import-state", Map.of("running", running));
+	}
+
 	@EventListener
 	public void responseUpdated(final DashboardResponseUpdatedEvent event) {
 		emit("response-updated");
 	}
 
 	private void emit(final String eventName) {
+		emit(eventName, Map.of("refresh", true));
+	}
+
+	private void emit(final String eventName, final Map<String, Object> data) {
 		for (final SseEmitter emitter : emitters) {
 			try {
-				emitter.send(SseEmitter.event().name(eventName).data(Map.of("refresh", true)));
+				emitter.send(SseEmitter.event().name(eventName).data(data));
 			} catch (final IOException | IllegalStateException exception) {
 				emitters.remove(emitter);
 				LOGGER.debug("Removing disconnected dashboard event stream ({}).",

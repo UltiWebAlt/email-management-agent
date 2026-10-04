@@ -34,6 +34,8 @@ const pageSize = 20;
 let currentPage = 0;
 let saving = false;
 let workflowMessage = "";
+let localImportRequest = false;
+let remoteImportRunning = false;
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
 	month: "short",
@@ -244,8 +246,8 @@ async function saveSelections() {
 }
 
 async function importArchitectEmails() {
-	elements.importEmails.disabled = true;
-	elements.importEmails.textContent = "Importing emails…";
+	localImportRequest = true;
+	setImportRunning(true);
 	elements.importNotice.textContent = "Classifying recent inbox emails and manually tagged architect emails. The import stops after saving 10 new architect opportunities.";
 	elements.importNotice.classList.remove("hidden", "is-error");
 	elements.importNotice.classList.add("is-loading");
@@ -268,8 +270,40 @@ async function importArchitectEmails() {
 		elements.importNotice.classList.remove("is-loading");
 		elements.importNotice.classList.add("is-error");
 	} finally {
-		elements.importEmails.disabled = false;
-		elements.importEmails.textContent = "Import recent Gmail emails";
+		localImportRequest = false;
+		await syncImportStatus();
+	}
+}
+
+function setImportRunning(running) {
+	elements.importEmails.disabled = running;
+	elements.importEmails.textContent = running ? "Import in progress…" : "Import recent Gmail emails";
+	if (running && !localImportRequest) {
+		remoteImportRunning = true;
+		elements.importNotice.textContent = "An email import is running from another dashboard session.";
+		elements.importNotice.classList.remove("hidden", "is-error");
+		elements.importNotice.classList.add("is-loading");
+	} else if (!running && remoteImportRunning) {
+		remoteImportRunning = false;
+		elements.importNotice.textContent = "The email import from the other dashboard session has finished.";
+		elements.importNotice.classList.remove("hidden", "is-loading", "is-error");
+	}
+}
+
+async function syncImportStatus() {
+	if (elements.importEmails.classList.contains("hidden")) {
+		return;
+	}
+	try {
+		const response = await fetch("/api/dashboard/dev/import-architect-emails/status", {
+			headers: { Accept: "application/json" }
+		});
+		if (response.ok) {
+			const status = await response.json();
+			setImportRunning(status.running === true);
+		}
+	} catch {
+		// The SSE stream will provide the next status change if this one-time sync fails.
 	}
 }
 
@@ -393,6 +427,10 @@ dashboardEvents.addEventListener("connected", () => {
 		loadDashboard(elements.searchInput.value, currentPage);
 	}
 	dashboardStreamConnected = true;
+	syncImportStatus();
+});
+dashboardEvents.addEventListener("import-state", event => {
+	setImportRunning(JSON.parse(event.data).running === true);
 });
 dashboardEvents.addEventListener("opportunity-added", () => loadDashboard(elements.searchInput.value, currentPage));
 dashboardEvents.addEventListener("opportunity-updated", () => loadDashboard(elements.searchInput.value, currentPage));
