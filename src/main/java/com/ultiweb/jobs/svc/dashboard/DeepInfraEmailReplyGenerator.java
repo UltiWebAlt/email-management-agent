@@ -11,6 +11,7 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.setup.OpenAiSetup;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -31,8 +32,9 @@ public final class DeepInfraEmailReplyGenerator {
 	private final String baseUrl;
 	private final String apiKey;
 	private final String modelName;
-	private volatile EmailAiClient client;
+	private EmailAiClient client;
 
+	@Autowired
 	public DeepInfraEmailReplyGenerator(
 			@Value("${DEEPINFRA_BASE_URL:https://api.deepinfra.com/v1/openai}") final String baseUrl,
 			@Value("${DEEPINFRA_API_KEY:}") final String apiKey,
@@ -40,6 +42,11 @@ public final class DeepInfraEmailReplyGenerator {
 		this.baseUrl = baseUrl;
 		this.apiKey = apiKey;
 		this.modelName = modelName;
+	}
+
+	DeepInfraEmailReplyGenerator(final String apiKey, final EmailAiClient client) {
+		this("https://api.deepinfra.com/v1/openai", apiKey, "test-model");
+		this.client = client;
 	}
 
 	public String generate(final ResponseCandidate candidate) {
@@ -66,25 +73,18 @@ public final class DeepInfraEmailReplyGenerator {
 		return response.strip();
 	}
 
-	private EmailAiClient client() {
-		EmailAiClient current = client;
-		if (current == null) {
-			synchronized (this) {
-				current = client;
-				if (current == null) {
-					final var openAiClient = OpenAiSetup.setupSyncClient(baseUrl, apiKey, null, null, null,
-							null, false, false, modelName, Duration.ofSeconds(90), 2, null, Map.of(),
-							io.micrometer.observation.ObservationRegistry.NOOP, null, List.of());
-					final var model = OpenAiChatModel.builder()
-							.openAiClient(openAiClient)
-							.options(OpenAiChatOptions.builder().model(modelName).temperature(0.2).build())
-							.build();
-					current = new SpringAiEmailClient(ChatClient.create(model));
-					client = current;
-				}
-			}
+	private synchronized EmailAiClient client() {
+		if (client == null) {
+			final var openAiClient = OpenAiSetup.setupSyncClient(baseUrl, apiKey, null, null, null,
+					null, false, false, modelName, Duration.ofSeconds(90), 2, null, Map.of(),
+					io.micrometer.observation.ObservationRegistry.NOOP, null, List.of());
+			final var model = OpenAiChatModel.builder()
+					.openAiClient(openAiClient)
+					.options(OpenAiChatOptions.builder().model(modelName).temperature(0.2).build())
+					.build();
+			client = new SpringAiEmailClient(ChatClient.create(model));
 		}
-		return current;
+		return client;
 	}
 
 	private static String value(final String value) {

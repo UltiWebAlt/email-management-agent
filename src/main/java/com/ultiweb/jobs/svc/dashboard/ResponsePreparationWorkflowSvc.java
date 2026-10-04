@@ -96,7 +96,7 @@ public class ResponsePreparationWorkflowSvc {
 			}
 			if (developmentMode) {
 				repository.saveGeneratedResponse(positionId, body, "SAVED_FOR_REVIEW", clock.instant());
-				notifyResponseUpdated();
+				notifyResponseUpdated(positionId);
 				LOGGER.info("Stored generated response in the development database for position {}.", positionId);
 				return;
 			}
@@ -108,18 +108,18 @@ public class ResponsePreparationWorkflowSvc {
 			final String draftId = gmailDraftSvc.createDraft(job.sourceAccount(), job.recruiterEmail(),
 					replySubject(job.sourceSubject()), body);
 			repository.saveDraftId(positionId, draftId, clock.instant());
-			notifyResponseUpdated();
+			notifyResponseUpdated(positionId);
 			LOGGER.info("Created Gmail draft for position {}.", positionId);
 		} catch (final Exception exception) {
 			repository.markResponseFailed(positionId, clock.instant());
-			notifyResponseUpdated();
+			notifyResponseUpdated(positionId);
 			LOGGER.error("Unable to prepare response for position {} ({}).", positionId,
 					exception.getClass().getSimpleName());
 		}
 	}
 
-	private void notifyResponseUpdated() {
-		eventPublisher.publishEvent(new DashboardResponseUpdatedEvent());
+	private void notifyResponseUpdated(final long positionId) {
+		eventPublisher.publishEvent(new DashboardResponseUpdatedEvent(positionId));
 	}
 
 	private static String replySubject(final String sourceSubject) {

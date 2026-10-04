@@ -48,10 +48,10 @@ public final class JobDashboardSvc {
 		final Instant now = clock.instant();
 		final String normalizedQuery = normalizeQuery(query);
 		final JobSortOrder sortOrder = JobSortOrder.fromValue(requestedSortOrder);
-		final int pageSize = Math.max(1, Math.min(requestedPageSize, MAX_PAGE_SIZE));
+		final int pageSize = Math.clamp(requestedPageSize, 1, MAX_PAGE_SIZE);
 		final long totalResults = repository.countJobs(normalizedQuery);
 		final long totalPages = Math.max(1, (totalResults + pageSize - 1) / pageSize);
-		final int page = Math.toIntExact(Math.max(0L, Math.min((long) requestedPage, totalPages - 1)));
+		final int page = Math.toIntExact(Math.clamp(requestedPage, 0L, totalPages - 1));
 		final var metricsRow = repository.metrics(now.minus(RECENT_WINDOW));
 		return new DashboardSnapshot(
 				now,

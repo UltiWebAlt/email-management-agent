@@ -62,39 +62,53 @@ public final class DevelopmentArchitectEmailImportSvc {
 				break;
 			}
 			scanned++;
-			if (persistenceSvc.isPersisted(email)) {
-				if (persistenceSvc.needsEnrichment(email)) {
-					persistenceSvc.enrichExisting(email, inferJobDetails(email));
-					enriched++;
-					completedArchitectJobs++;
-				} else {
-					skipped++;
-				}
-				continue;
-			}
-			try {
-				final String summary = emailSummarySvc.summarize(email);
-				if (!manuallyTaggedKeys.contains(key(email))
-						&& emailTagSvc.suggestTag(summary).filter(EmailTag.ARCHITECT_JOBS::equals).isEmpty()) {
-					notArchitectJobs++;
-					continue;
-				}
-				final JobOpportunityDetails details = inferJobDetails(email);
-				if (persistenceSvc.persist(email, summary, details)) {
+			switch (importEmail(email, manuallyTaggedKeys.contains(key(email)))) {
+				case IMPORTED -> {
 					imported++;
 					completedArchitectJobs++;
-				} else {
-					skipped++;
 				}
-			} catch (final RuntimeException exception) {
-				failed++;
-				LOGGER.warn("Development import failed for account={}, email id={} ({}).",
-						email.account(), email.id(), exception.getClass().getSimpleName());
+				case ENRICHED -> {
+					enriched++;
+					completedArchitectJobs++;
+				}
+				case SKIPPED -> skipped++;
+				case NOT_ARCHITECT -> notArchitectJobs++;
+				case FAILED -> failed++;
 			}
 		}
 		LOGGER.info("Development Gmail import complete: scanned={}, imported={}, enriched={}, skipped={}, nonArchitect={}, failed={}",
 				scanned, imported, enriched, skipped, notArchitectJobs, failed);
 		return new DevelopmentEmailImportResult(scanned, imported, enriched, skipped, notArchitectJobs, failed);
+	}
+
+	private ImportOutcome importEmail(final EmailMessage email, final boolean manuallyTagged) {
+		try {
+			if (persistenceSvc.isPersisted(email)) {
+				return enrichPersistedEmail(email);
+			}
+			final String summary = emailSummarySvc.summarize(email);
+			if (!manuallyTagged && emailTagSvc.suggestTag(summary).filter(EmailTag.ARCHITECT_JOBS::equals).isEmpty()) {
+				return ImportOutcome.NOT_ARCHITECT;
+			}
+			return persistenceSvc.persist(email, summary, inferJobDetails(email))
+					? ImportOutcome.IMPORTED : ImportOutcome.SKIPPED;
+		} catch (final RuntimeException exception) {
+			LOGGER.warn("Development import failed for account={}, email id={} ({}).",
+					email.account(), email.id(), exception.getClass().getSimpleName());
+			return ImportOutcome.FAILED;
+		}
+	}
+
+	private ImportOutcome enrichPersistedEmail(final EmailMessage email) {
+		if (!persistenceSvc.needsEnrichment(email)) {
+			return ImportOutcome.SKIPPED;
+		}
+		persistenceSvc.enrichExisting(email, inferJobDetails(email));
+		return ImportOutcome.ENRICHED;
+	}
+
+	private enum ImportOutcome {
+		IMPORTED, ENRICHED, SKIPPED, NOT_ARCHITECT, FAILED
 	}
 
 	private JobOpportunityDetails inferJobDetails(final EmailMessage email) {
