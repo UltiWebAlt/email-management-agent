@@ -34,7 +34,9 @@ abstract class AbstractGmailMessageOperation {
 			final Function<T, String> idExtractor) throws IOException {
 		try {
 			final T result = operation.execute();
-			logger.info("{}: id={}", successDescription, idExtractor.apply(result));
+			if (logger.isInfoEnabled()) {
+				logger.info("{}: id={}", successDescription, idExtractor.apply(result));
+			}
 			if (logger.isDebugEnabled()) {
 				logger.debug("{} response: {}", successDescription, result.toPrettyString());
 			}
@@ -43,7 +45,6 @@ abstract class AbstractGmailMessageOperation {
 			final GoogleJsonError error = exception.getDetails();
 			if (error != null && error.getCode() == 403) {
 				logger.error("Unable to {}: {}", operationDescription, error, exception);
-				return null;
 			}
 			throw exception;
 		}

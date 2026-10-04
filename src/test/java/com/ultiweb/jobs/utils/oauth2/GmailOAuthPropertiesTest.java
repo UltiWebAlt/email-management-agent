@@ -27,12 +27,18 @@ class GmailOAuthPropertiesTest {
 
 	@Test
 	void rejectsMissingOrInvalidAccounts() {
-		// given / when / then
+		// given
+		final List<String> empty = List.of();
+		final List<String> blank = List.of(" ");
+		final List<String> invalid = List.of("not-an-email");
+		final List<String> partiallyBlank = List.of("first@example.com", "");
+
+		// when / then
 		assertThrows(IllegalArgumentException.class, () -> properties(null));
-		assertThrows(IllegalArgumentException.class, () -> properties(List.of()));
-		assertThrows(IllegalArgumentException.class, () -> properties(List.of(" ")));
-		assertThrows(IllegalArgumentException.class, () -> properties(List.of("not-an-email")));
-		assertThrows(IllegalArgumentException.class, () -> properties(List.of("first@example.com", "")));
+		assertThrows(IllegalArgumentException.class, () -> properties(empty));
+		assertThrows(IllegalArgumentException.class, () -> properties(blank));
+		assertThrows(IllegalArgumentException.class, () -> properties(invalid));
+		assertThrows(IllegalArgumentException.class, () -> properties(partiallyBlank));
 	}
 
 	@Test
@@ -52,10 +58,12 @@ class GmailOAuthPropertiesTest {
 		// then
 		assertEquals(List.of("http://localhost:8888/Callback"), properties.redirectUris());
 		assertEquals(List.of("first@example.com"), properties.accounts());
+		final List<String> immutableRedirectUris = properties.redirectUris();
+		final List<String> immutableAccounts = properties.accounts();
 		assertThrows(UnsupportedOperationException.class,
-				() -> properties.redirectUris().add("http://localhost:9999/Callback"));
+				() -> immutableRedirectUris.add("http://localhost:9999/Callback"));
 		assertThrows(UnsupportedOperationException.class,
-				() -> properties.accounts().add("second@example.com"));
+				() -> immutableAccounts.add("second@example.com"));
 	}
 
 	@Test

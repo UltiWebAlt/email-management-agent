@@ -43,9 +43,9 @@ public final class SendMessage extends AbstractGmailMessageOperation {
  * @param gmailOAuth       - OAuth2 helper used to authorize Gmail access.
  * @param fromEmailAddress - Email address to appear in the from: header.
  * @param toEmailAddress   - Email address of the recipient.
- * @return the sent message, {@code null} otherwise.
+ * @return the sent message.
  * @throws MessagingException - if a wrongly formatted address is encountered.
- * @throws IOException        - if service account credentials file not found.
+ * @throws IOException        - if authorization, credentials, or the Gmail API operation fails.
  */
 public static Message sendEmail(GMailOAuth gmailOAuth,
                                 String fromEmailAddress,

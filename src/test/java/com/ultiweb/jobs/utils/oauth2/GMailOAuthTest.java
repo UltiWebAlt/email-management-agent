@@ -141,7 +141,7 @@ class GMailOAuthTest {
 	private GMailOAuth oauth() throws IOException {
 		final GMailOAuth oauth = spy(new GMailOAuth(GmailOAuthPropertiesTest.properties(
 				List.of("first@example.com", "second@example.com"))));
-		doReturn(flow).when(oauth).createFlow(eq(transport), eq(IDENTITY_SCOPES));
+		doReturn(flow).when(oauth).createFlow(transport, IDENTITY_SCOPES);
 		doAnswer(invocation -> new AccountAuthorizationCodeInstalledApp(flow, receiver, invocation.getArgument(1), browser))
 				.when(oauth).installedApp(eq(flow), anyString());
 		return oauth;

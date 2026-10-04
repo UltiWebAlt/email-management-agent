@@ -9,7 +9,6 @@ import com.ultiweb.jobs.svc.email.EmailMessage;
 import com.ultiweb.jobs.svc.email.EmailReader;
 import com.ultiweb.jobs.svc.email.EmailWorkflowLabels;
 import com.ultiweb.jobs.svc.persistence.ArchitectJobPersistenceSvc;
-import com.ultiweb.jobs.svc.JobOpportunityDetails;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -127,8 +126,10 @@ public class EmailTriageSvc {
 		final String summary = emailSummarySvc.summarize(email);
 		LOGGER.info("Requesting AI label recommendation for account={}, message={}", email.account(), email.id());
 		final Optional<EmailTag> suggestedLabel = emailTagSvc.suggestTag(summary);
-		LOGGER.info("Analyzed account={}, message={}, recommendedLabel={}",
-				email.account(), email.id(), suggestedLabel.map(EmailTag::labelName).orElse("NONE"));
+		if (LOGGER.isInfoEnabled()) {
+			LOGGER.info("Analyzed account={}, message={}, recommendedLabel={}",
+					email.account(), email.id(), suggestedLabel.map(EmailTag::labelName).orElse("NONE"));
+		}
 		return new EmailAnalysis(email, summary, suggestedLabel);
 	}
 
@@ -150,8 +151,9 @@ public class EmailTriageSvc {
 
 	private void applyWorkflowLabels(final EmailAnalysis analysis) throws IOException {
 		final EmailMessage email = analysis.email();
-		if (analysis.tag().isPresent()) {
-			final EmailTag tag = analysis.tag().get();
+		final Optional<EmailTag> suggestedTag = analysis.tag();
+		if (suggestedTag.isPresent()) {
+			final EmailTag tag = suggestedTag.get();
 			emailLabelWriter.applyLabel(email.account(), email.id(), tag.labelName());
 			LOGGER.info("Applied label: account={}, message={}, label={}", email.account(), email.id(), tag.labelName());
 			if (tag == EmailTag.ARCHITECT_JOBS) {

@@ -46,9 +46,9 @@ public final class CreateDraftWithAttachment extends AbstractGmailMessageOperati
  * @param fromEmailAddress - Email address to appear in the from: header.
  * @param toEmailAddress   - Email address of the recipient.
  * @param file             - Path to the file to be attached.
- * @return the created draft, {@code null} otherwise.
+ * @return the created draft.
  * @throws MessagingException - if a wrongly formatted address is encountered.
- * @throws IOException        - if service account credentials file not found.
+ * @throws IOException        - if authorization, credentials, or the Gmail API operation fails.
  */
 public static Draft createDraftMessageWithAttachment(GMailOAuth gmailOAuth,
                                                      String fromEmailAddress,
