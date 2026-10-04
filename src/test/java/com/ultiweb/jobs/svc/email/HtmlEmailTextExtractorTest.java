@@ -54,8 +54,8 @@ class HtmlEmailTextExtractorTest {
 	@Test
 	void sanitizesRenderedHtmlWhilePreservingLinksListsAndTables() {
 		// given
-		final String html = "<script>alert('x')</script><p onclick='steal()'>Role details</p>"
-				+ "<ul><li>Design systems</li></ul><table><tr><th>Location</th><td>Boston</td></tr></table>"
+		final String html = "<script>alert('x')</script><p onclick='steal()' style='width:1800px;color:red'>Role details</p>"
+				+ "<ul><li>Design systems</li></ul><table style='width:1800px'><tr><th>Location</th><td>Boston</td></tr></table>"
 				+ "<a href='https://example.com/job'>Full posting</a><img src='https://example.com/pixel' alt='Job logo'>";
 
 		// when
@@ -68,6 +68,8 @@ class HtmlEmailTextExtractorTest {
 		assertTrue(safeHtml.contains("[Image: Job logo]"));
 		assertFalse(safeHtml.contains("<script"));
 		assertFalse(safeHtml.contains("onclick"));
+		assertFalse(safeHtml.contains("style="));
+		assertFalse(safeHtml.contains("1800px"));
 		assertFalse(safeHtml.contains("pixel"));
 	}
 }

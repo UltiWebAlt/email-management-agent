@@ -243,6 +243,11 @@ h1 {
 	gap: 1rem;
 }
 
+.content-grid > *,
+.panel {
+	min-width: 0;
+}
+
 .panel {
 	border-radius: 20px;
 }
@@ -703,12 +708,15 @@ dialog::backdrop {
 
 .dialog-shell {
 	display: flex;
+	height: min(820px, calc(100vh - 2rem));
 	max-height: min(820px, calc(100vh - 2rem));
 	flex-direction: column;
+	min-height: 0;
 }
 
 .dialog-header {
 	display: flex;
+	flex: 0 0 auto;
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 1rem;
@@ -734,7 +742,10 @@ dialog::backdrop {
 }
 
 .dialog-body {
+	flex: 1 1 auto;
+	min-height: 0;
 	overflow: auto;
+	overscroll-behavior: contain;
 	padding: 1.5rem;
 }
 
@@ -785,16 +796,24 @@ dialog::backdrop {
 	font-size: 0.85rem;
 	line-height: 1.65;
 	white-space: pre-wrap;
+	overflow-wrap: anywhere;
 }
 
 .email-html-frame {
 	display: block;
 	width: 100%;
+	min-width: 0;
+	max-width: 100%;
 	min-height: 24rem;
 	max-height: 68vh;
 	border: 1px solid var(--line);
 	border-radius: 10px;
 	background: white;
+}
+
+.email-content-section {
+	min-width: 0;
+	max-width: 100%;
 }
 
 .email-plain-fallback {
@@ -834,13 +853,20 @@ dialog::backdrop {
 }
 
 @media (max-width: 640px) {
+	html,
+	body {
+		max-width: 100%;
+		overflow-x: hidden;
+	}
+
 	.system-state span:last-child,
 	.sync-card {
 		display: none;
 	}
 
 	main {
-		width: min(100% - 1.25rem, 1440px);
+		width: calc(100% - 1rem);
+		max-width: 100%;
 		padding-top: 2.2rem;
 	}
 
@@ -869,6 +895,81 @@ dialog::backdrop {
 	.selection-toolbar {
 		align-items: flex-start;
 		flex-direction: column;
+		width: 100%;
+	}
+
+	.selection-actions {
+		width: 100%;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.selection-actions button {
+		width: 100%;
+		max-width: 100%;
+		white-space: normal;
+		line-height: 1.35;
+	}
+
+	.sort-row {
+		align-items: stretch;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+
+	.sort-row select {
+		width: 100%;
+	}
+
+	.job-card {
+		width: 100%;
+		min-width: 0;
+		gap: 0.6rem;
+		padding: 0.75rem;
+	}
+
+	.job-checkbox-label {
+		flex: 0 0 18px;
+	}
+
+	.job-card-topline {
+		min-width: 0;
+		gap: 0.55rem;
+	}
+
+	.company-avatar {
+		width: 34px;
+		height: 34px;
+		flex-basis: 34px;
+	}
+
+	.job-title {
+		white-space: normal;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+	}
+
+	.job-summary,
+	.job-meta,
+	.response-status {
+		max-width: 100%;
+		overflow-wrap: anywhere;
+	}
+
+	.response-preview {
+		max-width: 100%;
+		overflow-wrap: anywhere;
+	}
+
+	.pagination {
+		flex-wrap: wrap;
+		gap: 0.6rem;
+	}
+
+	.pagination span {
+		width: 100%;
+		text-align: center;
 	}
 
 	.selection-status {
@@ -885,7 +986,66 @@ dialog::backdrop {
 		grid-template-columns: 1fr;
 	}
 
+	dialog {
+		position: fixed;
+		inset: 0;
+		width: 100%;
+		max-width: none;
+		height: 100vh;
+		max-height: 100vh;
+		margin: 0;
+		border-radius: 0;
+	}
+
+	.dialog-shell {
+		height: 100%;
+		max-height: none;
+	}
+
+	.dialog-header {
+		gap: 0.75rem;
+		padding: max(1rem, env(safe-area-inset-top)) 1rem 1rem;
+	}
+
+	.dialog-header h2 {
+		font-size: 1.1rem;
+		line-height: 1.35;
+		overflow-wrap: anywhere;
+	}
+
+	.dialog-body {
+		padding: 1rem;
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+	}
+
+	.email-html-frame {
+		min-height: 14rem;
+		max-height: 55vh;
+	}
+
 	footer {
 		flex-direction: column;
+	}
+}
+
+@supports (height: 100dvh) {
+	.dialog-shell {
+		height: min(820px, calc(100dvh - 2rem));
+		max-height: min(820px, calc(100dvh - 2rem));
+	}
+
+	.email-html-frame {
+		max-height: 68dvh;
+	}
+
+	@media (max-width: 640px) {
+		dialog {
+			height: 100dvh;
+			max-height: 100dvh;
+		}
+
+		.email-html-frame {
+			max-height: 55dvh;
+		}
 	}
 }

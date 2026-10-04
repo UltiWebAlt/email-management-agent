@@ -5,6 +5,7 @@ import com.ultiweb.jobs.svc.persistence.JobDashboardRepository;
 import com.ultiweb.jobs.svc.persistence.JobDashboardRow;
 import com.ultiweb.jobs.svc.persistence.JobSortOrder;
 import com.ultiweb.jobs.svc.HiringCompanyExtractor;
+import com.ultiweb.jobs.svc.email.EmailHtmlDisplayRenderer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -90,7 +91,8 @@ public final class JobDashboardSvc {
 	private static DashboardJobDetails details(final JobDashboardDetailsRow row) {
 		return new DashboardJobDetails(row.id(), row.title(), firstNonBlank(row.company(), HiringCompanyExtractor.extract(row.title())),
 				row.recruiterName(), row.recruiterEmail(),
-				row.location(), row.remote(), row.receivedAt(), row.savedAt(), row.summary(), row.description(), row.htmlBody(),
+				row.location(), row.remote(), row.receivedAt(), row.savedAt(), row.summary(), row.description(),
+				EmailHtmlDisplayRenderer.render(row.htmlBody(), row.description()),
 				row.requirements(), row.salaryRange(), row.sourceAccount(), row.sourceSubject(), row.sourceSender(),
 				row.responseCount(), row.responseStatus(), row.responseContent(), row.gmailDraftId());
 	}

@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -13,6 +15,7 @@ import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
 
 final class HtmlEmailTextExtractor {
+	private static final Pattern PLAIN_TEXT_LINK = Pattern.compile("([^\\n()]*)\\s*\\((https?://[^\\s)]+)\\)");
 	private static final Set<String> BLOCK_TAGS = Set.of(
 			"address", "article", "aside", "blockquote", "div", "footer", "h1", "h2", "h3", "h4", "h5", "h6",
 			"header", "main", "nav", "p", "section");
@@ -43,10 +46,7 @@ final class HtmlEmailTextExtractor {
 		final var document = Jsoup.parseBodyFragment(html);
 		document.select("head, script, style, noscript, template, iframe, object, embed, form, button, input, textarea, select, svg, canvas, video, audio, source, meta, link, base, [hidden], [aria-hidden=true]")
 				.remove();
-		document.select("[style]").stream()
-				.filter(element -> isHidden(element.attr("style")))
-				.toList()
-				.forEach(Element::remove);
+		document.select("[style]").removeAttr("style");
 		document.select("img").forEach(image -> {
 			final String alt = image.attr("alt").strip();
 			if (alt.isBlank()) {
@@ -57,10 +57,8 @@ final class HtmlEmailTextExtractor {
 		});
 		final Safelist safelist = Safelist.relaxed()
 				.addTags("table", "thead", "tbody", "tfoot", "tr", "td", "th", "colgroup", "col")
-				.addAttributes(":all", "style")
-				.addAttributes("table", "border", "cellpadding", "cellspacing", "width", "align", "bgcolor")
-				.addAttributes("td", "colspan", "rowspan", "width", "align", "valign", "bgcolor")
-				.addAttributes("th", "colspan", "rowspan", "width", "align", "valign", "bgcolor")
+				.addAttributes("td", "colspan", "rowspan")
+				.addAttributes("th", "colspan", "rowspan")
 				.addAttributes("a", "target", "rel");
 		return Jsoup.clean(document.body().html(), "", safelist);
 	}
@@ -69,9 +67,31 @@ final class HtmlEmailTextExtractor {
 		if (text == null || text.isBlank()) {
 			return "";
 		}
-		final String escaped = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+		return java.util.Arrays.stream(text.replace("\r\n", "\n").replace('\r', '\n').split("\\n{2,}"))
+				.map(paragraph -> "<p>" + linkifyPlainText(paragraph).replace("\n", "<br>") + "</p>")
+				.collect(java.util.stream.Collectors.joining());
+	}
+
+	private static String linkifyPlainText(final String text) {
+		final Matcher matcher = PLAIN_TEXT_LINK.matcher(text);
+		final StringBuilder html = new StringBuilder();
+		int position = 0;
+		while (matcher.find()) {
+			html.append(escapeHtml(text.substring(position, matcher.start())));
+			final String label = matcher.group(1).strip();
+			final String url = matcher.group(2);
+			final String linkText = label.isBlank() ? url : label;
+			html.append("<a href=\"").append(escapeHtml(url)).append("\" target=\"_blank\" rel=\"noopener noreferrer\">")
+					.append(escapeHtml(linkText)).append("</a>");
+			position = matcher.end();
+		}
+		html.append(escapeHtml(text.substring(position)));
+		return html.toString();
+	}
+
+	private static String escapeHtml(final String text) {
+		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 				.replace("\"", "&quot;").replace("'", "&#39;");
-		return "<p>" + escaped.replaceAll("\\n{2,}", "</p><p>").replace("\n", "<br>") + "</p>";
 	}
 
 	private static boolean isHidden(final String style) {

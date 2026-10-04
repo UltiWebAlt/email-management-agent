@@ -304,9 +304,19 @@ function originalEmailSection(job) {
 		const frame = document.createElement("iframe");
 		frame.className = "email-html-frame";
 		frame.title = "Formatted original email content";
-		frame.setAttribute("sandbox", "");
+		frame.setAttribute("sandbox", "allow-popups allow-popups-to-escape-sandbox");
 		frame.setAttribute("referrerpolicy", "no-referrer");
-		frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font:14px/1.55 system-ui,sans-serif;color:#253047;margin:16px;overflow-wrap:anywhere}img{max-width:100%;height:auto}table{max-width:100%;border-collapse:collapse}td,th{padding:5px;border:1px solid #d8deea}a{color:#3158a8}</style></head><body>${job.htmlBody}</body></html>`;
+		const frameStyles = `
+			* { box-sizing: border-box; max-width: 100% !important; }
+			html, body { width: 100%; max-width: 100%; margin: 0; overflow-x: hidden; }
+			body { padding: 16px; font: 14px/1.55 system-ui, sans-serif; color: #253047; overflow-wrap: anywhere; }
+			img, video, svg { max-width: 100% !important; height: auto !important; }
+			table { width: 100% !important; max-width: 100% !important; table-layout: fixed !important; border-collapse: collapse; }
+			td, th { max-width: 100% !important; padding: 5px; border: 1px solid #d8deea; white-space: normal !important; overflow-wrap: anywhere !important; }
+			pre, code { white-space: pre-wrap !important; overflow-wrap: anywhere !important; }
+			a { color: #3158a8; overflow-wrap: anywhere !important; }
+		`;
+		frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${frameStyles}</style></head><body>${job.htmlBody}</body></html>`;
 		section.append(heading, frame);
 	} else {
 		const content = document.createElement("pre");

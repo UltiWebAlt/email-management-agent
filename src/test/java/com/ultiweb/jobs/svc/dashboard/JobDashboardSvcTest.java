@@ -89,4 +89,19 @@ class JobDashboardSvcTest {
 		assertEquals("GE Vernova", details.company());
 	}
 
+	@Test
+	void buildsRenderableHtmlFromAStoredLegacyHtmlDescription() {
+		// given
+		final var service = new JobDashboardSvc(repository, Clock.fixed(NOW, ZoneOffset.UTC));
+		when(repository.findById(8)).thenReturn(Optional.of(new JobDashboardDetailsRow(
+				8, "Architect", null, "Pat", "pat@example.com", null, null, NOW, NOW, "Summary",
+				"<html><body><p>Original message</p></body></html>", null, null, null,
+				"owner@example.com", "Architect opening", "Pat <pat@example.com>", 0, null, null, null)));
+
+		// when
+		final DashboardJobDetails details = service.details(8);
+
+		// then
+		assertEquals("<p>Original message</p>", details.htmlBody());
+	}
 }

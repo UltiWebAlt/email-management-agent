@@ -21,7 +21,7 @@ final class GmailMessageBodyExtractor {
 	private static final String TRUNCATION_MARKER = "\n\n[Email body shortened for summarization]";
 	private static final Pattern CHARSET_PATTERN = Pattern.compile("(?i)charset\\s*=\\s*[\\\"']?([^;\\s\\\"']+)");
 	private static final Pattern HTML_PREFIX_PATTERN = Pattern.compile(
-			"(?is)^\\s*(?:<!doctype\\s+html\\b|<html\\b|<body\\b|<(?:article|div|footer|h[1-6]|header|main|ol|p|section|table|ul)\\b)");
+			"(?is)^\\s*(?:<!doctype\\s+html\\b|<!--|<(?:html|head|body|a|article|blockquote|br|div|footer|h[1-6]|header|hr|li|main|ol|p|section|span|table|td|th|tr|ul)\\b)");
 
 	private final Gmail gmail;
 	private final String messageId;
@@ -51,13 +51,15 @@ final class GmailMessageBodyExtractor {
 		}
 		final String mimeType = mimeType(part);
 		if ("text/plain".equals(mimeType)) {
-			final String text = normalizePlainText(decode(part));
+			final String decoded = decode(part);
+			if (looksLikeHtml(decoded)) {
+				return htmlContent(decoded);
+			}
+			final String text = normalizePlainText(decoded);
 			return new BodyContent(text, false, HtmlEmailTextExtractor.plainTextAsHtml(text));
 		}
 		if ("text/html".equals(mimeType)) {
-			final String html = decode(part);
-			return new BodyContent(HtmlEmailTextExtractor.extract(html), true,
-					HtmlEmailTextExtractor.sanitizeForDisplay(html));
+			return htmlContent(decode(part));
 		}
 		final List<MessagePart> parts = Optional.ofNullable(part.getParts()).orElseGet(List::of);
 		if (!parts.isEmpty()) {
@@ -76,8 +78,7 @@ final class GmailMessageBodyExtractor {
 		if ((mimeType.isBlank() || mimeType.startsWith("text/")) && hasBodyData(part.getBody())) {
 			final String decoded = decode(part);
 			if (looksLikeHtml(decoded)) {
-				return new BodyContent(HtmlEmailTextExtractor.extract(decoded), true,
-						HtmlEmailTextExtractor.sanitizeForDisplay(decoded));
+				return htmlContent(decoded);
 			}
 			final String text = normalizePlainText(decoded);
 			return new BodyContent(text, false, HtmlEmailTextExtractor.plainTextAsHtml(text));
@@ -101,6 +102,11 @@ final class GmailMessageBodyExtractor {
 			return "";
 		}
 		return new String(Base64.getUrlDecoder().decode(data), charset(part));
+	}
+
+	private static BodyContent htmlContent(final String html) {
+		return new BodyContent(HtmlEmailTextExtractor.extract(html), true,
+				HtmlEmailTextExtractor.sanitizeForDisplay(html));
 	}
 
 	private static Charset charset(final MessagePart part) {

@@ -66,6 +66,24 @@ class GmailMessageBodyExtractorTest {
 	}
 
 	@Test
+	void rendersHtmlEvenWhenTheProviderLabelsThePartAsPlainText() throws Exception {
+		// given
+		final String mislabelledHtml = "<html><body><p>Architect opening</p><ul><li>Design leadership</li></ul>"
+				+ "<script>doNotRun()</script></body></html>";
+
+		// when
+		final ExtractedEmailBody body = new GmailMessageBodyExtractor(gmail, "message-id")
+				.extractContent(textPart("text/plain", mislabelledHtml, StandardCharsets.UTF_8));
+
+		// then
+		assertTrue(body.text().contains("Architect opening"));
+		assertFalse(body.text().contains("<html"));
+		assertTrue(body.html().contains("<p>Architect opening</p>"));
+		assertTrue(body.html().contains("<li>Design leadership</li>"));
+		assertFalse(body.html().contains("<script"));
+	}
+
+	@Test
 	void prefersRichHtmlInANestedAlternativeAndSkipsHtmlAttachments() throws Exception {
 		// given
 		final MessagePart plain = textPart("text/plain", "Fallback text without the destination.", StandardCharsets.UTF_8);
