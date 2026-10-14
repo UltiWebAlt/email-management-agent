@@ -1,5 +1,16 @@
 # Email Management Agent
 
+Email Management Agent reduces the work of managing a busy Gmail inbox, with a particular focus on finding and responding to IT architect job opportunities. It helps you spend less time sorting email, extracting job details, and writing initial responses, so you can focus on evaluating worthwhile opportunities.
+
+The application summarizes and categorizes messages across multiple Gmail accounts, applies useful labels, and collects architect job opportunities into a local dashboard. General inbox organization supports this job-search workflow by separating recruitment messages from newsletters, promotions, receipts, and other mail.
+
+The workflow is:
+
+1. Summarize incoming email and classify it into a supported category.
+2. Apply Gmail labels and save architect opportunities with their source email and job details.
+3. Review opportunities in the dashboard and select those worth pursuing.
+4. Generate recruiter replies and prepare Gmail drafts for your review. The job-response workflow does not send messages automatically.
+
 SonarQube analysis uses a local SonarQube server at `http://localhost:9000`. With that server running and `SONAR_TOKEN` set in your environment, run `./gradlew sonar`. The task runs unit and integration tests and generates JaCoCo coverage before analysis. For a different self-hosted server address, use `./gradlew sonar -Dsonar.host.url=http://your-server:9000`. SonarQube analysis is opt-in and is not run by the GitHub workflows or the normal `check` task.
 
 Configure the Gmail accounts in `src/main/resources/application.yml` using a comma-separated list:
