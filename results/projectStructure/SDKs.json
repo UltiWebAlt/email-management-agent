@@ -1,7 +1,7 @@
 {
   "sdks": [
     {
-      "name": "21 (2)",
+      "name": "21",
       "roots": [
         "jrt://$USER_HOME$/.jdks/ms-21.0.12.1!/java.base",
         "jrt://$USER_HOME$/.jdks/ms-21.0.12.1!/java.compiler",
@@ -74,7 +74,7 @@
         "jrt://$USER_HOME$/.jdks/ms-21.0.12.1!/jdk.zipfs"
       ],
       "sdkType": "JavaSDK",
-      "sdkVersion": "java version \"21.0.12\""
+      "sdkVersion": "Microsoft OpenJDK 21.0.12"
     }
   ]
 }

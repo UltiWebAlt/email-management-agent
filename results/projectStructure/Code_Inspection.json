@@ -23,7 +23,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21 (2)",
+          "name": "21",
           "type": "SDK"
         },
         {
@@ -55,7 +55,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21 (2)",
+          "name": "21",
           "type": "SDK"
         },
         {
@@ -687,7 +687,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.ow2.asm:asm:9.10.1",
+          "name": "Gradle: org.ow2.asm:asm:9.11",
           "type": "Library"
         },
         {
@@ -903,7 +903,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21 (2)",
+          "name": "21",
           "type": "SDK"
         },
         {
@@ -1611,7 +1611,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21 (2)",
+          "name": "21",
           "type": "SDK"
         },
         {
@@ -2243,7 +2243,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.ow2.asm:asm:9.10.1",
+          "name": "Gradle: org.ow2.asm:asm:9.11",
           "type": "Library"
         },
         {

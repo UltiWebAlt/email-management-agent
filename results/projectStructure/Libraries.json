@@ -1352,9 +1352,9 @@
       "properties": {}
     },
     {
-      "name": "Gradle: org.ow2.asm:asm:9.10.1",
+      "name": "Gradle: org.ow2.asm:asm:9.11",
       "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.10.1/ada2141c0cc52ee8f5c48cd5fa4ce0e794f22236/asm-9.10.1.jar!/"
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.11/2a2c870691d2220eb93492c88fdcd3711ab0fadb/asm-9.11.jar!/"
       ],
       "properties": {}
     },

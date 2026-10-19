@@ -1,5 +1,5 @@
 {
-  "gradleJvm": "21",
+  "gradleJvm": "#USE_PROJECT_JDK",
   "libraries": [
     {
       "ideaName": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.1",
@@ -1250,12 +1250,12 @@
       "version": "13.0"
     },
     {
-      "ideaName": "Gradle: org.ow2.asm:asm:9.10.1",
-      "gradleName": "org.ow2.asm:asm:9.10.1",
+      "ideaName": "Gradle: org.ow2.asm:asm:9.11",
+      "gradleName": "org.ow2.asm:asm:9.11",
       "unresolved": false,
       "groupId": "org.ow2.asm",
       "artifactId": "asm",
-      "version": "9.10.1"
+      "version": "9.11"
     },
     {
       "ideaName": "Gradle: org.opentest4j:opentest4j:1.3.0",
