@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="260" viewBox="0 0 800 260" role="img" aria-labelledby="title description">
+  <title id="title">Email Management Agent</title>
+  <desc id="description">Organize your inbox. Discover opportunities. Prepare replies.</desc>
+  <defs>
+    <!-- Sun Purple (#594FBF) anchors the horizontal gradient. -->
+    <linearGradient id="sun-purple" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#30265F"/>
+      <stop offset="50%" stop-color="#594FBF"/>
+      <stop offset="100%" stop-color="#9388DB"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="260" rx="16" fill="url(#sun-purple)"/>
+  <rect x="40" y="46" width="48" height="4" rx="2" fill="white" opacity="0.65"/>
+  <g fill="white" font-family="Arial, Helvetica, sans-serif">
+    <text x="40" y="112" font-size="46" font-weight="700">Email Management Agent</text>
+    <text x="40" y="166" font-size="28">
+      <tspan x="40">Organize your inbox. Discover opportunities.</tspan>
+      <tspan x="40" dy="38">Prepare replies.</tspan>
+    </text>
+  </g>
+</svg>
