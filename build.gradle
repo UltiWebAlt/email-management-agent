@@ -47,7 +47,7 @@ configurations {
 dependencies {
     implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.1')
     implementation platform('org.springframework.ai:spring-ai-bom:2.0.1')
-    implementation platform('org.ow2.asm:asm-bom:9.11')
+    implementation platform('org.ow2.asm:asm-bom:9.11.1')
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
