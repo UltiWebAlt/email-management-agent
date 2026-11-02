@@ -63,23 +63,23 @@
           "type": "Own sources"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-jdbc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-jdbc:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-ollama:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-ollama:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-openai:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-openai:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.slf4j:slf4j-api:2.0.18",
+          "name": "Gradle: org.slf4j:slf4j-api:2.0.20",
           "type": "Library"
         },
         {
@@ -87,7 +87,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: com.google.api-client:google-api-client:2.9.1",
+          "name": "Gradle: com.google.api-client:google-api-client:2.9.2",
           "type": "Library"
         },
         {
@@ -119,31 +119,31 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-test:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-test:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-jackson:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-jackson:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-http-converter:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-http-converter:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-webmvc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-webmvc:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-jdbc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-jdbc:4.1.2",
           "type": "Library"
         },
         {
@@ -151,39 +151,39 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-webclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-webclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-restclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-restclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-ollama:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-ollama:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-ollama:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-ollama:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-client-chat:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-client-chat:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-client:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-client:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-memory:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-memory:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-openai:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-openai:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-openai:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-openai:2.0.2",
           "type": "Library"
         },
         {
@@ -247,11 +247,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-test:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-test:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-test-autoconfigure:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-test-autoconfigure:4.1.2",
           "type": "Library"
         },
         {
@@ -291,11 +291,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-core:7.0.9",
+          "name": "Gradle: org.springframework:spring-core:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-test:7.0.9",
+          "name": "Gradle: org.springframework:spring-test:7.0.10",
           "type": "Library"
         },
         {
@@ -303,11 +303,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-logging:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-logging:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-autoconfigure:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-autoconfigure:4.1.2",
           "type": "Library"
         },
         {
@@ -319,91 +319,91 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-jackson:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-jackson:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat-runtime:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat-runtime:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-tomcat:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-tomcat:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-web:7.0.9",
+          "name": "Gradle: org.springframework:spring-web:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-servlet:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-servlet:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-webmvc:7.0.9",
+          "name": "Gradle: org.springframework:spring-webmvc:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-sql:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-sql:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-transaction:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-transaction:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-jdbc:7.0.9",
+          "name": "Gradle: org.springframework:spring-jdbc:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-reactor:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-reactor:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-webclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-webclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.projectreactor.netty:reactor-netty-http:1.3.7",
+          "name": "Gradle: io.projectreactor.netty:reactor-netty-http:1.3.8",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-restclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-restclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-retry:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-retry:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-tool:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-tool:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-observation:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-observation:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-embedding-observation:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-embedding-observation:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-model:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-model:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-retry:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-retry:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-webflux:7.0.9",
+          "name": "Gradle: org.springframework:spring-webflux:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: tools.jackson.core:jackson-databind:3.1.5",
+          "name": "Gradle: tools.jackson.core:jackson-databind:3.1.7",
           "type": "Library"
         },
         {
@@ -419,11 +419,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.projectreactor:reactor-core:3.8.7",
+          "name": "Gradle: io.projectreactor:reactor-core:3.8.8",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-context:7.0.9",
+          "name": "Gradle: org.springframework:spring-context:7.0.10",
           "type": "Library"
         },
         {
@@ -435,11 +435,15 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-image-observation:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-image-observation:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.openai:openai-java-core:4.49.0",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-audio-observation:2.0.2",
+          "type": "Library"
+        },
+        {
+          "name": "Gradle: com.openai:openai-java-core:4.80.0",
           "type": "Library"
         },
         {
@@ -447,7 +451,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.micrometer:micrometer-core:1.17.1",
+          "name": "Gradle: io.micrometer:micrometer-core:1.17.2",
           "type": "Library"
         },
         {
@@ -455,7 +459,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-context-support:7.0.9",
+          "name": "Gradle: org.springframework:spring-context-support:7.0.10",
           "type": "Library"
         },
         {
@@ -499,7 +503,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.grpc:grpc-context:1.83.1",
+          "name": "Gradle: io.grpc:grpc-context:1.84.1",
           "type": "Library"
         },
         {
@@ -519,7 +523,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: net.bytebuddy:byte-buddy:1.18.11",
+          "name": "Gradle: net.bytebuddy:byte-buddy:1.18.15",
           "type": "Library"
         },
         {
@@ -531,7 +535,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: net.bytebuddy:byte-buddy-agent:1.18.11",
+          "name": "Gradle: net.bytebuddy:byte-buddy-agent:1.18.15",
           "type": "Library"
         },
         {
@@ -547,91 +551,91 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.slf4j:jul-to-slf4j:2.0.18",
+          "name": "Gradle: org.slf4j:jul-to-slf4j:2.0.20",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-web-server:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-web-server:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-core:11.0.24",
+          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-core:11.0.27",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-el:11.0.24",
+          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-el:11.0.27",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-websocket:11.0.24",
+          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-websocket:11.0.27",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-beans:7.0.9",
+          "name": "Gradle: org.springframework:spring-beans:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.micrometer:micrometer-observation:1.17.1",
+          "name": "Gradle: io.micrometer:micrometer-observation:1.17.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-aop:7.0.9",
+          "name": "Gradle: org.springframework:spring-aop:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-expression:7.0.9",
+          "name": "Gradle: org.springframework:spring-expression:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-persistence:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-persistence:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-tx:7.0.9",
+          "name": "Gradle: org.springframework:spring-tx:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-http-client:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-http-client:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-http:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-http:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-http2:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-http2:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-http3:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-http3:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver-dns:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver-dns:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver-dns-native-macos:osx-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver-dns-native-macos:osx-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport-native-epoll:linux-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport-native-epoll:linux-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.projectreactor.netty:reactor-netty-core:1.3.7",
+          "name": "Gradle: io.projectreactor.netty:reactor-netty-core:1.3.8",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-commons:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-commons:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-template-st:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-template-st:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-messaging:7.0.9",
+          "name": "Gradle: org.springframework:spring-messaging:7.0.10",
           "type": "Library"
         },
         {
@@ -647,7 +651,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: tools.jackson.core:jackson-core:3.1.5",
+          "name": "Gradle: tools.jackson.core:jackson-core:3.1.7",
           "type": "Library"
         },
         {
@@ -663,11 +667,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.core:jackson-core:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.core:jackson-core:2.21.7",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.core:jackson-databind:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.core:jackson-databind:2.21.7",
           "type": "Library"
         },
         {
@@ -679,7 +683,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.micrometer:micrometer-commons:1.17.1",
+          "name": "Gradle: io.micrometer:micrometer-commons:1.17.2",
           "type": "Library"
         },
         {
@@ -687,7 +691,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.ow2.asm:asm:9.11",
+          "name": "Gradle: org.ow2.asm:asm:9.11.1",
           "type": "Library"
         },
         {
@@ -723,55 +727,55 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-common:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-common:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-buffer:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-buffer:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-base:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-base:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-compression:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-compression:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-handler:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-handler:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport-native-unix-common:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-classes-quic:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-classes-quic:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-dns:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-dns:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver-dns-classes-macos:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver-dns-classes-macos:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport-native-unix-common:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport-classes-epoll:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport-classes-epoll:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-handler-proxy:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-handler-proxy:4.2.19.Final",
           "type": "Library"
         },
         {
@@ -795,7 +799,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-socks:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-socks:4.2.19.Final",
           "type": "Library"
         },
         {
@@ -835,19 +839,19 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-http-codec:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-http-codec:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.21.7",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.7",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.module:jackson-module-kotlin:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.module:jackson-module-kotlin:2.21.7",
           "type": "Library"
         },
         {
@@ -855,27 +859,27 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.grpc:grpc-api:1.83.1",
+          "name": "Gradle: io.grpc:grpc-api:1.84.1",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:linux-aarch_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:linux-aarch_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:linux-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:linux-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:osx-aarch_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:osx-aarch_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:osx-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:osx-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:windows-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:windows-x86_64:4.2.19.Final",
           "type": "Library"
         }
       ]
@@ -911,23 +915,23 @@
           "type": "Own sources"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-jdbc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-jdbc:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-ollama:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-ollama:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-openai:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-openai:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.slf4j:slf4j-api:2.0.18",
+          "name": "Gradle: org.slf4j:slf4j-api:2.0.20",
           "type": "Library"
         },
         {
@@ -935,7 +939,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: com.google.api-client:google-api-client:2.9.1",
+          "name": "Gradle: com.google.api-client:google-api-client:2.9.2",
           "type": "Library"
         },
         {
@@ -955,27 +959,27 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-jackson:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-jackson:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-http-converter:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-http-converter:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-webmvc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-webmvc:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-jdbc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-jdbc:4.1.2",
           "type": "Library"
         },
         {
@@ -983,39 +987,39 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-webclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-webclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-restclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-restclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-ollama:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-ollama:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-ollama:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-ollama:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-client-chat:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-client-chat:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-client:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-client:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-memory:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-memory:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-openai:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-openai:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-openai:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-openai:2.0.2",
           "type": "Library"
         },
         {
@@ -1075,11 +1079,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-logging:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-logging:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-autoconfigure:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-autoconfigure:4.1.2",
           "type": "Library"
         },
         {
@@ -1091,91 +1095,91 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-jackson:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-jackson:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat-runtime:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat-runtime:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-tomcat:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-tomcat:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-web:7.0.9",
+          "name": "Gradle: org.springframework:spring-web:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-servlet:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-servlet:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-webmvc:7.0.9",
+          "name": "Gradle: org.springframework:spring-webmvc:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-sql:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-sql:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-transaction:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-transaction:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-jdbc:7.0.9",
+          "name": "Gradle: org.springframework:spring-jdbc:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-reactor:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-reactor:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-webclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-webclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.projectreactor.netty:reactor-netty-http:1.3.7",
+          "name": "Gradle: io.projectreactor.netty:reactor-netty-http:1.3.8",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-restclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-restclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-retry:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-retry:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-tool:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-tool:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-observation:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-observation:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-embedding-observation:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-embedding-observation:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-model:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-model:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-retry:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-retry:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-webflux:7.0.9",
+          "name": "Gradle: org.springframework:spring-webflux:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: tools.jackson.core:jackson-databind:3.1.5",
+          "name": "Gradle: tools.jackson.core:jackson-databind:3.1.7",
           "type": "Library"
         },
         {
@@ -1191,11 +1195,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.projectreactor:reactor-core:3.8.7",
+          "name": "Gradle: io.projectreactor:reactor-core:3.8.8",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-context:7.0.9",
+          "name": "Gradle: org.springframework:spring-context:7.0.10",
           "type": "Library"
         },
         {
@@ -1207,11 +1211,15 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-image-observation:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-image-observation:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.openai:openai-java-core:4.49.0",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-audio-observation:2.0.2",
+          "type": "Library"
+        },
+        {
+          "name": "Gradle: com.openai:openai-java-core:4.80.0",
           "type": "Library"
         },
         {
@@ -1219,7 +1227,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.micrometer:micrometer-core:1.17.1",
+          "name": "Gradle: io.micrometer:micrometer-core:1.17.2",
           "type": "Library"
         },
         {
@@ -1227,7 +1235,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-context-support:7.0.9",
+          "name": "Gradle: org.springframework:spring-context-support:7.0.10",
           "type": "Library"
         },
         {
@@ -1271,7 +1279,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.grpc:grpc-context:1.83.1",
+          "name": "Gradle: io.grpc:grpc-context:1.84.1",
           "type": "Library"
         },
         {
@@ -1291,95 +1299,95 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.slf4j:jul-to-slf4j:2.0.18",
+          "name": "Gradle: org.slf4j:jul-to-slf4j:2.0.20",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-web-server:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-web-server:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-core:11.0.24",
+          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-core:11.0.27",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-el:11.0.24",
+          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-el:11.0.27",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-websocket:11.0.24",
+          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-websocket:11.0.27",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-core:7.0.9",
+          "name": "Gradle: org.springframework:spring-core:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-beans:7.0.9",
+          "name": "Gradle: org.springframework:spring-beans:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.micrometer:micrometer-observation:1.17.1",
+          "name": "Gradle: io.micrometer:micrometer-observation:1.17.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-aop:7.0.9",
+          "name": "Gradle: org.springframework:spring-aop:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-expression:7.0.9",
+          "name": "Gradle: org.springframework:spring-expression:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-persistence:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-persistence:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-tx:7.0.9",
+          "name": "Gradle: org.springframework:spring-tx:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-http-client:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-http-client:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-http:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-http:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-http2:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-http2:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-http3:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-http3:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver-dns:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver-dns:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver-dns-native-macos:osx-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver-dns-native-macos:osx-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport-native-epoll:linux-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport-native-epoll:linux-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.projectreactor.netty:reactor-netty-core:1.3.7",
+          "name": "Gradle: io.projectreactor.netty:reactor-netty-core:1.3.8",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-commons:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-commons:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-template-st:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-template-st:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-messaging:7.0.9",
+          "name": "Gradle: org.springframework:spring-messaging:7.0.10",
           "type": "Library"
         },
         {
@@ -1395,7 +1403,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: tools.jackson.core:jackson-core:3.1.5",
+          "name": "Gradle: tools.jackson.core:jackson-core:3.1.7",
           "type": "Library"
         },
         {
@@ -1411,11 +1419,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.core:jackson-core:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.core:jackson-core:2.21.7",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.core:jackson-databind:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.core:jackson-databind:2.21.7",
           "type": "Library"
         },
         {
@@ -1427,7 +1435,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.micrometer:micrometer-commons:1.17.1",
+          "name": "Gradle: io.micrometer:micrometer-commons:1.17.2",
           "type": "Library"
         },
         {
@@ -1455,55 +1463,55 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-common:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-common:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-buffer:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-buffer:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-base:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-base:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-compression:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-compression:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-handler:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-handler:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport-native-unix-common:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-classes-quic:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-classes-quic:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-dns:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-dns:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver-dns-classes-macos:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver-dns-classes-macos:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport-native-unix-common:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport-classes-epoll:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport-classes-epoll:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-handler-proxy:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-handler-proxy:4.2.19.Final",
           "type": "Library"
         },
         {
@@ -1527,7 +1535,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-socks:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-socks:4.2.19.Final",
           "type": "Library"
         },
         {
@@ -1543,19 +1551,19 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-http-codec:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-http-codec:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.21.7",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.7",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.module:jackson-module-kotlin:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.module:jackson-module-kotlin:2.21.7",
           "type": "Library"
         },
         {
@@ -1563,27 +1571,27 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.grpc:grpc-api:1.83.1",
+          "name": "Gradle: io.grpc:grpc-api:1.84.1",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:linux-aarch_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:linux-aarch_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:linux-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:linux-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:osx-aarch_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:osx-aarch_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:osx-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:osx-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:windows-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:windows-x86_64:4.2.19.Final",
           "type": "Library"
         }
       ]
@@ -1623,23 +1631,23 @@
           "type": "Module"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-jdbc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-jdbc:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-ollama:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-ollama:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-openai:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-starter-model-openai:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.slf4j:slf4j-api:2.0.18",
+          "name": "Gradle: org.slf4j:slf4j-api:2.0.20",
           "type": "Library"
         },
         {
@@ -1647,7 +1655,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: com.google.api-client:google-api-client:2.9.1",
+          "name": "Gradle: com.google.api-client:google-api-client:2.9.2",
           "type": "Library"
         },
         {
@@ -1675,31 +1683,31 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-test:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-test:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-jackson:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-jackson:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-http-converter:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-http-converter:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-webmvc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-webmvc:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-jdbc:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-jdbc:4.1.2",
           "type": "Library"
         },
         {
@@ -1707,39 +1715,39 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-webclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-webclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-restclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-restclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-ollama:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-ollama:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-ollama:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-ollama:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-client-chat:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-client-chat:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-client:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-client:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-memory:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-memory:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-openai:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-openai:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-openai:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-openai:2.0.2",
           "type": "Library"
         },
         {
@@ -1803,11 +1811,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-test:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-test:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-test-autoconfigure:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-test-autoconfigure:4.1.2",
           "type": "Library"
         },
         {
@@ -1847,11 +1855,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-core:7.0.9",
+          "name": "Gradle: org.springframework:spring-core:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-test:7.0.9",
+          "name": "Gradle: org.springframework:spring-test:7.0.10",
           "type": "Library"
         },
         {
@@ -1859,11 +1867,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-logging:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-logging:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-autoconfigure:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-autoconfigure:4.1.2",
           "type": "Library"
         },
         {
@@ -1875,91 +1883,91 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-jackson:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-jackson:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat-runtime:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-starter-tomcat-runtime:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-tomcat:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-tomcat:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-web:7.0.9",
+          "name": "Gradle: org.springframework:spring-web:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-servlet:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-servlet:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-webmvc:7.0.9",
+          "name": "Gradle: org.springframework:spring-webmvc:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-sql:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-sql:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-transaction:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-transaction:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-jdbc:7.0.9",
+          "name": "Gradle: org.springframework:spring-jdbc:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-reactor:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-reactor:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-webclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-webclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.projectreactor.netty:reactor-netty-http:1.3.7",
+          "name": "Gradle: io.projectreactor.netty:reactor-netty-http:1.3.8",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-restclient:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-restclient:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-retry:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-retry:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-tool:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-tool:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-observation:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-chat-observation:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-embedding-observation:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-embedding-observation:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-model:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-model:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-retry:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-retry:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-webflux:7.0.9",
+          "name": "Gradle: org.springframework:spring-webflux:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: tools.jackson.core:jackson-databind:3.1.5",
+          "name": "Gradle: tools.jackson.core:jackson-databind:3.1.7",
           "type": "Library"
         },
         {
@@ -1975,11 +1983,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.projectreactor:reactor-core:3.8.7",
+          "name": "Gradle: io.projectreactor:reactor-core:3.8.8",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-context:7.0.9",
+          "name": "Gradle: org.springframework:spring-context:7.0.10",
           "type": "Library"
         },
         {
@@ -1991,11 +1999,15 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-image-observation:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-image-observation:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.openai:openai-java-core:4.49.0",
+          "name": "Gradle: org.springframework.ai:spring-ai-autoconfigure-model-audio-observation:2.0.2",
+          "type": "Library"
+        },
+        {
+          "name": "Gradle: com.openai:openai-java-core:4.80.0",
           "type": "Library"
         },
         {
@@ -2003,7 +2015,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.micrometer:micrometer-core:1.17.1",
+          "name": "Gradle: io.micrometer:micrometer-core:1.17.2",
           "type": "Library"
         },
         {
@@ -2011,7 +2023,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-context-support:7.0.9",
+          "name": "Gradle: org.springframework:spring-context-support:7.0.10",
           "type": "Library"
         },
         {
@@ -2055,7 +2067,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.grpc:grpc-context:1.83.1",
+          "name": "Gradle: io.grpc:grpc-context:1.84.1",
           "type": "Library"
         },
         {
@@ -2075,7 +2087,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: net.bytebuddy:byte-buddy:1.18.11",
+          "name": "Gradle: net.bytebuddy:byte-buddy:1.18.15",
           "type": "Library"
         },
         {
@@ -2087,7 +2099,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: net.bytebuddy:byte-buddy-agent:1.18.11",
+          "name": "Gradle: net.bytebuddy:byte-buddy-agent:1.18.15",
           "type": "Library"
         },
         {
@@ -2103,91 +2115,91 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.slf4j:jul-to-slf4j:2.0.18",
+          "name": "Gradle: org.slf4j:jul-to-slf4j:2.0.20",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-web-server:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-web-server:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-core:11.0.24",
+          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-core:11.0.27",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-el:11.0.24",
+          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-el:11.0.27",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-websocket:11.0.24",
+          "name": "Gradle: org.apache.tomcat.embed:tomcat-embed-websocket:11.0.27",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-beans:7.0.9",
+          "name": "Gradle: org.springframework:spring-beans:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.micrometer:micrometer-observation:1.17.1",
+          "name": "Gradle: io.micrometer:micrometer-observation:1.17.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-aop:7.0.9",
+          "name": "Gradle: org.springframework:spring-aop:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-expression:7.0.9",
+          "name": "Gradle: org.springframework:spring-expression:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-persistence:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-persistence:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-tx:7.0.9",
+          "name": "Gradle: org.springframework:spring-tx:7.0.10",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-http-client:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-http-client:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-http:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-http:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-http2:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-http2:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-http3:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-http3:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver-dns:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver-dns:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver-dns-native-macos:osx-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver-dns-native-macos:osx-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport-native-epoll:linux-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport-native-epoll:linux-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.projectreactor.netty:reactor-netty-core:1.3.7",
+          "name": "Gradle: io.projectreactor.netty:reactor-netty-core:1.3.8",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-commons:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-commons:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.ai:spring-ai-template-st:2.0.1",
+          "name": "Gradle: org.springframework.ai:spring-ai-template-st:2.0.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework:spring-messaging:7.0.9",
+          "name": "Gradle: org.springframework:spring-messaging:7.0.10",
           "type": "Library"
         },
         {
@@ -2203,7 +2215,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: tools.jackson.core:jackson-core:3.1.5",
+          "name": "Gradle: tools.jackson.core:jackson-core:3.1.7",
           "type": "Library"
         },
         {
@@ -2219,11 +2231,11 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.core:jackson-core:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.core:jackson-core:2.21.7",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.core:jackson-databind:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.core:jackson-databind:2.21.7",
           "type": "Library"
         },
         {
@@ -2235,7 +2247,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.micrometer:micrometer-commons:1.17.1",
+          "name": "Gradle: io.micrometer:micrometer-commons:1.17.2",
           "type": "Library"
         },
         {
@@ -2243,7 +2255,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.ow2.asm:asm:9.11",
+          "name": "Gradle: org.ow2.asm:asm:9.11.1",
           "type": "Library"
         },
         {
@@ -2279,55 +2291,55 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-common:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-common:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-buffer:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-buffer:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-base:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-base:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-compression:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-compression:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-handler:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-handler:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport-native-unix-common:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-classes-quic:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-classes-quic:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-dns:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-dns:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-resolver-dns-classes-macos:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-resolver-dns-classes-macos:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport-native-unix-common:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-transport-classes-epoll:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-transport-classes-epoll:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-handler-proxy:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-handler-proxy:4.2.19.Final",
           "type": "Library"
         },
         {
@@ -2351,7 +2363,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-socks:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-socks:4.2.19.Final",
           "type": "Library"
         },
         {
@@ -2383,19 +2395,19 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.springframework.boot:spring-boot-http-codec:4.1.1",
+          "name": "Gradle: org.springframework.boot:spring-boot-http-codec:4.1.2",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.21.7",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.7",
           "type": "Library"
         },
         {
-          "name": "Gradle: com.fasterxml.jackson.module:jackson-module-kotlin:2.21.5",
+          "name": "Gradle: com.fasterxml.jackson.module:jackson-module-kotlin:2.21.7",
           "type": "Library"
         },
         {
@@ -2403,27 +2415,27 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: io.grpc:grpc-api:1.83.1",
+          "name": "Gradle: io.grpc:grpc-api:1.84.1",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:linux-aarch_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:linux-aarch_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:linux-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:linux-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:osx-aarch_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:osx-aarch_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:osx-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:osx-x86_64:4.2.19.Final",
           "type": "Library"
         },
         {
-          "name": "Gradle: io.netty:netty-codec-native-quic:windows-x86_64:4.2.17.Final",
+          "name": "Gradle: io.netty:netty-codec-native-quic:windows-x86_64:4.2.19.Final",
           "type": "Library"
         }
       ]
