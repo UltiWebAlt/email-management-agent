@@ -13,6 +13,9 @@ on:
 jobs:
   qodana:
     runs-on: ubuntu-latest
+    concurrency:
+      group: report-pages
+      cancel-in-progress: false
 
     permissions:
       contents: write
@@ -39,8 +42,9 @@ jobs:
           push-fixes: "none"
 
       - name: Deploy Qodana report to GitHub Pages
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/develop' && github.event_name != 'pull_request'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ${{ runner.temp }}/qodana/results/report
+          destination_dir: qodana
