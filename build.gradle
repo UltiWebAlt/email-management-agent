@@ -59,7 +59,7 @@ dependencies {
     implementation 'com.google.apis:google-api-services-gmail:v1-rev20260525-2.0.0'
     implementation 'javax.mail:mail:1.4.7'
     implementation 'org.apache.commons:commons-csv:1.14.1'
-    runtimeOnly 'org.xerial:sqlite-jdbc:3.53.4.0'
+    runtimeOnly 'org.xerial:sqlite-jdbc:3.54.1.0'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.hamcrest:hamcrest:3.0'
