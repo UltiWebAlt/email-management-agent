@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmailInferenceConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.config</a> &gt; <span class="el_source">EmailInferenceConfiguration.java</span></div><h1>EmailInferenceConfiguration.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.config;
+
+import com.ultiweb.jobs.svc.ai.ConcurrencyLimitedEmailAiClient;
+import com.ultiweb.jobs.svc.ai.EmailAiClient;
+import com.ultiweb.jobs.svc.ai.SpringAiEmailClient;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.model.ollama.autoconfigure.OllamaChatProperties;
+import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.ai.ollama.api.OllamaApi;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+
+@Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(OllamaChatProperties.class)
+<span class="fc" id="L20">public class EmailInferenceConfiguration {</span>
+	@Bean
+	OllamaChatModel ollamaChatModel(final OllamaApi api, final OllamaChatProperties properties) {
+<span class="fc" id="L23">		return OllamaChatModel.builder().ollamaApi(api).options(properties.toOptions()).build();</span>
+	}
+
+	@Bean
+	EmailAiClient summaryAiClient(final OllamaChatModel model,
+			@Value(&quot;${email.inference.local-max-concurrent-requests:2}&quot;) final int concurrency) {
+<span class="fc" id="L29">		return new ConcurrencyLimitedEmailAiClient(new SpringAiEmailClient(ChatClient.create(model)), concurrency);</span>
+	}
+
+	@Bean(&quot;tagAiClient&quot;)
+	@Profile(&quot;deepinfra&quot;)
+	EmailAiClient deepInfraTagAiClient(final OpenAiChatModel model,
+			@Value(&quot;${email.inference.deepinfra-max-concurrent-requests:8}&quot;) final int concurrency) {
+<span class="fc" id="L36">		return new ConcurrencyLimitedEmailAiClient(new SpringAiEmailClient(ChatClient.create(model)), concurrency);</span>
+	}
+
+	@Bean(&quot;tagAiClient&quot;)
+	@Profile(&quot;ollama&quot;)
+	EmailAiClient ollamaTagAiClient(@Qualifier(&quot;summaryAiClient&quot;)
+			final EmailAiClient summaryAiClient) {
+<span class="fc" id="L43">		return summaryAiClient;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

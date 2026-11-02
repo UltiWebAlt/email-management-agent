@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.web</a> &gt; <span class="el_source">DashboardExceptionHandler.java</span></div><h1>DashboardExceptionHandler.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.web;
+
+import com.ultiweb.jobs.svc.dashboard.DashboardJobNotFoundException;
+import com.ultiweb.jobs.svc.dashboard.ResponseSelectionException;
+import java.time.Instant;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+<span class="fc" id="L12">public final class DashboardExceptionHandler {</span>
+	@ExceptionHandler(DashboardJobNotFoundException.class)
+	public ResponseEntity&lt;ApiError&gt; handleNotFound(final DashboardJobNotFoundException exception) {
+<span class="fc" id="L15">		final HttpStatus status = HttpStatus.NOT_FOUND;</span>
+<span class="fc" id="L16">		return ResponseEntity.status(status)</span>
+<span class="fc" id="L17">				.body(new ApiError(Instant.now(), status.value(), exception.getMessage()));</span>
+	}
+
+	@ExceptionHandler(ResponseSelectionException.class)
+	public ResponseEntity&lt;ApiError&gt; handleBadRequest(final ResponseSelectionException exception) {
+<span class="nc" id="L22">		final HttpStatus status = HttpStatus.BAD_REQUEST;</span>
+<span class="nc" id="L23">		return ResponseEntity.status(status)</span>
+<span class="nc" id="L24">				.body(new ApiError(Instant.now(), status.value(), exception.getMessage()));</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardEventStream.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.dashboard</a> &gt; <span class="el_source">DashboardEventStream.java</span></div><h1>DashboardEventStream.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.dashboard;
+
+import com.ultiweb.jobs.svc.persistence.ArchitectOpportunityAddedEvent;
+import com.ultiweb.jobs.svc.persistence.ArchitectOpportunityUpdatedEvent;
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+/** Streams lightweight dashboard invalidation events to connected browsers. */
+@Component
+<span class="fc" id="L18">public final class DashboardEventStream {</span>
+<span class="fc" id="L19">	private static final Logger LOGGER = LoggerFactory.getLogger(DashboardEventStream.class);</span>
+	private static final long CONNECTION_TIMEOUT_MILLIS = 30 * 60 * 1000L;
+<span class="fc" id="L21">	private final CopyOnWriteArrayList&lt;SseEmitter&gt; emitters = new CopyOnWriteArrayList&lt;&gt;();</span>
+
+	public SseEmitter connect() {
+<span class="fc" id="L24">		final SseEmitter emitter = new SseEmitter(CONNECTION_TIMEOUT_MILLIS);</span>
+<span class="fc" id="L25">		emitters.add(emitter);</span>
+<span class="pc" id="L26">		emitter.onCompletion(() -&gt; emitters.remove(emitter));</span>
+<span class="pc" id="L27">		emitter.onTimeout(() -&gt; emitters.remove(emitter));</span>
+<span class="pc" id="L28">		emitter.onError(error -&gt; emitters.remove(emitter));</span>
+		try {
+<span class="fc" id="L30">			emitter.send(SseEmitter.event().name(&quot;connected&quot;).data(Map.of(&quot;connected&quot;, true)));</span>
+<span class="nc" id="L31">		} catch (final IOException exception) {</span>
+<span class="nc" id="L32">			emitters.remove(emitter);</span>
+<span class="nc" id="L33">			emitter.completeWithError(exception);</span>
+<span class="fc" id="L34">		}</span>
+<span class="fc" id="L35">		return emitter;</span>
+	}
+
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void opportunityAdded(final ArchitectOpportunityAddedEvent event) {
+<span class="fc" id="L40">		emit(&quot;opportunity-added&quot;);</span>
+<span class="fc" id="L41">	}</span>
+
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void opportunityUpdated(final ArchitectOpportunityUpdatedEvent event) {
+<span class="fc" id="L45">		emit(&quot;opportunity-updated&quot;);</span>
+<span class="fc" id="L46">	}</span>
+
+	public void importStateChanged(final boolean running) {
+<span class="fc" id="L49">		emit(&quot;import-state&quot;, Map.of(&quot;running&quot;, running));</span>
+<span class="fc" id="L50">	}</span>
+
+	@EventListener
+	public void responseUpdated(final DashboardResponseUpdatedEvent event) {
+<span class="fc" id="L54">		emit(&quot;response-updated&quot;);</span>
+<span class="fc" id="L55">	}</span>
+
+	private void emit(final String eventName) {
+<span class="fc" id="L58">		emit(eventName, Map.of(&quot;refresh&quot;, true));</span>
+<span class="fc" id="L59">	}</span>
+
+	private void emit(final String eventName, final Map&lt;String, Object&gt; data) {
+<span class="fc bfc" id="L62" title="All 2 branches covered.">		for (final SseEmitter emitter : emitters) {</span>
+			try {
+<span class="fc" id="L64">				emitter.send(SseEmitter.event().name(eventName).data(data));</span>
+<span class="fc" id="L65">			} catch (final IOException | IllegalStateException exception) {</span>
+<span class="fc" id="L66">				emitters.remove(emitter);</span>
+<span class="fc" id="L67">				LOGGER.debug(&quot;Removing disconnected dashboard event stream ({}).&quot;,</span>
+<span class="fc" id="L68">					exception.getClass().getSimpleName());</span>
+<span class="fc" id="L69">			}</span>
+<span class="fc" id="L70">		}</span>
+<span class="fc" id="L71">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

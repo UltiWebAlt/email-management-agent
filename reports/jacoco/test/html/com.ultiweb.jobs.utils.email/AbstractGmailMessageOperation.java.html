@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractGmailMessageOperation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.utils.email</a> &gt; <span class="el_source">AbstractGmailMessageOperation.java</span></div><h1>AbstractGmailMessageOperation.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.utils.email;
+
+import com.google.api.client.googleapis.json.GoogleJsonError;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.json.GenericJson;
+import com.google.api.services.gmail.model.Message;
+import java.io.File;
+import java.io.IOException;
+import java.util.function.Function;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+
+<span class="nc" id="L14">abstract class AbstractGmailMessageOperation {</span>
+	private static final String MESSAGE_SUBJECT = &quot;Test message&quot;;
+	private static final String BODY_TEXT = &quot;lorem ipsum.&quot;;
+
+	protected static Message createMessage(final String fromEmailAddress, final String toEmailAddress)
+			throws MessagingException, IOException {
+<span class="fc" id="L20">		final MimeMessage email = CreateEmail.createEmail(</span>
+				toEmailAddress, fromEmailAddress, MESSAGE_SUBJECT, BODY_TEXT);
+<span class="fc" id="L22">		return CreateMessage.createMessageWithEmail(email);</span>
+	}
+
+	protected static Message createMessageWithAttachment(final String fromEmailAddress,
+			final String toEmailAddress, final File file) throws MessagingException, IOException {
+<span class="nc" id="L27">		final MimeMessage email = CreateEmail.createEmailWithAttachment(</span>
+				toEmailAddress, fromEmailAddress, MESSAGE_SUBJECT, BODY_TEXT, file);
+<span class="nc" id="L29">		return CreateMessage.createMessageWithEmail(email);</span>
+	}
+
+	protected static &lt;T extends GenericJson&gt; T execute(final String successDescription,
+			final String operationDescription, final Logger logger, final GmailApiCall&lt;T&gt; operation,
+			final Function&lt;T, String&gt; idExtractor) throws IOException {
+		try {
+<span class="fc" id="L36">			final T result = operation.execute();</span>
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">			if (logger.isInfoEnabled()) {</span>
+<span class="fc" id="L38">				logger.info(&quot;{}: id={}&quot;, successDescription, idExtractor.apply(result));</span>
+			}
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">			if (logger.isDebugEnabled()) {</span>
+<span class="nc" id="L41">				logger.debug(&quot;{} response: {}&quot;, successDescription, result.toPrettyString());</span>
+			}
+<span class="fc" id="L43">			return result;</span>
+<span class="fc" id="L44">		} catch (GoogleJsonResponseException exception) {</span>
+<span class="fc" id="L45">			final GoogleJsonError error = exception.getDetails();</span>
+<span class="pc bpc" id="L46" title="2 of 4 branches missed.">			if (error != null &amp;&amp; error.getCode() == 403) {</span>
+<span class="fc" id="L47">				logger.error(&quot;Unable to {}: {}&quot;, operationDescription, error, exception);</span>
+			}
+<span class="fc" id="L49">			throw exception;</span>
+		}
+	}
+
+	@FunctionalInterface
+	protected interface GmailApiCall&lt;T extends GenericJson&gt; {
+		T execute() throws IOException;
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

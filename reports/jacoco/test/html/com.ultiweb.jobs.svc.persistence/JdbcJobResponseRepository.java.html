@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JdbcJobResponseRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.persistence</a> &gt; <span class="el_source">JdbcJobResponseRepository.java</span></div><h1>JdbcJobResponseRepository.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.persistence;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class JdbcJobResponseRepository implements JobResponseRepository {
+	private final JdbcOperations jdbcTemplate;
+
+<span class="fc" id="L15">	public JdbcJobResponseRepository(final JdbcOperations jdbcTemplate) {</span>
+<span class="fc" id="L16">		this.jdbcTemplate = jdbcTemplate;</span>
+<span class="fc" id="L17">	}</span>
+
+	@Override
+	public int updateSelections(final List&lt;ResponseSelectionChange&gt; changes) {
+<span class="nc" id="L21">		int updated = 0;</span>
+<span class="nc bnc" id="L22" title="All 2 branches missed.">		for (final ResponseSelectionChange change : changes) {</span>
+<span class="nc" id="L23">			updated += jdbcTemplate.update(&quot;UPDATE positions SET respond_to = ? WHERE id = ?&quot;,</span>
+<span class="nc bnc" id="L24" title="All 2 branches missed.">					change.selected() ? 1 : 0, change.positionId());</span>
+<span class="nc" id="L25">		}</span>
+<span class="nc" id="L26">		return updated;</span>
+	}
+
+	@Override
+	public List&lt;Long&gt; findSelectedWithoutResponse() {
+<span class="nc" id="L31">		return jdbcTemplate.queryForList(&quot;&quot;&quot;</span>
+				SELECT p.id
+				FROM positions p
+				WHERE p.respond_to = 1
+				AND NOT EXISTS (
+				SELECT 1 FROM responses r
+				WHERE r.position_id = p.id
+				AND r.response_type = 'INITIAL_RESPONSE'
+				AND r.response_status &lt;&gt; 'FAILED')
+				ORDER BY p.id
+				&quot;&quot;&quot;, Long.class);
+	}
+
+	@Override
+	public boolean isSelected(final long positionId) {
+<span class="nc" id="L46">		final Integer selected = jdbcTemplate.queryForObject(</span>
+<span class="nc" id="L47">				&quot;SELECT respond_to FROM positions WHERE id = ?&quot;, Integer.class, positionId);</span>
+<span class="nc" id="L48">		return Integer.valueOf(1).equals(selected);</span>
+	}
+
+	@Override
+	public Optional&lt;ResponseCandidate&gt; claimResponse(final long positionId, final Instant now) {
+<span class="fc" id="L53">		final int inserted = jdbcTemplate.update(&quot;&quot;&quot;</span>
+				INSERT INTO responses (created_at, response_type, response_status, updated_at, position_id, recruiter_id)
+				SELECT ?, 'INITIAL_RESPONSE', 'GENERATING', ?, p.id, p.recruiter_id
+				FROM positions p
+				WHERE p.id = ? AND p.respond_to = 1
+				AND NOT EXISTS (
+				SELECT 1 FROM responses r WHERE r.position_id = p.id AND r.response_type = 'INITIAL_RESPONSE')
+<span class="fc" id="L60">				&quot;&quot;&quot;, now.toString(), now.toString(), positionId);</span>
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">		boolean claimed = inserted == 1;</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">		if (!claimed) {</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">			claimed = jdbcTemplate.update(&quot;&quot;&quot;</span>
+					UPDATE responses SET response_status = 'GENERATING', updated_at = ?
+					WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'FAILED'
+					AND EXISTS (SELECT 1 FROM positions p WHERE p.id = ? AND p.respond_to = 1)
+<span class="nc" id="L67">					&quot;&quot;&quot;, now.toString(), positionId, positionId) == 1;</span>
+		}
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">		if (!claimed) {</span>
+<span class="nc" id="L70">			return Optional.empty();</span>
+		}
+<span class="fc" id="L72">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
+				SELECT p.id, p.recruiter_id, p.source_account, p.source_subject, p.source_sender,
+				p.description, p.summary, p.title, r.email AS recruiter_email, r.name AS recruiter_name
+				FROM positions p
+				JOIN recruiters r ON r.id = p.recruiter_id
+				JOIN responses response ON response.position_id = p.id
+				WHERE p.id = ? AND p.respond_to = 1 AND response.response_type = 'INITIAL_RESPONSE'
+				AND response.response_status = 'GENERATING'
+<span class="fc" id="L80">				&quot;&quot;&quot;, JdbcJobResponseRepository::candidateRow, positionId).stream().findFirst();</span>
+	}
+
+	@Override
+	public void saveGeneratedResponse(final long positionId, final String response,
+			final String status, final Instant updatedAt) {
+<span class="fc" id="L86">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+				UPDATE responses SET response_content = ?, response_status = ?, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'GENERATING'
+<span class="fc" id="L89">				&quot;&quot;&quot;, response, status, updatedAt.toString(), positionId);</span>
+<span class="fc" id="L90">	}</span>
+
+	@Override
+	public void saveDraftId(final long positionId, final String draftId, final Instant updatedAt) {
+<span class="fc" id="L94">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+				UPDATE responses SET gmail_draft_id = ?, response_status = 'DRAFT_CREATED', updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'GENERATED'
+<span class="fc" id="L97">				&quot;&quot;&quot;, draftId, updatedAt.toString(), positionId);</span>
+<span class="fc" id="L98">	}</span>
+
+	@Override
+	public void markResponseFailed(final long positionId, final Instant updatedAt) {
+<span class="nc" id="L102">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+				UPDATE responses SET response_status = 'FAILED', updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status IN ('GENERATING', 'GENERATED')
+<span class="nc" id="L105">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
+<span class="nc" id="L106">	}</span>
+
+	private static ResponseCandidate candidateRow(final ResultSet resultSet, final int rowNumber) throws SQLException {
+<span class="fc" id="L109">		return new ResponseCandidate(</span>
+<span class="fc" id="L110">				resultSet.getLong(&quot;id&quot;),</span>
+<span class="fc" id="L111">				resultSet.getLong(&quot;recruiter_id&quot;),</span>
+<span class="fc" id="L112">				resultSet.getString(&quot;source_account&quot;),</span>
+<span class="fc" id="L113">				resultSet.getString(&quot;source_subject&quot;),</span>
+<span class="fc" id="L114">				resultSet.getString(&quot;source_sender&quot;),</span>
+<span class="fc" id="L115">				resultSet.getString(&quot;description&quot;),</span>
+<span class="fc" id="L116">				resultSet.getString(&quot;summary&quot;),</span>
+<span class="fc" id="L117">				resultSet.getString(&quot;title&quot;),</span>
+<span class="fc" id="L118">				resultSet.getString(&quot;recruiter_email&quot;),</span>
+<span class="fc" id="L119">				resultSet.getString(&quot;recruiter_name&quot;));</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

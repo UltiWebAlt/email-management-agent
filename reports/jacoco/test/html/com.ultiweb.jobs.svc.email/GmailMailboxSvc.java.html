@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GmailMailboxSvc.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.email</a> &gt; <span class="el_source">GmailMailboxSvc.java</span></div><h1>GmailMailboxSvc.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.email;
+
+import com.google.api.services.gmail.Gmail;
+import com.google.api.services.gmail.GmailScopes;
+import com.google.api.services.gmail.model.Label;
+import com.google.api.services.gmail.model.ListLabelsResponse;
+import com.google.api.services.gmail.model.ListMessagesResponse;
+import com.google.api.services.gmail.model.MessagePart;
+import com.google.api.services.gmail.model.MessagePartHeader;
+import com.google.api.services.gmail.model.ModifyMessageRequest;
+import com.ultiweb.jobs.svc.ai.EmailTag;
+import com.ultiweb.jobs.utils.email.GmailServiceFactory;
+import com.ultiweb.jobs.utils.oauth2.GMailOAuth;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+/**
+ * Gmail API implementation for retrieving unread email and applying user labels.
+ */
+@Service
+public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
+<span class="fc" id="L28">	private static final Logger LOGGER = LoggerFactory.getLogger(GmailMailboxSvc.class);</span>
+	private static final String USER_ID = &quot;me&quot;;
+<span class="fc" id="L30">	private static final List&lt;String&gt; GMAIL_SCOPES = List.of(GmailScopes.GMAIL_MODIFY);</span>
+
+	private final GMailOAuth gmailOAuth;
+	private final int initialLookbackDays;
+
+	public GmailMailboxSvc(final GMailOAuth gmailOAuth,
+			@org.springframework.beans.factory.annotation.Value(&quot;${gmail.polling.initial-lookback-days:14}&quot;)
+<span class="fc" id="L37">			final int initialLookbackDays) {</span>
+<span class="fc bfc" id="L38" title="All 4 branches covered.">		if (initialLookbackDays &lt; 1 || initialLookbackDays &gt; 365) {</span>
+<span class="fc" id="L39">			throw new IllegalArgumentException(&quot;Initial Gmail lookback must be between 1 and 365 days&quot;);</span>
+		}
+<span class="fc" id="L41">		this.gmailOAuth = gmailOAuth;</span>
+<span class="fc" id="L42">		this.initialLookbackDays = initialLookbackDays;</span>
+<span class="fc" id="L43">	}</span>
+
+	@Override
+	public List&lt;EmailMessage&gt; readEmailsForTriage() throws IOException {
+<span class="fc" id="L47">		return readEmails(&quot;in:inbox newer_than:&quot; + initialLookbackDays + &quot;d -label:&quot; + EmailWorkflowLabels.PROCESSED,</span>
+				&quot;Checking emails pending triage for account {}.&quot;);
+	}
+
+	@Override
+	public List&lt;EmailMessage&gt; readArchitectEmailsPendingPersistence() throws IOException {
+<span class="fc" id="L53">		return readEmails(&quot;label:&quot; + EmailTag.ARCHITECT_JOBS.labelName()</span>
+				+ &quot; -label:&quot; + EmailWorkflowLabels.ARCHITECT_PERSISTED,
+				&quot;Checking manually tagged architect emails for account {}.&quot;);
+	}
+
+	/** Reads architect-labeled messages without changing Gmail labels, for explicit development imports. */
+	public List&lt;EmailMessage&gt; readArchitectLabeledEmailsForDevelopment() throws IOException {
+<span class="nc" id="L60">		return readEmails(&quot;label:&quot; + EmailTag.ARCHITECT_JOBS.labelName(),</span>
+				&quot;Reading architect-labeled messages for development import from account {}.&quot;, true);
+	}
+
+	/** Reads recent inbox mail for explicit development classification without modifying Gmail. */
+	public List&lt;EmailMessage&gt; readRecentInboxEmailsForDevelopment() throws IOException {
+<span class="nc" id="L66">		return readEmails(&quot;in:inbox newer_than:&quot; + initialLookbackDays + &quot;d&quot;,</span>
+				&quot;Reading recent inbox messages for development import from account {}.&quot;, true);
+	}
+
+	private List&lt;EmailMessage&gt; readEmails(final String query, final String logMessage) throws IOException {
+<span class="fc" id="L71">		return readEmails(query, logMessage, false);</span>
+	}
+
+	private List&lt;EmailMessage&gt; readEmails(final String query, final String logMessage,
+			final boolean failOnAccountError) throws IOException {
+<span class="fc" id="L76">		final List&lt;EmailMessage&gt; emails = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">		for (final String account : gmailOAuth.accounts()) {</span>
+<span class="fc" id="L78">			LOGGER.info(logMessage, account);</span>
+			try {
+<span class="fc" id="L80">				final Gmail gmail = gmail(account);</span>
+<span class="fc" id="L81">				final var request = gmail.users().messages().list(USER_ID).setQ(query);</span>
+				String nextPage;
+				do {
+<span class="fc" id="L84">					final ListMessagesResponse response = request.execute();</span>
+<span class="fc" id="L85">					emails.addAll(emailMessages(gmail, account, response));</span>
+<span class="fc" id="L86">					nextPage = response.getNextPageToken();</span>
+<span class="fc" id="L87">					request.setPageToken(nextPage);</span>
+<span class="pc bpc" id="L88" title="1 of 4 branches missed.">				} while (nextPage != null &amp;&amp; !nextPage.isBlank());</span>
+<span class="fc" id="L89">			} catch (final IOException | RuntimeException exception) {</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">				if (failOnAccountError) {</span>
+<span class="nc" id="L91">					throw new IOException(&quot;Unable to read Gmail messages for development import&quot;, exception);</span>
+				}
+<span class="fc" id="L93">				LOGGER.error(&quot;Unable to read account {}; continuing other accounts and retrying on the next poll.&quot;, account, exception);</span>
+<span class="fc" id="L94">			}</span>
+<span class="fc" id="L95">		}</span>
+<span class="fc" id="L96">		return List.copyOf(emails);</span>
+	}
+
+	/**
+	 * Returns up to maxResults newest messages per configured account without altering them.
+	 */
+	public List&lt;EmailMessage&gt; readLatestEmails(final int maxResults) throws IOException {
+<span class="pc bpc" id="L103" title="2 of 4 branches missed.">		if (maxResults &lt; 1 || maxResults &gt; 500) {</span>
+<span class="nc" id="L104">			throw new IllegalArgumentException(&quot;maxResults must be between 1 and 500&quot;);</span>
+		}
+<span class="fc" id="L106">		final List&lt;EmailMessage&gt; emails = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">		for (final String account : gmailOAuth.accounts()) {</span>
+<span class="fc" id="L108">			final Gmail gmail = gmail(account);</span>
+<span class="fc" id="L109">			final ListMessagesResponse response = gmail.users().messages().list(USER_ID)</span>
+<span class="fc" id="L110">					.setMaxResults((long) maxResults)</span>
+<span class="fc" id="L111">					.execute();</span>
+<span class="fc" id="L112">			emails.addAll(emailMessages(gmail, account, response));</span>
+<span class="fc" id="L113">		}</span>
+<span class="fc" id="L114">		return List.copyOf(emails);</span>
+	}
+
+	private List&lt;EmailMessage&gt; emailMessages(final Gmail gmail, final String account, final ListMessagesResponse response) {
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">		if (response.getMessages() == null) {</span>
+<span class="nc" id="L119">			return List.of();</span>
+		}
+<span class="fc" id="L121">		return response.getMessages().stream()</span>
+<span class="fc" id="L122">				.map(message -&gt; getEmail(gmail, account, message.getId()))</span>
+<span class="fc" id="L123">				.toList();</span>
+	}
+
+	@Override
+	public void applyLabel(final String account, final String messageId, final String labelName) throws IOException {
+<span class="fc" id="L128">		final Gmail gmail = gmail(account);</span>
+<span class="fc" id="L129">		final String labelId = findOrCreateLabel(gmail, labelName);</span>
+<span class="fc" id="L130">		gmail.users().messages().modify(USER_ID, messageId,</span>
+<span class="fc" id="L131">				new ModifyMessageRequest().setAddLabelIds(List.of(labelId))).execute();</span>
+<span class="fc" id="L132">	}</span>
+
+	Gmail gmail(final String account) throws IOException {
+<span class="nc" id="L135">		return GmailServiceFactory.create(gmailOAuth, GMAIL_SCOPES, account);</span>
+	}
+
+	private EmailMessage getEmail(final Gmail gmail, final String account, final String messageId) {
+		try {
+<span class="fc" id="L140">			final com.google.api.services.gmail.model.Message message = gmail.users().messages().get(USER_ID, messageId)</span>
+<span class="fc" id="L141">					.setFormat(&quot;full&quot;)</span>
+<span class="fc" id="L142">					.execute();</span>
+<span class="fc" id="L143">			final MessagePart payload = message.getPayload();</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">			final Instant receivedAt = message.getInternalDate() == null ? null : Instant.ofEpochMilli(message.getInternalDate());</span>
+<span class="fc" id="L145">			final ExtractedEmailBody body = new GmailMessageBodyExtractor(gmail, messageId).extractContent(payload);</span>
+<span class="fc" id="L146">			return new EmailMessage(account, message.getId(), header(payload, &quot;Subject&quot;), header(payload, &quot;From&quot;),</span>
+<span class="fc" id="L147">					body.text(), receivedAt, body.html());</span>
+<span class="nc" id="L148">		} catch (final IOException | IllegalArgumentException exception) {</span>
+<span class="nc" id="L149">			throw new EmailTriageException(&quot;Unable to read message &quot; + messageId + &quot; for account &quot; + account, exception);</span>
+		}
+	}
+
+	private String findOrCreateLabel(final Gmail gmail, final String labelName) throws IOException {
+<span class="fc" id="L154">		final ListLabelsResponse response = gmail.users().labels().list(USER_ID).execute();</span>
+<span class="fc" id="L155">		final Optional&lt;Label&gt; existing = Optional.ofNullable(response.getLabels()).orElseGet(List::of).stream()</span>
+<span class="fc" id="L156">				.filter(label -&gt; labelName.equals(label.getName()))</span>
+<span class="fc" id="L157">				.findFirst();</span>
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">		if (existing.isPresent()) {</span>
+<span class="fc" id="L159">			return existing.get().getId();</span>
+		}
+<span class="nc" id="L161">		return gmail.users().labels().create(USER_ID, new Label().setName(labelName)).execute().getId();</span>
+	}
+
+	private static String header(final MessagePart payload, final String name) {
+<span class="fc" id="L165">		return Optional.ofNullable(payload.getHeaders()).orElseGet(List::of).stream()</span>
+<span class="pc" id="L166">				.filter(header -&gt; name.equalsIgnoreCase(header.getName()))</span>
+<span class="fc" id="L167">				.map(MessagePartHeader::getValue)</span>
+<span class="fc" id="L168">				.findFirst()</span>
+<span class="fc" id="L169">				.orElse(&quot;&quot;);</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

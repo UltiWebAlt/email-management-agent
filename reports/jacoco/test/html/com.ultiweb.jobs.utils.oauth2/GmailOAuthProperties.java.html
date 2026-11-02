@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GmailOAuthProperties.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.utils.oauth2</a> &gt; <span class="el_source">GmailOAuthProperties.java</span></div><h1>GmailOAuthProperties.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.utils.oauth2;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+
+import java.util.List;
+import java.util.Locale;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties(&quot;gmail.oauth&quot;)
+public record GmailOAuthProperties(
+		String projectId,
+		String authUri,
+		String tokenUri,
+		String authProviderX509CertUrl,
+		List&lt;String&gt; redirectUris,
+		int callbackPort,
+		String clientId,
+		String clientSecret,
+		List&lt;String&gt; accounts) {
+
+<span class="fc" id="L22">	public GmailOAuthProperties {</span>
+<span class="fc bfc" id="L23" title="All 4 branches covered.">		if (accounts == null || accounts.isEmpty()) {</span>
+<span class="fc" id="L24">			throw new IllegalArgumentException(&quot;Configure gmail.oauth.accounts with at least one Google account email address&quot;);</span>
+		}
+<span class="fc bfc" id="L26" title="All 2 branches covered.">		redirectUris = redirectUris == null ? List.of() : List.copyOf(redirectUris);</span>
+<span class="fc" id="L27">		accounts = List.copyOf(accounts.stream().map(GmailOAuthProperties::normalizeAccount).distinct().toList());</span>
+<span class="fc" id="L28">	}</span>
+
+	static String normalizeAccount(final String account) {
+<span class="pc bpc" id="L31" title="1 of 4 branches missed.">		if (account == null || !account.trim().matches(&quot;[^\\s@,]+@[^\\s@,]+&quot;)) {</span>
+<span class="fc" id="L32">			throw new IllegalArgumentException(&quot;gmail.oauth.accounts must contain Google account email addresses&quot;);</span>
+		}
+<span class="fc" id="L34">		return account.trim().toLowerCase(Locale.ROOT);</span>
+	}
+
+	GoogleClientSecrets toClientSecrets() {
+<span class="fc" id="L38">		final GoogleClientSecrets.Details details = new GoogleClientSecrets.Details()</span>
+<span class="fc" id="L39">				.setClientId(clientId)</span>
+<span class="fc" id="L40">				.setClientSecret(clientSecret)</span>
+<span class="fc" id="L41">				.setAuthUri(authUri)</span>
+<span class="fc" id="L42">				.setTokenUri(tokenUri)</span>
+<span class="fc" id="L43">				.setRedirectUris(redirectUris);</span>
+<span class="fc" id="L44">		return new GoogleClientSecrets().setInstalled(details);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

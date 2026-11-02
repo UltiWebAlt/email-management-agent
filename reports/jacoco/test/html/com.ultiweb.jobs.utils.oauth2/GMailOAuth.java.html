@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GMailOAuth.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.utils.oauth2</a> &gt; <span class="el_source">GMailOAuth.java</span></div><h1>GMailOAuth.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.utils.oauth2;
+
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.GenericJson;
+import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.services.gmail.GmailScopes;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+@Component
+public class GMailOAuth {
+<span class="fc" id="L28">	private static final Logger LOGGER = LoggerFactory.getLogger(GMailOAuth.class);</span>
+<span class="fc" id="L29">	private static final GsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();</span>
+<span class="fc" id="L30">	private static final List&lt;String&gt; DEFAULT_SCOPES = List.of(GmailScopes.GMAIL_LABELS);</span>
+	private static final String EMAIL_SCOPE = &quot;https://www.googleapis.com/auth/userinfo.email&quot;;
+	private final GmailOAuthProperties oauthProperties;
+
+<span class="fc" id="L34">	public GMailOAuth(final GmailOAuthProperties oauthProperties) {</span>
+<span class="fc" id="L35">		this.oauthProperties = oauthProperties;</span>
+<span class="fc" id="L36">	}</span>
+
+	public List&lt;String&gt; accounts() {
+<span class="fc" id="L39">		return oauthProperties.accounts();</span>
+	}
+
+	public String singleAccount() {
+<span class="pc bpc" id="L43" title="1 of 2 branches missed.">		if (accounts().size() != 1) {</span>
+<span class="fc" id="L44">			throw new IllegalStateException(&quot;Multiple Gmail accounts are configured; select an account explicitly&quot;);</span>
+		}
+<span class="nc" id="L46">		return accounts().getFirst();</span>
+	}
+
+	public Credential authorize(final NetHttpTransport httpTransport) throws IOException {
+<span class="nc" id="L50">		return authorize(httpTransport, DEFAULT_SCOPES, singleAccount());</span>
+	}
+
+	public Credential authorize(final NetHttpTransport httpTransport, final List&lt;String&gt; scopes) throws IOException {
+<span class="nc" id="L54">		return authorize(httpTransport, scopes, singleAccount());</span>
+	}
+
+	public synchronized Credential authorize(final NetHttpTransport httpTransport, final List&lt;String&gt; scopes,
+			final String requestedAccount) throws IOException {
+<span class="fc" id="L59">		final String account = GmailOAuthProperties.normalizeAccount(requestedAccount);</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">		if (!accounts().contains(account)) {</span>
+<span class="fc" id="L61">			throw new IllegalArgumentException(&quot;Gmail account is not configured: &quot; + account);</span>
+		}
+<span class="fc" id="L63">		final List&lt;String&gt; requestedScopes = Stream.concat(scopes.stream(), Stream.of(EMAIL_SCOPE))</span>
+<span class="fc" id="L64">				.distinct().sorted().toList();</span>
+<span class="fc" id="L65">		final String tokenKey = tokenKey(account, requestedScopes);</span>
+<span class="fc" id="L66">		LOGGER.info(&quot;Preparing Gmail OAuth authorization for account {}.&quot;, account);</span>
+<span class="fc" id="L67">		final GoogleAuthorizationCodeFlow flow = createFlow(httpTransport, requestedScopes);</span>
+<span class="fc" id="L68">		final Credential credential = installedApp(flow, account).authorize(tokenKey);</span>
+<span class="fc" id="L69">		final String authenticatedAccount = authenticatedEmail(httpTransport, credential);</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">		if (!account.equalsIgnoreCase(authenticatedAccount)) {</span>
+<span class="fc" id="L71">			flow.getCredentialDataStore().delete(tokenKey);</span>
+<span class="fc" id="L72">			throw new IOException(&quot;Expected Gmail account &quot; + account + &quot; but authorized &quot; + authenticatedAccount</span>
+					+ &quot;. The mismatched token was removed; retry and sign in with &quot; + account + &quot;.&quot;);
+		}
+<span class="fc" id="L75">		LOGGER.info(&quot;Gmail OAuth credentials ready for account {}.&quot;, account);</span>
+<span class="fc" id="L76">		return credential;</span>
+	}
+
+	GoogleAuthorizationCodeFlow createFlow(final NetHttpTransport httpTransport, final List&lt;String&gt; scopes) throws IOException {
+<span class="nc" id="L80">		return new GoogleAuthorizationCodeFlow.Builder(httpTransport, JSON_FACTORY, oauthProperties.toClientSecrets(), scopes)</span>
+<span class="nc" id="L81">				.setDataStoreFactory(new FileDataStoreFactory(new File(&quot;tokens&quot;)))</span>
+<span class="nc" id="L82">				.setAccessType(&quot;offline&quot;)</span>
+<span class="nc" id="L83">				.build();</span>
+	}
+
+	AuthorizationCodeInstalledApp installedApp(final GoogleAuthorizationCodeFlow flow, final String account) {
+<span class="nc" id="L87">		final LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(oauthProperties.callbackPort()).build();</span>
+<span class="nc" id="L88">		return new AccountAuthorizationCodeInstalledApp(flow, receiver, account, new AuthorizationCodeInstalledApp.DefaultBrowser());</span>
+	}
+
+	String authenticatedEmail(final NetHttpTransport transport, final Credential credential) throws IOException {
+<span class="nc" id="L92">		final var request = transport.createRequestFactory(credential)</span>
+<span class="nc" id="L93">				.buildGetRequest(new GenericUrl(&quot;https://www.googleapis.com/oauth2/v2/userinfo&quot;));</span>
+<span class="nc" id="L94">		request.setParser(new JsonObjectParser(JSON_FACTORY));</span>
+<span class="nc" id="L95">		final var response = request.execute();</span>
+		try {
+<span class="nc" id="L97">			final GenericJson profile = response.parseAs(GenericJson.class);</span>
+<span class="nc" id="L98">			return (String) profile.get(&quot;email&quot;);</span>
+		} finally {
+<span class="nc" id="L100">			response.disconnect();</span>
+		}
+	}
+
+	static String tokenKey(final String account, final List&lt;String&gt; scopes) {
+<span class="fc" id="L105">		final String scopeKey = String.join(&quot; &quot;, scopes.stream().distinct().sorted().toList());</span>
+		try {
+<span class="fc" id="L107">			final byte[] digest = MessageDigest.getInstance(&quot;SHA-256&quot;).digest(scopeKey.getBytes(StandardCharsets.UTF_8));</span>
+<span class="fc" id="L108">			return GmailOAuthProperties.normalizeAccount(account) + &quot;:&quot; + HexFormat.of().formatHex(digest);</span>
+<span class="nc" id="L109">		} catch (final NoSuchAlgorithmException exception) {</span>
+<span class="nc" id="L110">			throw new IllegalStateException(&quot;SHA-256 is unavailable&quot;, exception);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

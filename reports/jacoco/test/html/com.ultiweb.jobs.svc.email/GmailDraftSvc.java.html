@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GmailDraftSvc.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.email</a> &gt; <span class="el_source">GmailDraftSvc.java</span></div><h1>GmailDraftSvc.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.email;
+
+import com.google.api.services.gmail.Gmail;
+import com.google.api.services.gmail.GmailScopes;
+import com.google.api.services.gmail.model.Draft;
+import com.google.api.services.gmail.model.Message;
+import com.ultiweb.jobs.utils.email.CreateEmail;
+import com.ultiweb.jobs.utils.email.CreateMessage;
+import com.ultiweb.jobs.utils.email.GmailServiceFactory;
+import com.ultiweb.jobs.utils.oauth2.GMailOAuth;
+import java.io.IOException;
+import java.util.List;
+import javax.mail.MessagingException;
+import org.springframework.stereotype.Service;
+
+@Service
+public class GmailDraftSvc {
+	private final GMailOAuth gmailOAuth;
+
+<span class="fc" id="L20">	public GmailDraftSvc(final GMailOAuth gmailOAuth) {</span>
+<span class="fc" id="L21">		this.gmailOAuth = gmailOAuth;</span>
+<span class="fc" id="L22">	}</span>
+
+	public String createDraft(final String account, final String recipient, final String subject, final String body)
+			throws IOException, MessagingException {
+<span class="nc" id="L26">		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_COMPOSE), account);</span>
+<span class="nc" id="L27">		final var mimeMessage = CreateEmail.createEmail(recipient, account, subject, body);</span>
+<span class="nc" id="L28">		final Message message = CreateMessage.createMessageWithEmail(mimeMessage);</span>
+<span class="nc" id="L29">		final Draft draft = gmail.users().drafts().create(&quot;me&quot;, new Draft().setMessage(message)).execute();</span>
+<span class="nc bnc" id="L30" title="All 6 branches missed.">		if (draft == null || draft.getId() == null || draft.getId().isBlank()) {</span>
+<span class="nc" id="L31">			throw new IOException(&quot;Gmail returned no draft ID&quot;);</span>
+		}
+<span class="nc" id="L33">		return draft.getId();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HtmlEmailTextExtractor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.email</a> &gt; <span class="el_source">HtmlEmailTextExtractor.java</span></div><h1>HtmlEmailTextExtractor.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.email;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.safety.Safelist;
+import org.jsoup.select.NodeTraversor;
+import org.jsoup.select.NodeVisitor;
+
+final class HtmlEmailTextExtractor {
+<span class="fc" id="L18">	private static final Pattern PLAIN_TEXT_LINK = Pattern.compile(&quot;\\(https?://[^\\s)]++\\)&quot;);</span>
+<span class="fc" id="L19">	private static final Set&lt;String&gt; BLOCK_TAGS = Set.of(</span>
+			&quot;address&quot;, &quot;article&quot;, &quot;aside&quot;, &quot;blockquote&quot;, &quot;div&quot;, &quot;footer&quot;, &quot;h1&quot;, &quot;h2&quot;, &quot;h3&quot;, &quot;h4&quot;, &quot;h5&quot;, &quot;h6&quot;,
+			&quot;header&quot;, &quot;main&quot;, &quot;nav&quot;, &quot;p&quot;, &quot;section&quot;);
+
+<span class="nc" id="L23">	private HtmlEmailTextExtractor() {</span>
+<span class="nc" id="L24">		throw new UnsupportedOperationException(&quot;Utility class&quot;);</span>
+	}
+
+	static String extract(final String html) {
+<span class="pc bpc" id="L28" title="2 of 4 branches missed.">		if (html == null || html.isBlank()) {</span>
+<span class="nc" id="L29">			return &quot;&quot;;</span>
+		}
+<span class="fc" id="L31">		final var document = Jsoup.parse(html);</span>
+<span class="fc" id="L32">		document.select(&quot;head, script, style, noscript, template, svg, canvas, [hidden], [aria-hidden=true]&quot;).remove();</span>
+<span class="fc" id="L33">		document.select(&quot;[style]&quot;).stream()</span>
+<span class="fc" id="L34">				.filter(element -&gt; isHidden(element.attr(&quot;style&quot;)))</span>
+<span class="fc" id="L35">				.toList()</span>
+<span class="fc" id="L36">				.forEach(Element::remove);</span>
+<span class="fc" id="L37">		final var output = new StringBuilder();</span>
+<span class="fc" id="L38">		NodeTraversor.traverse(new SemanticTextVisitor(output), document.body());</span>
+<span class="fc" id="L39">		return normalize(output.toString());</span>
+	}
+
+	static String sanitizeForDisplay(final String html) {
+<span class="pc bpc" id="L43" title="2 of 4 branches missed.">		if (html == null || html.isBlank()) {</span>
+<span class="nc" id="L44">			return &quot;&quot;;</span>
+		}
+<span class="fc" id="L46">		final var document = Jsoup.parseBodyFragment(html);</span>
+<span class="fc" id="L47">		document.select(&quot;head, script, style, noscript, template, iframe, object, embed, form, button, input, textarea, select, svg, canvas, video, audio, source, meta, link, base, [hidden], [aria-hidden=true]&quot;)</span>
+<span class="fc" id="L48">				.remove();</span>
+<span class="fc" id="L49">		document.select(&quot;[style]&quot;).removeAttr(&quot;style&quot;);</span>
+<span class="fc" id="L50">		document.select(&quot;img&quot;).forEach(image -&gt; {</span>
+<span class="fc" id="L51">			final String alt = image.attr(&quot;alt&quot;).strip();</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">			if (alt.isBlank()) {</span>
+<span class="nc" id="L53">				image.remove();</span>
+			} else {
+<span class="fc" id="L55">				image.replaceWith(new TextNode(&quot;[Image: &quot; + alt + &quot;]&quot;));</span>
+			}
+<span class="fc" id="L57">		});</span>
+<span class="fc" id="L58">		final Safelist safelist = Safelist.relaxed()</span>
+<span class="fc" id="L59">				.addTags(&quot;table&quot;, &quot;thead&quot;, &quot;tbody&quot;, &quot;tfoot&quot;, &quot;tr&quot;, &quot;td&quot;, &quot;th&quot;, &quot;colgroup&quot;, &quot;col&quot;)</span>
+<span class="fc" id="L60">				.addAttributes(&quot;td&quot;, &quot;colspan&quot;, &quot;rowspan&quot;)</span>
+<span class="fc" id="L61">				.addAttributes(&quot;th&quot;, &quot;colspan&quot;, &quot;rowspan&quot;)</span>
+<span class="fc" id="L62">				.addAttributes(&quot;a&quot;, &quot;target&quot;, &quot;rel&quot;);</span>
+<span class="fc" id="L63">		return Jsoup.clean(document.body().html(), &quot;&quot;, safelist);</span>
+	}
+
+	static String plainTextAsHtml(final String text) {
+<span class="pc bpc" id="L67" title="2 of 4 branches missed.">		if (text == null || text.isBlank()) {</span>
+<span class="nc" id="L68">			return &quot;&quot;;</span>
+		}
+<span class="fc" id="L70">		return java.util.Arrays.stream(text.replace(&quot;\r\n&quot;, &quot;\n&quot;).replace('\r', '\n').split(&quot;\\n{2,}&quot;))</span>
+<span class="fc" id="L71">				.map(paragraph -&gt; &quot;&lt;p&gt;&quot; + linkifyPlainText(paragraph).replace(&quot;\n&quot;, &quot;&lt;br&gt;&quot;) + &quot;&lt;/p&gt;&quot;)</span>
+<span class="fc" id="L72">				.collect(java.util.stream.Collectors.joining());</span>
+	}
+
+	private static String linkifyPlainText(final String text) {
+<span class="fc" id="L76">		final Matcher matcher = PLAIN_TEXT_LINK.matcher(text);</span>
+<span class="fc" id="L77">		final StringBuilder html = new StringBuilder();</span>
+<span class="fc" id="L78">		int position = 0;</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">		while (matcher.find()) {</span>
+<span class="fc" id="L80">			int labelStart = matcher.start();</span>
+<span class="pc bpc" id="L81" title="1 of 4 branches missed.">			while (labelStart &gt; position &amp;&amp; &quot;\n()&quot;.indexOf(text.charAt(labelStart - 1)) &lt; 0) {</span>
+<span class="fc" id="L82">				labelStart--;</span>
+			}
+<span class="fc" id="L84">			html.append(escapeHtml(text.substring(position, labelStart)));</span>
+<span class="fc" id="L85">			final String label = text.substring(labelStart, matcher.start()).strip();</span>
+<span class="fc" id="L86">			final String url = matcher.group().substring(1, matcher.group().length() - 1);</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">			final String linkText = label.isBlank() ? url : label;</span>
+<span class="fc" id="L88">			html.append(&quot;&lt;a href=\&quot;&quot;).append(escapeHtml(url)).append(&quot;\&quot; target=\&quot;_blank\&quot; rel=\&quot;noopener noreferrer\&quot;&gt;&quot;)</span>
+<span class="fc" id="L89">					.append(escapeHtml(linkText)).append(&quot;&lt;/a&gt;&quot;);</span>
+<span class="fc" id="L90">			position = matcher.end();</span>
+<span class="fc" id="L91">		}</span>
+<span class="fc" id="L92">		html.append(escapeHtml(text.substring(position)));</span>
+<span class="fc" id="L93">		return html.toString();</span>
+	}
+
+	private static String escapeHtml(final String text) {
+<span class="fc" id="L97">		return text.replace(&quot;&amp;&quot;, &quot;&amp;amp;&quot;).replace(&quot;&lt;&quot;, &quot;&amp;lt;&quot;).replace(&quot;&gt;&quot;, &quot;&amp;gt;&quot;)</span>
+<span class="fc" id="L98">				.replace(&quot;\&quot;&quot;, &quot;&amp;quot;&quot;).replace(&quot;'&quot;, &quot;&amp;#39;&quot;);</span>
+	}
+
+	private static boolean isHidden(final String style) {
+<span class="fc" id="L102">		final String normalized = style.toLowerCase(Locale.ROOT).replace(&quot; &quot;, &quot;&quot;);</span>
+<span class="pc bpc" id="L103" title="3 of 4 branches missed.">		return normalized.contains(&quot;display:none&quot;) || normalized.contains(&quot;visibility:hidden&quot;);</span>
+	}
+
+	private static String normalize(final String text) {
+<span class="fc" id="L107">		return text.replace('\u00a0', ' ')</span>
+<span class="fc" id="L108">				.replaceAll(&quot;[\\t\\x0B\\f ]+&quot;, &quot; &quot;)</span>
+<span class="fc" id="L109">				.lines().map(String::strip).collect(java.util.stream.Collectors.joining(&quot;\n&quot;))</span>
+<span class="fc" id="L110">				.replaceAll(&quot;\\n{3,}&quot;, &quot;\n\n&quot;)</span>
+<span class="fc" id="L111">				.strip();</span>
+	}
+
+	private static final class SemanticTextVisitor implements NodeVisitor {
+		private final StringBuilder output;
+
+<span class="fc" id="L117">		private SemanticTextVisitor(final StringBuilder output) {</span>
+<span class="fc" id="L118">			this.output = output;</span>
+<span class="fc" id="L119">		}</span>
+
+		@Override
+		public void head(final Node node, final int depth) {
+<span class="fc bfc" id="L123" title="All 2 branches covered.">			if (node instanceof TextNode textNode) {</span>
+<span class="fc" id="L124">				appendText(textNode.getWholeText());</span>
+<span class="fc" id="L125">				return;</span>
+			}
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">			if (!(node instanceof Element element)) {</span>
+<span class="nc" id="L128">				return;</span>
+			}
+<span class="fc" id="L130">			final String tag = element.normalName();</span>
+<span class="fc bfc" id="L131" title="All 4 branches covered.">			if (BLOCK_TAGS.contains(tag) || &quot;tr&quot;.equals(tag)) {</span>
+<span class="fc" id="L132">				appendLineBreak();</span>
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">			} else if (&quot;br&quot;.equals(tag)) {</span>
+<span class="nc" id="L134">				appendLineBreak();</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">			} else if (&quot;li&quot;.equals(tag)) {</span>
+<span class="fc" id="L136">				appendLineBreak();</span>
+<span class="fc" id="L137">				output.append(&quot;- &quot;);</span>
+<span class="fc bfc" id="L138" title="All 6 branches covered.">			} else if ((&quot;td&quot;.equals(tag) || &quot;th&quot;.equals(tag)) &amp;&amp; hasPreviousTableCell(element)) {</span>
+<span class="fc" id="L139">				appendInline(&quot; | &quot;);</span>
+<span class="pc bpc" id="L140" title="1 of 4 branches missed.">			} else if (&quot;img&quot;.equals(tag) &amp;&amp; !element.attr(&quot;alt&quot;).isBlank()) {</span>
+<span class="fc" id="L141">				appendInline(&quot;[Image: &quot; + element.attr(&quot;alt&quot;).strip() + &quot;]&quot;);</span>
+			}
+<span class="fc" id="L143">		}</span>
+
+		@Override
+		public void tail(final Node node, final int depth) {
+<span class="fc bfc" id="L147" title="All 2 branches covered.">			if (!(node instanceof Element element)) {</span>
+<span class="fc" id="L148">				return;</span>
+			}
+<span class="fc" id="L150">			final String tag = element.normalName();</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">			if (&quot;a&quot;.equals(tag)) {</span>
+<span class="fc" id="L152">				appendLink(element);</span>
+			}
+<span class="fc bfc" id="L154" title="All 6 branches covered.">			if (BLOCK_TAGS.contains(tag) || &quot;li&quot;.equals(tag) || &quot;tr&quot;.equals(tag)) {</span>
+<span class="fc" id="L155">				appendLineBreak();</span>
+			}
+<span class="fc" id="L157">		}</span>
+
+		private void appendText(final String text) {
+<span class="fc" id="L160">			final String compact = text.replaceAll(&quot;\\s+&quot;, &quot; &quot;).strip();</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">			if (!compact.isEmpty()) {</span>
+<span class="fc" id="L162">				appendInline(compact);</span>
+			}
+<span class="fc" id="L164">		}</span>
+
+		private void appendLink(final Element element) {
+<span class="fc" id="L167">			final String href = semanticHref(element.attr(&quot;href&quot;));</span>
+<span class="fc" id="L168">			final String label = element.text().strip();</span>
+<span class="pc bpc" id="L169" title="3 of 6 branches missed.">			if (!href.isBlank() &amp;&amp; !label.equalsIgnoreCase(href) &amp;&amp; !label.equalsIgnoreCase(element.attr(&quot;href&quot;).strip())) {</span>
+<span class="fc" id="L170">				appendInline(&quot; (&quot; + href + &quot;)&quot;);</span>
+			}
+<span class="fc" id="L172">		}</span>
+
+		private void appendInline(final String text) {
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">			if (text.isBlank()) {</span>
+<span class="nc" id="L176">				return;</span>
+			}
+<span class="fc bfc" id="L178" title="All 4 branches covered.">			if (!output.isEmpty() &amp;&amp; !Character.isWhitespace(output.charAt(output.length() - 1))</span>
+<span class="pc bpc" id="L179" title="1 of 4 branches missed.">					&amp;&amp; !text.startsWith(&quot; | &quot;) &amp;&amp; !text.startsWith(&quot; (&quot;)) {</span>
+<span class="nc" id="L180">				output.append(' ');</span>
+			}
+<span class="fc" id="L182">			output.append(text);</span>
+<span class="fc" id="L183">		}</span>
+
+		private void appendLineBreak() {
+<span class="fc bfc" id="L186" title="All 4 branches covered.">			if (!output.isEmpty() &amp;&amp; output.charAt(output.length() - 1) != '\n') {</span>
+<span class="fc" id="L187">				output.append('\n');</span>
+			}
+<span class="fc" id="L189">		}</span>
+
+		private static boolean hasPreviousTableCell(final Element element) {
+<span class="fc" id="L192">			final Element previous = element.previousElementSibling();</span>
+<span class="pc bpc" id="L193" title="1 of 6 branches missed.">			return previous != null &amp;&amp; (&quot;td&quot;.equals(previous.normalName()) || &quot;th&quot;.equals(previous.normalName()));</span>
+		}
+
+		private static String semanticHref(final String rawHref) {
+<span class="fc" id="L197">			final String href = rawHref.strip();</span>
+<span class="pc bpc" id="L198" title="3 of 6 branches missed.">			if (href.isEmpty() || href.startsWith(&quot;#&quot;) || href.regionMatches(true, 0, &quot;javascript:&quot;, 0, 11)</span>
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">					|| href.regionMatches(true, 0, &quot;data:&quot;, 0, 5)) {</span>
+<span class="nc" id="L200">				return &quot;&quot;;</span>
+			}
+			try {
+<span class="fc" id="L203">				final URI uri = new URI(href);</span>
+<span class="pc bpc" id="L204" title="1 of 2 branches missed.">				if (uri.getScheme() == null) {</span>
+<span class="nc" id="L205">					return shorten(href);</span>
+				}
+<span class="pc bpc" id="L207" title="2 of 4 branches missed.">				if (&quot;mailto&quot;.equalsIgnoreCase(uri.getScheme()) || &quot;tel&quot;.equalsIgnoreCase(uri.getScheme())) {</span>
+<span class="nc" id="L208">					return shorten(uri.getScheme().toLowerCase(Locale.ROOT) + &quot;:&quot; + uri.getSchemeSpecificPart().split(&quot;\\?&quot;, 2)[0]);</span>
+				}
+<span class="pc bpc" id="L210" title="2 of 4 branches missed.">				if (!&quot;http&quot;.equalsIgnoreCase(uri.getScheme()) &amp;&amp; !&quot;https&quot;.equalsIgnoreCase(uri.getScheme())) {</span>
+<span class="nc" id="L211">					return &quot;&quot;;</span>
+				}
+<span class="fc" id="L213">				return shorten(new URI(uri.getScheme().toLowerCase(Locale.ROOT), null, uri.getHost(), uri.getPort(),</span>
+<span class="fc" id="L214">						uri.getPath(), null, null).toString());</span>
+<span class="nc" id="L215">			} catch (final URISyntaxException exception) {</span>
+<span class="nc" id="L216">				return &quot;&quot;;</span>
+			}
+		}
+
+		private static String shorten(final String value) {
+<span class="pc bpc" id="L221" title="1 of 2 branches missed.">			return value.length() &lt;= 240 ? value : value.substring(0, 237) + &quot;...&quot;;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

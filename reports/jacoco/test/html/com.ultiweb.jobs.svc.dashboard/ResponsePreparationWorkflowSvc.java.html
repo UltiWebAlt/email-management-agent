@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResponsePreparationWorkflowSvc.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.dashboard</a> &gt; <span class="el_source">ResponsePreparationWorkflowSvc.java</span></div><h1>ResponsePreparationWorkflowSvc.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.dashboard;
+
+import com.ultiweb.jobs.svc.email.GmailDraftSvc;
+import com.ultiweb.jobs.svc.persistence.JobResponseRepository;
+import com.ultiweb.jobs.svc.persistence.ResponseSelectionChange;
+import java.time.Clock;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+@Service
+public class ResponsePreparationWorkflowSvc {
+<span class="fc" id="L25">	private static final Logger LOGGER = LoggerFactory.getLogger(ResponsePreparationWorkflowSvc.class);</span>
+	private final JobResponseRepository repository;
+	private final DeepInfraEmailReplyGenerator replyGenerator;
+	private final GmailDraftSvc gmailDraftSvc;
+	private final Executor executor;
+	private final Clock clock;
+	private final boolean developmentMode;
+	private final ApplicationEventPublisher eventPublisher;
+
+	@Autowired
+	public ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
+			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
+			@Qualifier(&quot;responseExecutor&quot;) final Executor executor, final Environment environment,
+			final ApplicationEventPublisher eventPublisher) {
+<span class="fc" id="L39">		this(repository, replyGenerator, gmailDraftSvc, executor, Clock.systemUTC(),</span>
+<span class="fc" id="L40">			environment.acceptsProfiles(Profiles.of(&quot;dev&quot;)), eventPublisher);</span>
+<span class="fc" id="L41">	}</span>
+
+	ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
+			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
+			final Executor executor, final Clock clock, final boolean developmentMode) {
+<span class="nc" id="L46">		this(repository, replyGenerator, gmailDraftSvc, executor, clock, developmentMode, event -&gt; { });</span>
+<span class="nc" id="L47">	}</span>
+
+	ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
+			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
+			final Executor executor, final Clock clock, final boolean developmentMode,
+<span class="fc" id="L52">			final ApplicationEventPublisher eventPublisher) {</span>
+<span class="fc" id="L53">		this.repository = repository;</span>
+<span class="fc" id="L54">		this.replyGenerator = replyGenerator;</span>
+<span class="fc" id="L55">		this.gmailDraftSvc = gmailDraftSvc;</span>
+<span class="fc" id="L56">		this.executor = executor;</span>
+<span class="fc" id="L57">		this.clock = clock;</span>
+<span class="fc" id="L58">		this.developmentMode = developmentMode;</span>
+<span class="fc" id="L59">		this.eventPublisher = eventPublisher;</span>
+<span class="fc" id="L60">	}</span>
+
+	@Transactional
+	public ResponseSelectionResult save(final List&lt;DashboardSelectionChange&gt; changes) {
+<span class="fc" id="L64">		final Set&lt;Long&gt; positionIds = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">		for (final DashboardSelectionChange change : changes) {</span>
+<span class="fc bfc" id="L66" title="All 4 branches covered.">			if (change.positionId() &lt; 1 || !positionIds.add(change.positionId())) {</span>
+<span class="fc" id="L67">				throw new ResponseSelectionException(&quot;Selection changes must contain unique, positive position IDs&quot;);</span>
+			}
+<span class="fc" id="L69">		}</span>
+<span class="fc" id="L70">		final int updated = repository.updateSelections(changes.stream()</span>
+<span class="fc" id="L71">				.map(change -&gt; new ResponseSelectionChange(change.positionId(), change.selected())).toList());</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">		if (updated != changes.size()) {</span>
+<span class="fc" id="L73">			throw new ResponseSelectionException(&quot;One or more selected opportunities no longer exist&quot;);</span>
+		}
+<span class="fc" id="L75">		final List&lt;Long&gt; eligible = repository.findSelectedWithoutResponse();</span>
+<span class="fc" id="L76">		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {</span>
+			@Override
+			public void afterCommit() {
+<span class="fc" id="L79">				eligible.forEach(positionId -&gt; executor.execute(() -&gt; prepareResponse(positionId)));</span>
+<span class="fc" id="L80">			}</span>
+		});
+<span class="fc bfc" id="L82" title="All 2 branches covered.">		return new ResponseSelectionResult(updated, eligible.size(), developmentMode ? &quot;development&quot; : &quot;gmail-drafts&quot;);</span>
+	}
+
+	private void prepareResponse(final long positionId) {
+<span class="fc" id="L86">		final var candidate = repository.claimResponse(positionId, clock.instant());</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">		if (candidate.isEmpty()) {</span>
+<span class="fc" id="L88">			return;</span>
+		}
+		try {
+<span class="fc" id="L91">			final var job = candidate.orElseThrow();</span>
+<span class="fc" id="L92">			final String body = replyGenerator.generate(job);</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">			if (!repository.isSelected(positionId)) {</span>
+<span class="fc" id="L94">				repository.markResponseFailed(positionId, clock.instant());</span>
+<span class="fc" id="L95">				return;</span>
+			}
+<span class="fc bfc" id="L97" title="All 2 branches covered.">			if (developmentMode) {</span>
+<span class="fc" id="L98">				repository.saveGeneratedResponse(positionId, body, &quot;SAVED_FOR_REVIEW&quot;, clock.instant());</span>
+<span class="fc" id="L99">				notifyResponseUpdated(positionId);</span>
+<span class="fc" id="L100">				LOGGER.info(&quot;Stored generated response in the development database for position {}.&quot;, positionId);</span>
+<span class="fc" id="L101">				return;</span>
+			}
+<span class="fc" id="L103">			repository.saveGeneratedResponse(positionId, body, &quot;GENERATED&quot;, clock.instant());</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">			if (!repository.isSelected(positionId)) {</span>
+<span class="fc" id="L105">				repository.markResponseFailed(positionId, clock.instant());</span>
+<span class="fc" id="L106">				return;</span>
+			}
+<span class="fc" id="L108">			final String draftId = gmailDraftSvc.createDraft(job.sourceAccount(), job.recruiterEmail(),</span>
+<span class="fc" id="L109">					replySubject(job.sourceSubject()), body);</span>
+<span class="fc" id="L110">			repository.saveDraftId(positionId, draftId, clock.instant());</span>
+<span class="fc" id="L111">			notifyResponseUpdated(positionId);</span>
+<span class="fc" id="L112">			LOGGER.info(&quot;Created Gmail draft for position {}.&quot;, positionId);</span>
+<span class="fc" id="L113">		} catch (final Exception exception) {</span>
+<span class="fc" id="L114">			repository.markResponseFailed(positionId, clock.instant());</span>
+<span class="fc" id="L115">			notifyResponseUpdated(positionId);</span>
+<span class="fc" id="L116">			LOGGER.error(&quot;Unable to prepare response for position {} ({}).&quot;, positionId,</span>
+<span class="fc" id="L117">					exception.getClass().getSimpleName());</span>
+<span class="fc" id="L118">		}</span>
+<span class="fc" id="L119">	}</span>
+
+	private void notifyResponseUpdated(final long positionId) {
+<span class="fc" id="L122">		eventPublisher.publishEvent(new DashboardResponseUpdatedEvent(positionId));</span>
+<span class="fc" id="L123">	}</span>
+
+	private static String replySubject(final String sourceSubject) {
+<span class="fc bfc" id="L126" title="All 4 branches covered.">		if (sourceSubject == null || sourceSubject.isBlank()) {</span>
+<span class="fc" id="L127">			return &quot;Re: Architect job opportunity&quot;;</span>
+		}
+<span class="fc" id="L129">		final String subject = sourceSubject.replaceAll(&quot;[\\p{Cntrl}\\s]+&quot;, &quot; &quot;).strip();</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">		return subject.regionMatches(true, 0, &quot;Re:&quot;, 0, 3) ? subject : &quot;Re: &quot; + subject;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DevelopmentArchitectEmailImportSvc.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.dashboard</a> &gt; <span class="el_source">DevelopmentArchitectEmailImportSvc.java</span></div><h1>DevelopmentArchitectEmailImportSvc.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.dashboard;
+
+import com.ultiweb.jobs.svc.ai.EmailSummarySvc;
+import com.ultiweb.jobs.svc.ai.ArchitectJobDetailsInferenceSvc;
+import com.ultiweb.jobs.svc.ai.EmailTag;
+import com.ultiweb.jobs.svc.ai.EmailTagSvc;
+import com.ultiweb.jobs.svc.JobOpportunityDetails;
+import com.ultiweb.jobs.svc.email.EmailMessage;
+import com.ultiweb.jobs.svc.email.GmailMailboxSvc;
+import com.ultiweb.jobs.svc.persistence.ArchitectJobPersistenceSvc;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+/** Explicitly copies real architect-labeled mail into the development database, without modifying Gmail. */
+@Service
+@Profile(&quot;dev&quot;)
+public final class DevelopmentArchitectEmailImportSvc {
+<span class="fc" id="L25">	private static final Logger LOGGER = LoggerFactory.getLogger(DevelopmentArchitectEmailImportSvc.class);</span>
+	private static final int MAX_ARCHITECT_JOBS_PER_IMPORT = 10;
+	private final GmailMailboxSvc gmailMailboxSvc;
+	private final EmailSummarySvc emailSummarySvc;
+	private final EmailTagSvc emailTagSvc;
+	private final ArchitectJobDetailsInferenceSvc jobDetailsInferenceSvc;
+	private final ArchitectJobPersistenceSvc persistenceSvc;
+
+	public DevelopmentArchitectEmailImportSvc(final GmailMailboxSvc gmailMailboxSvc,
+			final EmailSummarySvc emailSummarySvc, final EmailTagSvc emailTagSvc,
+			final ArchitectJobDetailsInferenceSvc jobDetailsInferenceSvc,
+<span class="fc" id="L36">			final ArchitectJobPersistenceSvc persistenceSvc) {</span>
+<span class="fc" id="L37">		this.gmailMailboxSvc = gmailMailboxSvc;</span>
+<span class="fc" id="L38">		this.emailSummarySvc = emailSummarySvc;</span>
+<span class="fc" id="L39">		this.emailTagSvc = emailTagSvc;</span>
+<span class="fc" id="L40">		this.jobDetailsInferenceSvc = jobDetailsInferenceSvc;</span>
+<span class="fc" id="L41">		this.persistenceSvc = persistenceSvc;</span>
+<span class="fc" id="L42">	}</span>
+
+	public DevelopmentEmailImportResult importArchitectEmails() throws IOException {
+<span class="fc" id="L45">		final var manuallyTagged = gmailMailboxSvc.readArchitectLabeledEmailsForDevelopment();</span>
+<span class="fc" id="L46">		final var recentInbox = gmailMailboxSvc.readRecentInboxEmailsForDevelopment();</span>
+<span class="fc" id="L47">		final Set&lt;String&gt; manuallyTaggedKeys = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc" id="L48">		manuallyTagged.forEach(email -&gt; manuallyTaggedKeys.add(key(email)));</span>
+<span class="fc" id="L49">		final Map&lt;String, EmailMessage&gt; candidates = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L50">		manuallyTagged.forEach(email -&gt; candidates.put(key(email), email));</span>
+<span class="fc" id="L51">		recentInbox.forEach(email -&gt; candidates.putIfAbsent(key(email), email));</span>
+<span class="fc" id="L52">		final var emails = candidates.values();</span>
+<span class="fc" id="L53">		int imported = 0;</span>
+<span class="fc" id="L54">		int enriched = 0;</span>
+<span class="fc" id="L55">		int completedArchitectJobs = 0;</span>
+<span class="fc" id="L56">		int skipped = 0;</span>
+<span class="fc" id="L57">		int notArchitectJobs = 0;</span>
+<span class="fc" id="L58">		int failed = 0;</span>
+<span class="fc" id="L59">		int scanned = 0;</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">		for (final EmailMessage email : emails) {</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">			if (completedArchitectJobs &gt;= MAX_ARCHITECT_JOBS_PER_IMPORT) {</span>
+<span class="fc" id="L62">				break;</span>
+			}
+<span class="fc" id="L64">			scanned++;</span>
+<span class="pc bpc" id="L65" title="1 of 6 branches missed.">			switch (importEmail(email, manuallyTaggedKeys.contains(key(email)))) {</span>
+				case IMPORTED -&gt; {
+<span class="fc" id="L67">					imported++;</span>
+<span class="fc" id="L68">					completedArchitectJobs++;</span>
+<span class="fc" id="L69">				}</span>
+				case ENRICHED -&gt; {
+<span class="fc" id="L71">					enriched++;</span>
+<span class="fc" id="L72">					completedArchitectJobs++;</span>
+<span class="fc" id="L73">				}</span>
+<span class="fc" id="L74">				case SKIPPED -&gt; skipped++;</span>
+<span class="fc" id="L75">				case NOT_ARCHITECT -&gt; notArchitectJobs++;</span>
+<span class="fc" id="L76">				case FAILED -&gt; failed++;</span>
+			}
+<span class="fc" id="L78">		}</span>
+<span class="fc" id="L79">		LOGGER.info(&quot;Development Gmail import complete: scanned={}, imported={}, enriched={}, skipped={}, nonArchitect={}, failed={}&quot;,</span>
+<span class="fc" id="L80">				scanned, imported, enriched, skipped, notArchitectJobs, failed);</span>
+<span class="fc" id="L81">		return new DevelopmentEmailImportResult(scanned, imported, enriched, skipped, notArchitectJobs, failed);</span>
+	}
+
+	private ImportOutcome importEmail(final EmailMessage email, final boolean manuallyTagged) {
+		try {
+<span class="fc bfc" id="L86" title="All 2 branches covered.">			if (persistenceSvc.isPersisted(email)) {</span>
+<span class="fc" id="L87">				return enrichPersistedEmail(email);</span>
+			}
+<span class="fc" id="L89">			final String summary = emailSummarySvc.summarize(email);</span>
+<span class="fc bfc" id="L90" title="All 4 branches covered.">			if (!manuallyTagged &amp;&amp; emailTagSvc.suggestTag(summary).filter(EmailTag.ARCHITECT_JOBS::equals).isEmpty()) {</span>
+<span class="fc" id="L91">				return ImportOutcome.NOT_ARCHITECT;</span>
+			}
+<span class="fc bfc" id="L93" title="All 2 branches covered.">			return persistenceSvc.persist(email, summary, inferJobDetails(email))</span>
+<span class="fc" id="L94">					? ImportOutcome.IMPORTED : ImportOutcome.SKIPPED;</span>
+<span class="fc" id="L95">		} catch (final RuntimeException exception) {</span>
+<span class="fc" id="L96">			LOGGER.warn(&quot;Development import failed for account={}, email id={} ({}).&quot;,</span>
+<span class="fc" id="L97">					email.account(), email.id(), exception.getClass().getSimpleName());</span>
+<span class="fc" id="L98">			return ImportOutcome.FAILED;</span>
+		}
+	}
+
+	private ImportOutcome enrichPersistedEmail(final EmailMessage email) {
+<span class="fc bfc" id="L103" title="All 2 branches covered.">		if (!persistenceSvc.needsEnrichment(email)) {</span>
+<span class="fc" id="L104">			return ImportOutcome.SKIPPED;</span>
+		}
+<span class="fc" id="L106">		persistenceSvc.enrichExisting(email, inferJobDetails(email));</span>
+<span class="fc" id="L107">		return ImportOutcome.ENRICHED;</span>
+	}
+
+<span class="fc" id="L110">	private enum ImportOutcome {</span>
+<span class="fc" id="L111">		IMPORTED, ENRICHED, SKIPPED, NOT_ARCHITECT, FAILED</span>
+	}
+
+	private JobOpportunityDetails inferJobDetails(final EmailMessage email) {
+		try {
+<span class="fc" id="L116">			return jobDetailsInferenceSvc.infer(email);</span>
+<span class="fc" id="L117">		} catch (final RuntimeException exception) {</span>
+<span class="fc" id="L118">			LOGGER.warn(&quot;Development job detail inference failed for account={}, email id={} ({}).&quot;,</span>
+<span class="fc" id="L119">					email.account(), email.id(), exception.getClass().getSimpleName());</span>
+<span class="fc" id="L120">			return JobOpportunityDetails.empty();</span>
+		}
+	}
+
+	private static String key(final EmailMessage email) {
+<span class="fc" id="L125">		return email.account() + &quot;\u0000&quot; + email.id();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

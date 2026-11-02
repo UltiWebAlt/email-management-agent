@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmailTriageSvc.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc</a> &gt; <span class="el_source">EmailTriageSvc.java</span></div><h1>EmailTriageSvc.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc;
+
+import com.ultiweb.jobs.svc.ai.EmailSummarySvc;
+import com.ultiweb.jobs.svc.ai.ArchitectJobDetailsInferenceSvc;
+import com.ultiweb.jobs.svc.ai.EmailTag;
+import com.ultiweb.jobs.svc.ai.EmailTagSvc;
+import com.ultiweb.jobs.svc.email.EmailLabelWriter;
+import com.ultiweb.jobs.svc.email.EmailMessage;
+import com.ultiweb.jobs.svc.email.EmailReader;
+import com.ultiweb.jobs.svc.email.EmailWorkflowLabels;
+import com.ultiweb.jobs.svc.persistence.ArchitectJobPersistenceSvc;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+/**
+ * Coordinates reading unread mail, AI analysis, and Gmail label application.
+ */
+@Service
+public class EmailTriageSvc {
+<span class="fc" id="L32">	private static final Logger LOGGER = LoggerFactory.getLogger(EmailTriageSvc.class);</span>
+<span class="fc" id="L33">	private final ReentrantLock pollLock = new ReentrantLock();</span>
+<span class="fc" id="L34">	private final Set&lt;MessageKey&gt; processedMessages = new HashSet&lt;&gt;();</span>
+	private final EmailReader emailReader;
+	private final EmailSummarySvc emailSummarySvc;
+	private final EmailTagSvc emailTagSvc;
+	private final EmailLabelWriter emailLabelWriter;
+	private final ArchitectJobPersistenceSvc architectJobPersistenceSvc;
+	private final ArchitectJobDetailsInferenceSvc jobDetailsInferenceSvc;
+
+	public EmailTriageSvc(final EmailReader emailReader, final EmailSummarySvc emailSummarySvc,
+			final EmailTagSvc emailTagSvc, final EmailLabelWriter emailLabelWriter,
+			final ArchitectJobPersistenceSvc architectJobPersistenceSvc,
+<span class="fc" id="L45">			final ArchitectJobDetailsInferenceSvc jobDetailsInferenceSvc) {</span>
+<span class="fc" id="L46">		this.emailReader = emailReader;</span>
+<span class="fc" id="L47">		this.emailSummarySvc = emailSummarySvc;</span>
+<span class="fc" id="L48">		this.emailTagSvc = emailTagSvc;</span>
+<span class="fc" id="L49">		this.emailLabelWriter = emailLabelWriter;</span>
+<span class="fc" id="L50">		this.architectJobPersistenceSvc = architectJobPersistenceSvc;</span>
+<span class="fc" id="L51">		this.jobDetailsInferenceSvc = jobDetailsInferenceSvc;</span>
+<span class="fc" id="L52">	}</span>
+
+	public List&lt;EmailTriageResult&gt; processEmails() throws IOException {
+<span class="fc" id="L55">		pollLock.lock();</span>
+<span class="fc" id="L56">		try (final var executor = Executors.newVirtualThreadPerTaskExecutor()) {</span>
+<span class="fc" id="L57">			final List&lt;EmailTriageResult&gt; results = new ArrayList&lt;&gt;(persistManuallyTaggedArchitectJobs());</span>
+<span class="fc" id="L58">			final List&lt;EmailMessage&gt; emails = emailReader.readEmailsForTriage();</span>
+<span class="fc" id="L59">			final var pending = new LinkedHashMap&lt;MessageKey, CompletableFuture&lt;EmailAnalysis&gt;&gt;();</span>
+<span class="fc" id="L60">			int skipped = 0;</span>
+<span class="fc" id="L61">			int analyzed = 0;</span>
+<span class="fc" id="L62">			int failed = 0;</span>
+<span class="fc" id="L63">			LOGGER.info(&quot;Retrieved {} emails pending triage.&quot;, emails.size());</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">			for (final EmailMessage email : emails) {</span>
+<span class="fc" id="L65">				final MessageKey key = new MessageKey(email.account(), email.id());</span>
+<span class="fc bfc" id="L66" title="All 4 branches covered.">				if (processedMessages.contains(key) || pending.containsKey(key)) {</span>
+<span class="fc" id="L67">					skipped++;</span>
+<span class="fc" id="L68">					continue;</span>
+				}
+<span class="fc" id="L70">				pending.put(key, CompletableFuture.supplyAsync(() -&gt; analyzeEmail(email), executor));</span>
+<span class="fc" id="L71">			}</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">			for (final var entry : pending.entrySet()) {</span>
+<span class="fc" id="L73">				final MessageKey key = entry.getKey();</span>
+				try {
+<span class="fc" id="L75">					final EmailAnalysis analysis = entry.getValue().join();</span>
+<span class="fc" id="L76">					persistArchitectJob(analysis);</span>
+<span class="fc" id="L77">					applyWorkflowLabels(analysis);</span>
+<span class="fc" id="L78">					analysis.tag().map(tag -&gt; new EmailTriageResult(analysis.email().account(), analysis.email().id(),</span>
+<span class="fc" id="L79">							analysis.summary(), tag.labelName())).ifPresent(results::add);</span>
+<span class="fc" id="L80">					processedMessages.add(key);</span>
+<span class="fc" id="L81">					analyzed++;</span>
+<span class="fc" id="L82">				} catch (final RuntimeException | IOException exception) {</span>
+<span class="fc" id="L83">					failed++;</span>
+<span class="fc" id="L84">					LOGGER.error(&quot;Triage failed for account={}, message={}; retrying on the next poll.&quot;,</span>
+<span class="fc" id="L85">							key.account(), key.messageId(), exception);</span>
+<span class="fc" id="L86">				}</span>
+<span class="fc" id="L87">			}</span>
+<span class="fc" id="L88">			LOGGER.info(&quot;Triage complete: analyzed={}, already processed={}, failed={}, labels applied={}.&quot;,</span>
+<span class="fc" id="L89">					analyzed, skipped, failed, results.size());</span>
+<span class="fc" id="L90">			return List.copyOf(results);</span>
+		} finally {
+<span class="fc" id="L92">			pollLock.unlock();</span>
+		}
+	}
+
+	private List&lt;EmailTriageResult&gt; persistManuallyTaggedArchitectJobs() throws IOException {
+<span class="fc" id="L97">		final List&lt;EmailMessage&gt; emails = emailReader.readArchitectEmailsPendingPersistence();</span>
+<span class="fc" id="L98">		final List&lt;EmailTriageResult&gt; results = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L99">		LOGGER.info(&quot;Retrieved {} manually tagged architect emails pending persistence.&quot;, emails.size());</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">		for (final EmailMessage email : emails) {</span>
+<span class="fc" id="L101">			final MessageKey key = new MessageKey(email.account(), email.id());</span>
+			try {
+<span class="fc bfc" id="L103" title="All 2 branches covered.">				if (!architectJobPersistenceSvc.isPersisted(email)) {</span>
+<span class="fc" id="L104">					final String summary = emailSummarySvc.summarize(email);</span>
+<span class="fc" id="L105">					architectJobPersistenceSvc.persist(email, summary, inferJobDetails(email));</span>
+<span class="fc" id="L106">					results.add(new EmailTriageResult(email.account(), email.id(), summary,</span>
+<span class="fc" id="L107">							EmailTag.ARCHITECT_JOBS.labelName()));</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">				} else if (architectJobPersistenceSvc.needsEnrichment(email)) {</span>
+<span class="nc" id="L109">					architectJobPersistenceSvc.enrichExisting(email, inferJobDetails(email));</span>
+				}
+<span class="fc" id="L111">				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.ARCHITECT_PERSISTED);</span>
+<span class="fc" id="L112">				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.PROCESSED);</span>
+<span class="fc" id="L113">				processedMessages.add(key);</span>
+<span class="fc" id="L114">				LOGGER.info(&quot;Persisted manually tagged architect email: account={}, message={}&quot;, email.account(), email.id());</span>
+<span class="nc" id="L115">			} catch (final RuntimeException | IOException exception) {</span>
+<span class="nc" id="L116">				LOGGER.error(&quot;Unable to persist manually tagged architect email: account={}, message={}; retrying next poll.&quot;,</span>
+<span class="nc" id="L117">						email.account(), email.id(), exception);</span>
+<span class="fc" id="L118">			}</span>
+<span class="fc" id="L119">		}</span>
+<span class="fc" id="L120">		return results;</span>
+	}
+
+	private EmailAnalysis analyzeEmail(final EmailMessage email) {
+<span class="fc" id="L124">		LOGGER.info(&quot;Requesting AI summary for account={}, message={}, bodyCharacters={}&quot;,</span>
+<span class="fc" id="L125">				email.account(), email.id(), email.body().length());</span>
+<span class="fc" id="L126">		final String summary = emailSummarySvc.summarize(email);</span>
+<span class="fc" id="L127">		LOGGER.info(&quot;Requesting AI label recommendation for account={}, message={}&quot;, email.account(), email.id());</span>
+<span class="fc" id="L128">		final Optional&lt;EmailTag&gt; suggestedLabel = emailTagSvc.suggestTag(summary);</span>
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">		if (LOGGER.isInfoEnabled()) {</span>
+<span class="fc" id="L130">			LOGGER.info(&quot;Analyzed account={}, message={}, recommendedLabel={}&quot;,</span>
+<span class="fc" id="L131">					email.account(), email.id(), suggestedLabel.map(EmailTag::labelName).orElse(&quot;NONE&quot;));</span>
+		}
+<span class="fc" id="L133">		return new EmailAnalysis(email, summary, suggestedLabel);</span>
+	}
+
+	private void persistArchitectJob(final EmailAnalysis analysis) {
+<span class="fc bfc" id="L137" title="All 2 branches covered.">		if (analysis.tag().filter(EmailTag.ARCHITECT_JOBS::equals).isPresent()) {</span>
+<span class="fc" id="L138">			architectJobPersistenceSvc.persist(analysis.email(), analysis.summary(), inferJobDetails(analysis.email()));</span>
+		}
+<span class="fc" id="L140">	}</span>
+
+	private JobOpportunityDetails inferJobDetails(final EmailMessage email) {
+		try {
+<span class="fc" id="L144">			return jobDetailsInferenceSvc.infer(email);</span>
+<span class="nc" id="L145">		} catch (final RuntimeException exception) {</span>
+<span class="nc" id="L146">			LOGGER.warn(&quot;Job detail inference failed for account={}, message={} ({}); storing available email data.&quot;,</span>
+<span class="nc" id="L147">					email.account(), email.id(), exception.getClass().getSimpleName());</span>
+<span class="nc" id="L148">			return JobOpportunityDetails.empty();</span>
+		}
+	}
+
+	private void applyWorkflowLabels(final EmailAnalysis analysis) throws IOException {
+<span class="fc" id="L153">		final EmailMessage email = analysis.email();</span>
+<span class="fc" id="L154">		final Optional&lt;EmailTag&gt; suggestedTag = analysis.tag();</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">		if (suggestedTag.isPresent()) {</span>
+<span class="fc" id="L156">			final EmailTag tag = suggestedTag.get();</span>
+<span class="fc" id="L157">			emailLabelWriter.applyLabel(email.account(), email.id(), tag.labelName());</span>
+<span class="fc" id="L158">			LOGGER.info(&quot;Applied label: account={}, message={}, label={}&quot;, email.account(), email.id(), tag.labelName());</span>
+<span class="fc bfc" id="L159" title="All 2 branches covered.">			if (tag == EmailTag.ARCHITECT_JOBS) {</span>
+<span class="fc" id="L160">				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.ARCHITECT_PERSISTED);</span>
+			}
+		}
+<span class="fc" id="L163">		emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.PROCESSED);</span>
+<span class="fc" id="L164">	}</span>
+
+<span class="fc" id="L166">	private record MessageKey(String account, String messageId) {</span>
+	}
+
+<span class="fc" id="L169">	private record EmailAnalysis(EmailMessage email, String summary, Optional&lt;EmailTag&gt; tag) {</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

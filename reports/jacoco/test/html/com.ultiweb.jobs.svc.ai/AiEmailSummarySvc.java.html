@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AiEmailSummarySvc.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.ai</a> &gt; <span class="el_source">AiEmailSummarySvc.java</span></div><h1>AiEmailSummarySvc.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.ai;
+
+import com.ultiweb.jobs.svc.email.EmailMessage;
+import jakarta.annotation.PostConstruct;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AiEmailSummarySvc implements EmailSummarySvc {
+	private static final String SUMMARY_INTRO = &quot;Here is a summary of the email in three concise sentences:&quot;;
+	private static final String DEFAULT_PROMPT_PATH = &quot;prompts/email-summary-system-prompt.txt&quot;;
+
+	private final EmailAiClient emailAiClient;
+	private final Resource systemPromptResource;
+	private volatile String systemPrompt;
+
+	@Autowired
+	public AiEmailSummarySvc(@Qualifier(&quot;summaryAiClient&quot;) final EmailAiClient emailAiClient) {
+<span class="fc" id="L24">		this(emailAiClient, new ClassPathResource(DEFAULT_PROMPT_PATH));</span>
+<span class="fc" id="L25">	}</span>
+
+<span class="fc" id="L27">	AiEmailSummarySvc(final EmailAiClient emailAiClient, final Resource systemPromptResource) {</span>
+<span class="fc" id="L28">		this.emailAiClient = emailAiClient;</span>
+<span class="fc" id="L29">		this.systemPromptResource = systemPromptResource;</span>
+<span class="fc" id="L30">	}</span>
+
+	@PostConstruct
+	void initializePrompt() {
+<span class="fc" id="L34">		systemPrompt();</span>
+<span class="fc" id="L35">	}</span>
+
+	@Override
+	public String summarize(final EmailMessage email) {
+<span class="fc" id="L39">		final String response = emailAiClient.complete(systemPrompt(), emailPrompt(email));</span>
+<span class="fc bfc" id="L40" title="All 4 branches covered.">		if (response == null || response.isBlank()) {</span>
+<span class="fc" id="L41">			throw new IllegalStateException(&quot;Email summarization returned an empty response&quot;);</span>
+		}
+<span class="fc" id="L43">		return removeSummaryIntro(response);</span>
+	}
+
+	private String systemPrompt() {
+<span class="fc" id="L47">		String prompt = systemPrompt;</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">		if (prompt != null) {</span>
+<span class="fc" id="L49">			return prompt;</span>
+		}
+<span class="fc" id="L51">		synchronized (this) {</span>
+<span class="fc" id="L52">			prompt = systemPrompt;</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">			if (prompt == null) {</span>
+				try {
+<span class="fc" id="L55">					prompt = systemPromptResource.getContentAsString(StandardCharsets.UTF_8);</span>
+<span class="nc" id="L56">				} catch (final IOException exception) {</span>
+<span class="nc" id="L57">					throw new IllegalStateException(&quot;Unable to load email summary prompt from &quot;</span>
+<span class="nc" id="L58">							+ systemPromptResource.getDescription(), exception);</span>
+<span class="fc" id="L59">				}</span>
+<span class="fc" id="L60">				systemPrompt = prompt;</span>
+			}
+<span class="fc" id="L62">			return prompt;</span>
+		}
+	}
+
+	private static String removeSummaryIntro(final String response) {
+<span class="fc" id="L67">		final String summary = response.strip();</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">		if (summary.regionMatches(true, 0, SUMMARY_INTRO, 0, SUMMARY_INTRO.length())) {</span>
+<span class="fc" id="L69">			return summary.substring(SUMMARY_INTRO.length()).stripLeading();</span>
+		}
+<span class="fc" id="L71">		return summary;</span>
+	}
+
+	static String emailPrompt(final EmailMessage email) {
+<span class="fc" id="L75">		return &quot;Subject: &quot; + promptHeader(email.subject()) + &quot;\n&quot;</span>
+<span class="fc" id="L76">				+ &quot;From: &quot; + promptHeader(email.from()) + &quot;\n\n&quot;</span>
+				+ &quot;Body (normalized visible text; links appear in parentheses and table cells use |):\n&quot;
+<span class="fc" id="L78">				+ email.body();</span>
+	}
+
+	private static String promptHeader(final String value) {
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">		if (value == null) {</span>
+<span class="nc" id="L83">			return &quot;&quot;;</span>
+		}
+<span class="fc" id="L85">		final String normalized = value.replaceAll(&quot;[\\p{Cntrl}\\s]+&quot;, &quot; &quot;).strip();</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">		return normalized.length() &lt;= 500 ? normalized : normalized.substring(0, 497) + &quot;...&quot;;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConcurrencyLimitedEmailAiClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.ai</a> &gt; <span class="el_source">ConcurrencyLimitedEmailAiClient.java</span></div><h1>ConcurrencyLimitedEmailAiClient.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.ai;
+
+import java.util.concurrent.Semaphore;
+import org.springframework.util.Assert;
+
+/** Limits in-flight calls, including retries performed by the delegate. */
+public final class ConcurrencyLimitedEmailAiClient implements EmailAiClient {
+	private final EmailAiClient delegate;
+	private final Semaphore permits;
+
+<span class="fc" id="L11">	public ConcurrencyLimitedEmailAiClient(final EmailAiClient delegate, final int maxConcurrentRequests) {</span>
+<span class="fc bfc" id="L12" title="All 4 branches covered.">		Assert.isTrue(maxConcurrentRequests &gt;= 1 &amp;&amp; maxConcurrentRequests &lt;= 200,</span>
+				&quot;Inference concurrency must be between 1 and 200&quot;);
+<span class="fc" id="L14">		this.delegate = delegate;</span>
+<span class="fc" id="L15">		this.permits = new Semaphore(maxConcurrentRequests, true);</span>
+<span class="fc" id="L16">	}</span>
+
+	@Override
+	public String complete(final String systemPrompt, final String userPrompt) {
+		try {
+<span class="fc" id="L21">			permits.acquire();</span>
+<span class="nc" id="L22">		} catch (final InterruptedException exception) {</span>
+<span class="nc" id="L23">			Thread.currentThread().interrupt();</span>
+<span class="nc" id="L24">			throw new IllegalStateException(&quot;Interrupted while waiting for inference capacity&quot;, exception);</span>
+<span class="fc" id="L25">		}</span>
+		try {
+<span class="fc" id="L27">			return delegate.complete(systemPrompt, userPrompt);</span>
+		} finally {
+<span class="fc" id="L29">			permits.release();</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
