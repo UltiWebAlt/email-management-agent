@@ -25,6 +25,11 @@ jobs:
     name: Java 21 / Gradle
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
+    concurrency:
+      group: report-pages
+      cancel-in-progress: false
 
     steps:
       - name: Checkout repository
@@ -54,3 +59,15 @@ jobs:
             build/reports/spotbugs/
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Prepare report site
+        if: ${{ always() && !cancelled() && github.ref == 'refs/heads/develop' && github.event_name != 'pull_request' && hashFiles('build/reports/tests/**/index.html') != '' }}
+        run: python3 .github/scripts/prepare_reports.py build/reports report-site
+
+      - name: Publish test reports to GitHub Pages
+        if: ${{ always() && !cancelled() && github.ref == 'refs/heads/develop' && github.event_name != 'pull_request' && hashFiles('report-site/index.html') != '' }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: report-site
+          keep_files: true
