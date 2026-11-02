@@ -63,7 +63,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">0.038s</div>
+<div class="counter">0.074s</div>
 <p>duration</p>
 </div>
 </td>
@@ -88,12 +88,12 @@
 <div class="clipboard-copy-btn-container">
 <button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-failedLabelWritesAreRetriedInsteadOfMarkedProcessed()">Copy</button>
 </div>
-<pre id="root-0-test-stdout-failedLabelWritesAreRetriedInsteadOfMarkedProcessed()">18:49:41.634 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
-18:49:41.634 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 1 emails pending triage.
-18:49:41.634 [virtual-62] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
-18:49:41.635 [virtual-62] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=first@example.com, message=1
-18:49:41.635 [virtual-62] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=first@example.com, message=1, recommendedLabel=Dev_Jobs
-18:49:41.637 [Test worker] ERROR com.ultiweb.jobs.svc.EmailTriageSvc -- Triage failed for account=first@example.com, message=1; retrying on the next poll.
+<pre id="root-0-test-stdout-failedLabelWritesAreRetriedInsteadOfMarkedProcessed()">07:25:38.043 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
+07:25:38.056 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 1 emails pending triage.
+07:25:38.057 [virtual-62] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
+07:25:38.058 [virtual-62] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=first@example.com, message=1
+07:25:38.061 [virtual-62] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=first@example.com, message=1, recommendedLabel=Dev_Jobs
+07:25:38.063 [Test worker] ERROR com.ultiweb.jobs.svc.EmailTriageSvc -- Triage failed for account=first@example.com, message=1; retrying on the next poll.
 java.io.IOException: Gmail unavailable
 	at com.ultiweb.jobs.svc.EmailTriageSvc.applyWorkflowLabels(EmailTriageSvc.java:157)
 	at com.ultiweb.jobs.svc.EmailTriageSvc.processEmails(EmailTriageSvc.java:77)
@@ -189,14 +189,14 @@ java.io.IOException: Gmail unavailable
 	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
 	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
 	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
-18:49:41.642 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=0, already processed=0, failed=1, labels applied=0.
-18:49:41.642 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
-18:49:41.652 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 1 emails pending triage.
-18:49:41.652 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
-18:49:41.652 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=first@example.com, message=1
-18:49:41.653 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=first@example.com, message=1, recommendedLabel=Dev_Jobs
-18:49:41.653 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=first@example.com, message=1, label=Dev_Jobs
-18:49:41.653 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=0, failed=0, labels applied=1.
+07:25:38.074 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=0, already processed=0, failed=1, labels applied=0.
+07:25:38.081 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
+07:25:38.081 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 1 emails pending triage.
+07:25:38.081 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
+07:25:38.082 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=first@example.com, message=1
+07:25:38.082 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=first@example.com, message=1, recommendedLabel=Dev_Jobs
+07:25:38.087 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=first@example.com, message=1, label=Dev_Jobs
+07:25:38.088 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=0, failed=0, labels applied=1.
 </pre>
 </span>
 </div>
@@ -210,7 +210,7 @@ java.io.IOException: Gmail unavailable
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.8.1</a> at Oct 19, 2026, 6:49:49 PM</p>
+<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 2, 2026, 7:25:51 AM</p>
 </div>
 </div>
 </body>

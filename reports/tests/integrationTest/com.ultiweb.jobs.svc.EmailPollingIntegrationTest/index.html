@@ -65,7 +65,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">26.180s</div>
+<div class="counter">35.462s</div>
 <p>duration</p>
 </div>
 </td>
@@ -103,7 +103,7 @@
 <td>1</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="536">0.536s</td>
+<td data-sort-value="579">0.579s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 </tbody>
@@ -116,10 +116,10 @@
 <div class="clipboard-copy-btn-container">
 <button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-com.ultiweb.jobs.svc.EmailPollingIntegrationTest">Copy</button>
 </div>
-<pre id="root-0-test-stdout-com.ultiweb.jobs.svc.EmailPollingIntegrationTest">18:49:16.171 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ultiweb.jobs.svc.EmailPollingIntegrationTest]: EmailPollingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-18:49:16.884 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ultiweb.jobs.EmailManagementAgent for test class com.ultiweb.jobs.svc.EmailPollingIntegrationTest
-18:49:17.474 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ultiweb.jobs.svc.EmailPollingIntegrationTest]: EmailPollingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-18:49:17.488 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ultiweb.jobs.EmailManagementAgent for test class com.ultiweb.jobs.svc.EmailPollingIntegrationTest
+<pre id="root-0-test-stdout-com.ultiweb.jobs.svc.EmailPollingIntegrationTest">07:25:06.675 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ultiweb.jobs.svc.EmailPollingIntegrationTest]: EmailPollingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+07:25:07.706 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ultiweb.jobs.EmailManagementAgent for test class com.ultiweb.jobs.svc.EmailPollingIntegrationTest
+07:25:08.319 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ultiweb.jobs.svc.EmailPollingIntegrationTest]: EmailPollingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+07:25:08.329 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ultiweb.jobs.EmailManagementAgent for test class com.ultiweb.jobs.svc.EmailPollingIntegrationTest
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -128,25 +128,32 @@
   '  |____| .__|_| |_|_| |_\__, | / / / /
  =========|_|==============|___/=/_/_/_/
 
- :: Spring Boot ::                (v4.1.1)
+ :: Spring Boot ::                (v4.1.2)
 
-2026-10-19T18:49:20.064Z  INFO 2417 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : Starting EmailPollingIntegrationTest using Java 21.0.12.1 with PID 2417 (started by runner in /home/runner/work/email-management-agent/email-management-agent)
-2026-10-19T18:49:20.074Z  INFO 2417 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : The following 2 profiles are active: &quot;test&quot;, &quot;deepinfra&quot;
-2026-10-19T18:49:32.310Z  INFO 2417 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
-2026-10-19T18:49:32.450Z  INFO 2417 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2026-10-19T18:49:32.454Z  INFO 2417 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
-2026-10-19T18:49:32.863Z  INFO 2417 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 12678 ms
-2026-10-19T18:49:36.333Z  INFO 2417 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-10-19T18:49:36.988Z  INFO 2417 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.sqlite.jdbc4.JDBC4Connection@38dab7df
-2026-10-19T18:49:36.992Z  INFO 2417 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-10-19T18:49:38.846Z  INFO 2417 --- [    Test worker] o.s.b.w.a.WelcomePageHandlerMapping      : Adding welcome page: class path resource [static/index.html]
-2026-10-19T18:49:40.791Z  INFO 2417 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 45037 (http) with context path '/'
-2026-10-19T18:49:40.818Z  INFO 2417 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : Started EmailPollingIntegrationTest in 22.989 seconds (process running for 29.173)
-2026-10-19T18:49:40.819Z  INFO 2417 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
-2026-10-19T18:49:41.431Z  INFO 2417 --- [    Test worker] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
-2026-10-19T18:49:41.457Z  INFO 2417 --- [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
-2026-10-19T18:49:41.472Z  INFO 2417 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
-2026-10-19T18:49:41.489Z  INFO 2417 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-11-02T07:25:10.744Z  INFO 2736 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : Starting EmailPollingIntegrationTest using Java 21.0.13 with PID 2736 (started by runner in /home/runner/work/email-management-agent/email-management-agent)
+2026-11-02T07:25:10.751Z  INFO 2736 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : The following 2 profiles are active: &quot;test&quot;, &quot;deepinfra&quot;
+2026-11-02T07:25:26.363Z  INFO 2736 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-11-02T07:25:26.496Z  INFO 2736 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-02T07:25:26.497Z  INFO 2736 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.27]
+2026-11-02T07:25:26.746Z  INFO 2736 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 15840 ms
+2026-11-02T07:25:29.321Z  INFO 2736 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-02T07:25:30.088Z  INFO 2736 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.sqlite.jdbc4.JDBC4Connection@169b16dd
+2026-11-02T07:25:30.095Z  INFO 2736 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-02T07:25:34.485Z  INFO 2736 --- [    Test worker] o.s.b.w.a.WelcomePageHandlerMapping      : Adding welcome page: class path resource [static/index.html]
+2026-11-02T07:25:39.725Z  INFO 2736 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 33423 (http) with context path '/'
+2026-11-02T07:25:39.788Z  INFO 2736 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-02T07:25:39.790Z  INFO 2736 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : Started EmailPollingIntegrationTest in 31.18 seconds (process running for 38.777)
+2026-11-02T07:25:39.839Z  INFO 2736 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-02T07:25:39.840Z  INFO 2736 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 emails pending triage.
+2026-11-02T07:25:40.430Z  INFO 2736 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-02T07:25:40.437Z  INFO 2736 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-02T07:25:40.437Z  INFO 2736 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 emails pending triage.
+2026-11-02T07:25:40.438Z  INFO 2736 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=0, failed=0, labels applied=0.
+2026-11-02T07:25:40.438Z  INFO 2736 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
+2026-11-02T07:25:40.451Z  INFO 2736 --- [    Test worker] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-11-02T07:25:40.478Z  INFO 2736 --- [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-11-02T07:25:40.489Z  INFO 2736 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-11-02T07:25:40.507Z  INFO 2736 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
 </pre>
 </span>
 </div>
@@ -157,7 +164,7 @@
 <button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stderr-com.ultiweb.jobs.svc.EmailPollingIntegrationTest">Copy</button>
 </div>
 <pre id="root-0-test-stderr-com.ultiweb.jobs.svc.EmailPollingIntegrationTest">Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
-WARNING: A Java agent has been loaded dynamically (/home/runner/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.18.11/82212e5b3633e7a65fca8bec525762cfb6c9bae4/byte-buddy-agent-1.18.11.jar)
+WARNING: A Java agent has been loaded dynamically (/home/runner/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.18.15/de6980bb799c25bb1fe9e6c434201299cb5e694e/byte-buddy-agent-1.18.15.jar)
 WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
 WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
 WARNING: Dynamic loading of agents will be disallowed by default in a future release
@@ -174,7 +181,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.8.1</a> at Oct 19, 2026, 6:49:51 PM</p>
+<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 2, 2026, 7:25:55 AM</p>
 </div>
 </div>
 </body>
