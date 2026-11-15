@@ -3,80 +3,98 @@
   "listProblem": [
     {
       "tool": "Code Inspection",
-      "category": "RegExp",
+      "category": "Nullability problems",
       "categoryPath": [
         {
-          "id": "RegExp",
-          "name": "RegExp"
+          "id": "Java",
+          "name": "Java"
+        },
+        {
+          "id": "Java/Probable bugs",
+          "name": "Probable bugs"
+        },
+        {
+          "id": "Java/Probable bugs/Nullability problems",
+          "name": "Nullability problems"
         }
       ],
-      "type": "Redundant character escape",
+      "type": "Nullability problems",
       "tags": [
-        "RegExp"
+        "JAVA",
+        "CWE Top 25"
       ],
       "severity": "High",
-      "comment": "Redundant character escape `\\\\\\\"` in RegExp",
-      "detailsInfo": "Reports redundant character escape sequences that can be replaced with unescaped characters preserving the meaning. Many escape sequences that are necessary outside of a character class are redundant inside square brackets `[]` of a character class.\n\n\nAlthough unescaped opening curly braces `{` outside of character classes are allowed in some dialects (JavaScript, Python, and so on),\nit can cause confusion and make the pattern less portable, because there are dialects that require escaping curly braces as characters.\nFor this reason the inspection does not report escaped opening curly braces.\n\n**Example:**\n\n\n      \\-\\;[\\.]\n\nAfter the quick-fix is applied:\n\n\n      -;[.]\n\n\nThe **Ignore escaped closing brackets '}' and '\\]'** option specifies whether to report `\\}` and `\\]` outside of a character class\nwhen they are allowed to be unescaped by the RegExp dialect.\n\n\nSimilarly, the **Ignore escaped forward-slashes '/'** option specifies whether to report `\\/` when\nthey are allowed to be unescaped by the RegExp dialect.\n\nNew in 2017.3\n\nInspection ID: RegExpRedundantEscape",
+      "comment": "Not annotated parameter overrides @NullMarked parameter",
+      "detailsInfo": "Reports problems related to nullability annotations.\n\n**Examples:**\n\n* Overriding methods are not annotated:\n\n\n      abstract class A {\n        @NotNull abstract String m();\n      }\n      class B extends A {\n          String m() { return \"empty string\"; }\n      }\n          \n* Annotated primitive types: `@NotNull int myFoo;`\n* Both `@Nullable` and `@NotNull` are present on the same member: `@Nullable @NotNull String myFooString;`\n* Collection of nullable elements is assigned into a collection of non-null elements:\n\n\n      void testList(List<@Nullable String> nullableList) {\n         List<@NotNull String> list2 = nullableList;\n      }\n          \nUse the **Configure Annotations** button to specify nullability annotations and the checkboxes to fine-tune where the inspection should provide warnings.\n\nThis inspection only reports if the language level of the project or module is 5 or higher,\nand nullability annotations are available on the classpath.\n\nInspection ID: NullableProblems",
       "sources": [
         {
           "type": "file",
-          "path": "src/main/java/com/ultiweb/jobs/svc/email/GmailMessageBodyExtractor.java",
+          "path": "src/main/java/com/ultiweb/jobs/svc/email/HtmlEmailTextExtractor.java",
           "language": "JAVA",
-          "line": 22,
-          "offset": 101,
+          "line": 146,
+          "offset": 31,
           "length": 4,
           "code": {
-            "startLine": 20,
+            "startLine": 144,
             "length": 4,
-            "offset": 252,
-            "surroundingCode": "\tprivate static final int MAX_BODY_CHARACTERS = 5_000;\n\tprivate static final String TRUNCATION_MARKER = \"\\n\\n[Email body shortened for summarization]\";\n\tprivate static final Pattern CHARSET_PATTERN = Pattern.compile(\"(?i)charset\\\\s*=\\\\s*[\\\\\\\"']?([^;\\\\s\\\\\\\"']+)\");\n\n"
+            "offset": 43,
+            "surroundingCode": "\n\t\t@Override\n\t\tpublic void tail(final Node node, final int depth) {\n\t\t\tif (!(node instanceof Element element)) {\n\t\t\t\treturn;"
           }
         }
       ],
       "attributes": {
         "module": "email-management-agent.main",
-        "inspectionName": "RegExpRedundantEscape"
+        "inspectionName": "NullableProblems"
       },
-      "hash": "d00b36c76e85d8cc9d92226ffd8c9debb0fee19b07123d6b7b3adfe3c0f4e78b",
+      "hash": "07febf46fa345d70430da8db1f621335ce4881abec0d5a9d8b53378d58d9944d",
       "problemType": "REGULAR"
     },
     {
       "tool": "Code Inspection",
-      "category": "RegExp",
+      "category": "Nullability problems",
       "categoryPath": [
         {
-          "id": "RegExp",
-          "name": "RegExp"
+          "id": "Java",
+          "name": "Java"
+        },
+        {
+          "id": "Java/Probable bugs",
+          "name": "Probable bugs"
+        },
+        {
+          "id": "Java/Probable bugs/Nullability problems",
+          "name": "Nullability problems"
         }
       ],
-      "type": "Redundant character escape",
+      "type": "Nullability problems",
       "tags": [
-        "RegExp"
+        "JAVA",
+        "CWE Top 25"
       ],
       "severity": "High",
-      "comment": "Redundant character escape `\\\\\\\"` in RegExp",
-      "detailsInfo": "Reports redundant character escape sequences that can be replaced with unescaped characters preserving the meaning. Many escape sequences that are necessary outside of a character class are redundant inside square brackets `[]` of a character class.\n\n\nAlthough unescaped opening curly braces `{` outside of character classes are allowed in some dialects (JavaScript, Python, and so on),\nit can cause confusion and make the pattern less portable, because there are dialects that require escaping curly braces as characters.\nFor this reason the inspection does not report escaped opening curly braces.\n\n**Example:**\n\n\n      \\-\\;[\\.]\n\nAfter the quick-fix is applied:\n\n\n      -;[.]\n\n\nThe **Ignore escaped closing brackets '}' and '\\]'** option specifies whether to report `\\}` and `\\]` outside of a character class\nwhen they are allowed to be unescaped by the RegExp dialect.\n\n\nSimilarly, the **Ignore escaped forward-slashes '/'** option specifies whether to report `\\/` when\nthey are allowed to be unescaped by the RegExp dialect.\n\nNew in 2017.3\n\nInspection ID: RegExpRedundantEscape",
+      "comment": "Not annotated parameter overrides @NullMarked parameter",
+      "detailsInfo": "Reports problems related to nullability annotations.\n\n**Examples:**\n\n* Overriding methods are not annotated:\n\n\n      abstract class A {\n        @NotNull abstract String m();\n      }\n      class B extends A {\n          String m() { return \"empty string\"; }\n      }\n          \n* Annotated primitive types: `@NotNull int myFoo;`\n* Both `@Nullable` and `@NotNull` are present on the same member: `@Nullable @NotNull String myFooString;`\n* Collection of nullable elements is assigned into a collection of non-null elements:\n\n\n      void testList(List<@Nullable String> nullableList) {\n         List<@NotNull String> list2 = nullableList;\n      }\n          \nUse the **Configure Annotations** button to specify nullability annotations and the checkboxes to fine-tune where the inspection should provide warnings.\n\nThis inspection only reports if the language level of the project or module is 5 or higher,\nand nullability annotations are available on the classpath.\n\nInspection ID: NullableProblems",
       "sources": [
         {
           "type": "file",
-          "path": "src/main/java/com/ultiweb/jobs/svc/email/GmailMessageBodyExtractor.java",
+          "path": "src/main/java/com/ultiweb/jobs/svc/email/HtmlEmailTextExtractor.java",
           "language": "JAVA",
-          "line": 22,
-          "offset": 87,
+          "line": 122,
+          "offset": 31,
           "length": 4,
           "code": {
-            "startLine": 20,
+            "startLine": 120,
             "length": 4,
-            "offset": 238,
-            "surroundingCode": "\tprivate static final int MAX_BODY_CHARACTERS = 5_000;\n\tprivate static final String TRUNCATION_MARKER = \"\\n\\n[Email body shortened for summarization]\";\n\tprivate static final Pattern CHARSET_PATTERN = Pattern.compile(\"(?i)charset\\\\s*=\\\\s*[\\\\\\\"']?([^;\\\\s\\\\\\\"']+)\");\n\n"
+            "offset": 43,
+            "surroundingCode": "\n\t\t@Override\n\t\tpublic void head(final Node node, final int depth) {\n\t\t\tif (node instanceof TextNode textNode) {\n\t\t\t\tappendText(textNode.getWholeText());"
           }
         }
       ],
       "attributes": {
         "module": "email-management-agent.main",
-        "inspectionName": "RegExpRedundantEscape"
+        "inspectionName": "NullableProblems"
       },
-      "hash": "f15f595a607210347c6d8063fbe6b8f2a699bed8125b98102452863fe62dac6e",
+      "hash": "0aa44722cc87b3086da3bad4d17a23d146ce560ddf9478cc9081bdb4b38d1f84",
       "problemType": "REGULAR"
     }
   ]

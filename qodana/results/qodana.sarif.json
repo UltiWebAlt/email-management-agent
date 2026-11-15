@@ -7,7 +7,7 @@
         "driver": {
           "name": "QDJVM",
           "fullName": "Qodana for JVM",
-          "version": "262.12298",
+          "version": "262.12654",
           "rules": [],
           "taxa": [
             {
@@ -2081,7 +2081,7 @@
         "extensions": [
           {
             "name": "DevKit",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "ActionIsNotPreviewFriendly",
@@ -5595,7 +5595,7 @@
           },
           {
             "name": "JUnit",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "AssertEqualsCalledOnArray",
@@ -6151,7 +6151,7 @@
           },
           {
             "name": "Lombook Plugin",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "DeprecatedLombok",
@@ -6537,7 +6537,7 @@
           },
           {
             "name": "TestNG-J",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "ConvertJavadoc",
@@ -6889,7 +6889,7 @@
           },
           {
             "name": "XPathView",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "CheckNodeTest",
@@ -7207,7 +7207,7 @@
           },
           {
             "name": "com.intellij",
-            "version": "262.12298",
+            "version": "262.12654",
             "rules": [
               {
                 "id": "Annotator",
@@ -9089,7 +9089,7 @@
           },
           {
             "name": "com.intellij.java",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "AbsoluteAlignmentInUserInterface",
@@ -41110,7 +41110,7 @@
           },
           {
             "name": "com.intellij.java-i18n",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "ConvertToBasicLatin",
@@ -41428,7 +41428,7 @@
           },
           {
             "name": "com.intellij.modules.json",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "Json5StandardCompliance",
@@ -41644,7 +41644,7 @@
           },
           {
             "name": "com.intellij.properties",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "AlphaUnsortedPropertiesFile",
@@ -41894,7 +41894,7 @@
           },
           {
             "name": "com.intellij.uiDesigner",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "BoundFieldAssignment",
@@ -42246,7 +42246,7 @@
           },
           {
             "name": "intellij.structuralSearch.plugin",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "SSBasedInspection",
@@ -42292,7 +42292,7 @@
           },
           {
             "name": "org.editorconfig.editorconfigjetbrains",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "EditorConfigCharClassLetterRedundancy",
@@ -43290,7 +43290,7 @@
           },
           {
             "name": "org.intellij.groovy",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "ChangeToMethod",
@@ -47926,7 +47926,7 @@
           },
           {
             "name": "org.intellij.qodana",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "CyclomaticComplexityInspection",
@@ -48108,7 +48108,7 @@
           },
           {
             "name": "org.jetbrains.idea.maven",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "Maven4RedundantParentCoordinates",
@@ -48664,7 +48664,7 @@
           },
           {
             "name": "org.jetbrains.kotlin",
-            "version": "262.12298.0-IJ",
+            "version": "262.12654.0-IJ",
             "rules": [
               {
                 "id": "AddExplicitTargetToParameterAnnotation",
@@ -58944,7 +58944,7 @@
           },
           {
             "name": "org.jetbrains.plugins.gradle",
-            "version": "262.12298.0",
+            "version": "262.12654.0",
             "rules": [
               {
                 "id": "AvoidApplyPluginMethod",
@@ -59502,7 +59502,7 @@
       },
       "invocations": [
         {
-          "startTimeUtc": "2026-11-02T07:21:23.876447293Z",
+          "startTimeUtc": "2026-11-15T23:32:18.143709375Z",
           "exitCode": 0,
           "executionSuccessful": true
         }
@@ -59511,7 +59511,7 @@
       "versionControlProvenance": [
         {
           "repositoryUri": "https://github.com/UltiWebAlt/email-management-agent.git",
-          "revisionId": "29ff7fa4d6d95cd4e555e0ea43cb74e7704b7f8c",
+          "revisionId": "ee1e1439da9cf180b86577515c26e453a39525c1",
           "branch": "develop",
           "properties": {
             "repoUrl": "https://github.com/UltiWebAlt/email-management-agent.git",
@@ -59530,10 +59530,10 @@
       },
       "results": [],
       "automationDetails": {
-        "id": "email-management-agent/qodana/2026-11-02",
-        "guid": "f211f44a-8e3f-401e-9be0-19472946466e",
+        "id": "email-management-agent/qodana/2026-11-15",
+        "guid": "050dd57e-2d45-4fb4-a537-e0960fbd6466",
         "properties": {
-          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/41405681701",
+          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/43775162811",
           "analysisKind": "regular"
         }
       },
@@ -59544,37 +59544,37 @@
       "properties": {
         "qodana.promo.results": [
           {
-            "ruleId": "RegExpRedundantEscape",
+            "ruleId": "NullableProblems",
             "kind": "fail",
             "level": "warning",
             "message": {
-              "text": "Redundant character escape '\\\\\\\"' in RegExp",
-              "markdown": "Redundant character escape `\\\\\\\"` in RegExp"
+              "text": "Not annotated parameter overrides @NullMarked parameter",
+              "markdown": "Not annotated parameter overrides @NullMarked parameter"
             },
             "locations": [
               {
                 "physicalLocation": {
                   "artifactLocation": {
-                    "uri": "src/main/java/com/ultiweb/jobs/svc/email/GmailMessageBodyExtractor.java",
+                    "uri": "src/main/java/com/ultiweb/jobs/svc/email/HtmlEmailTextExtractor.java",
                     "uriBaseId": "SRCROOT"
                   },
                   "region": {
-                    "startLine": 22,
-                    "startColumn": 101,
-                    "charOffset": 863,
+                    "startLine": 146,
+                    "startColumn": 31,
+                    "charOffset": 5372,
                     "charLength": 4,
                     "snippet": {
-                      "text": "\\\\\\\""
+                      "text": "node"
                     },
-                    "sourceLanguage": "RegExp"
+                    "sourceLanguage": "JAVA"
                   },
                   "contextRegion": {
-                    "startLine": 20,
+                    "startLine": 144,
                     "startColumn": 1,
-                    "charOffset": 611,
-                    "charLength": 265,
+                    "charOffset": 5329,
+                    "charLength": 124,
                     "snippet": {
-                      "text": "\tprivate static final int MAX_BODY_CHARACTERS = 5_000;\n\tprivate static final String TRUNCATION_MARKER = \"\\n\\n[Email body shortened for summarization]\";\n\tprivate static final Pattern CHARSET_PATTERN = Pattern.compile(\"(?i)charset\\\\s*=\\\\s*[\\\\\\\"']?([^;\\\\s\\\\\\\"']+)\");\n\n"
+                      "text": "\n\t\t@Override\n\t\tpublic void tail(final Node node, final int depth) {\n\t\t\tif (!(node instanceof Element element)) {\n\t\t\t\treturn;"
                     },
                     "sourceLanguage": "JAVA"
                   }
@@ -59588,8 +59588,8 @@
               }
             ],
             "partialFingerprints": {
-              "equalIndicator/v2": "7c74afda26a6742a",
-              "equalIndicator/v1": "d00b36c76e85d8cc9d92226ffd8c9debb0fee19b07123d6b7b3adfe3c0f4e78b"
+              "equalIndicator/v2": "84a12ad33633348b",
+              "equalIndicator/v1": "07febf46fa345d70430da8db1f621335ce4881abec0d5a9d8b53378d58d9944d"
             },
             "properties": {
               "ideaSeverity": "WARNING",
@@ -59597,42 +59597,43 @@
               "problemType": "REGULAR",
               "hasFixes": true,
               "tags": [
-                "RegExp"
+                "JAVA",
+                "CWE Top 25"
               ]
             }
           },
           {
-            "ruleId": "RegExpRedundantEscape",
+            "ruleId": "NullableProblems",
             "kind": "fail",
             "level": "warning",
             "message": {
-              "text": "Redundant character escape '\\\\\\\"' in RegExp",
-              "markdown": "Redundant character escape `\\\\\\\"` in RegExp"
+              "text": "Not annotated parameter overrides @NullMarked parameter",
+              "markdown": "Not annotated parameter overrides @NullMarked parameter"
             },
             "locations": [
               {
                 "physicalLocation": {
                   "artifactLocation": {
-                    "uri": "src/main/java/com/ultiweb/jobs/svc/email/GmailMessageBodyExtractor.java",
+                    "uri": "src/main/java/com/ultiweb/jobs/svc/email/HtmlEmailTextExtractor.java",
                     "uriBaseId": "SRCROOT"
                   },
                   "region": {
-                    "startLine": 22,
-                    "startColumn": 87,
-                    "charOffset": 849,
+                    "startLine": 122,
+                    "startColumn": 31,
+                    "charOffset": 4621,
                     "charLength": 4,
                     "snippet": {
-                      "text": "\\\\\\\""
+                      "text": "node"
                     },
-                    "sourceLanguage": "RegExp"
+                    "sourceLanguage": "JAVA"
                   },
                   "contextRegion": {
-                    "startLine": 20,
+                    "startLine": 120,
                     "startColumn": 1,
-                    "charOffset": 611,
-                    "charLength": 265,
+                    "charOffset": 4578,
+                    "charLength": 152,
                     "snippet": {
-                      "text": "\tprivate static final int MAX_BODY_CHARACTERS = 5_000;\n\tprivate static final String TRUNCATION_MARKER = \"\\n\\n[Email body shortened for summarization]\";\n\tprivate static final Pattern CHARSET_PATTERN = Pattern.compile(\"(?i)charset\\\\s*=\\\\s*[\\\\\\\"']?([^;\\\\s\\\\\\\"']+)\");\n\n"
+                      "text": "\n\t\t@Override\n\t\tpublic void head(final Node node, final int depth) {\n\t\t\tif (node instanceof TextNode textNode) {\n\t\t\t\tappendText(textNode.getWholeText());"
                     },
                     "sourceLanguage": "JAVA"
                   }
@@ -59646,8 +59647,8 @@
               }
             ],
             "partialFingerprints": {
-              "equalIndicator/v2": "a4b8729c7a60ab3f",
-              "equalIndicator/v1": "f15f595a607210347c6d8063fbe6b8f2a699bed8125b98102452863fe62dac6e"
+              "equalIndicator/v2": "a0a84affe27d7fc4",
+              "equalIndicator/v1": "0aa44722cc87b3086da3bad4d17a23d146ce560ddf9478cc9081bdb4b38d1f84"
             },
             "properties": {
               "ideaSeverity": "WARNING",
@@ -59655,7 +59656,8 @@
               "problemType": "REGULAR",
               "hasFixes": true,
               "tags": [
-                "RegExp"
+                "JAVA",
+                "CWE Top 25"
               ]
             }
           }
@@ -59663,6 +59665,7 @@
         "qodana.coverage.files.provided": false,
         "configProfile": "starter",
         "deviceId": "200820300000000-cfa1-6c85-fae0-4c3b3b9f9eb4",
+        "baselineSource": "NONE",
         "qodanaNewResultSummary": {
           "total": 0
         }

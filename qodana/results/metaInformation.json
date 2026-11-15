@@ -7,15 +7,15 @@
   "linter": "QDJVM",
   "attributes": {
     "deviceId": "200820300000000-cfa1-6c85-fae0-4c3b3b9f9eb4",
-    "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/41405681701",
+    "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/43775162811",
     "vcs": {
       "sarifIdea": {
         "repositoryUri": "https://github.com/UltiWebAlt/email-management-agent.git",
-        "revisionId": "29ff7fa4d6d95cd4e555e0ea43cb74e7704b7f8c",
+        "revisionId": "ee1e1439da9cf180b86577515c26e453a39525c1",
         "branch": "develop"
       }
     },
     "repoUrl": "https://github.com/UltiWebAlt/email-management-agent.git"
   },
-  "linterVersion": "262.12298"
+  "linterVersion": "262.12654"
 }

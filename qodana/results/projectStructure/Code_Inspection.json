@@ -83,7 +83,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.jsoup:jsoup:1.23.2",
+          "name": "Gradle: org.jsoup:jsoup:1.24.1",
           "type": "Library"
         },
         {
@@ -935,7 +935,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.jsoup:jsoup:1.23.2",
+          "name": "Gradle: org.jsoup:jsoup:1.24.1",
           "type": "Library"
         },
         {
@@ -1651,7 +1651,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.jsoup:jsoup:1.23.2",
+          "name": "Gradle: org.jsoup:jsoup:1.24.1",
           "type": "Library"
         },
         {
