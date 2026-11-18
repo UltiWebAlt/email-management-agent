@@ -35,170 +35,209 @@ final class GmailMessageBodyExtractor {
 	}
 
 	ExtractedEmailBody extractContent(final MessagePart payload) throws IOException {
-<span class="fc" id="L38">		final BodyContent content = content(payload);</span>
-<span class="fc" id="L39">		final String text = limit(content.text());</span>
-<span class="fc" id="L40">		String html = content.htmlBody();</span>
-<span class="pc bpc" id="L41" title="1 of 2 branches missed.">		if (html.length() &gt; 100_000) {</span>
-<span class="nc" id="L42">			html = HtmlEmailTextExtractor.plainTextAsHtml(text);</span>
+<span class="fc" id="L38">		final var inlineImages = new java.util.HashMap&lt;String, String&gt;();</span>
+<span class="fc" id="L39">		collectInlineImages(payload, inlineImages);</span>
+<span class="fc" id="L40">		final BodyContent content = content(payload);</span>
+<span class="fc" id="L41">		final String text = limit(content.text());</span>
+<span class="fc" id="L42">		final String html = replaceInlineImageReferences(content.htmlBody(), inlineImages);</span>
+<span class="fc" id="L43">		return new ExtractedEmailBody(text, html);</span>
+	}
+
+	private void collectInlineImages(final MessagePart part, final java.util.Map&lt;String, String&gt; inlineImages)
+			throws IOException {
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">		if (part == null) {</span>
+<span class="nc" id="L49">			return;</span>
 		}
-<span class="fc" id="L44">		return new ExtractedEmailBody(text, html);</span>
+<span class="fc" id="L51">		final String contentId = header(part, &quot;Content-ID&quot;).strip().replaceAll(&quot;^&lt;|&gt;$&quot;, &quot;&quot;);</span>
+<span class="pc bpc" id="L52" title="2 of 6 branches missed.">		if (!contentId.isBlank() &amp;&amp; mimeType(part).startsWith(&quot;image/&quot;) &amp;&amp; hasBodyData(part.getBody())) {</span>
+<span class="fc" id="L53">			final String encodedData = encodedData(part);</span>
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">			if (!encodedData.isBlank()) {</span>
+<span class="fc" id="L55">				final byte[] imageBytes = Base64.getUrlDecoder().decode(encodedData);</span>
+<span class="fc" id="L56">				final String dataUri = &quot;data:&quot; + mimeType(part) + &quot;;base64,&quot; + Base64.getEncoder().encodeToString(imageBytes);</span>
+<span class="fc" id="L57">				inlineImages.put(contentId.toLowerCase(Locale.ROOT), dataUri);</span>
+			}
+		}
+<span class="fc bfc" id="L60" title="All 2 branches covered.">		for (final MessagePart child : Optional.ofNullable(part.getParts()).orElseGet(List::of)) {</span>
+<span class="fc" id="L61">			collectInlineImages(child, inlineImages);</span>
+<span class="fc" id="L62">		}</span>
+<span class="fc" id="L63">	}</span>
+
+	private static String replaceInlineImageReferences(final String html,
+			final java.util.Map&lt;String, String&gt; inlineImages) {
+<span class="fc bfc" id="L67" title="All 4 branches covered.">		if (html.isBlank() || inlineImages.isEmpty()) {</span>
+<span class="fc" id="L68">			return html;</span>
+		}
+<span class="fc" id="L70">		final var output = new StringBuilder();</span>
+<span class="fc" id="L71">		final var matcher = Pattern.compile(&quot;(?i)cid:([^\\s\\\&quot;'&lt;&gt;\\)]+)&quot;).matcher(html);</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">		while (matcher.find()) {</span>
+<span class="fc" id="L73">			final String dataUri = inlineImages.get(matcher.group(1).replaceAll(&quot;^&lt;|&gt;$&quot;, &quot;&quot;).toLowerCase(Locale.ROOT));</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">			if (dataUri != null) {</span>
+<span class="fc" id="L75">				matcher.appendReplacement(output, java.util.regex.Matcher.quoteReplacement(dataUri));</span>
+			}
+<span class="fc" id="L77">		}</span>
+<span class="fc" id="L78">		matcher.appendTail(output);</span>
+<span class="fc" id="L79">		return output.toString();</span>
 	}
 
 	private BodyContent content(final MessagePart part) throws IOException {
-<span class="pc bpc" id="L48" title="1 of 4 branches missed.">		if (part == null || isAttachment(part)) {</span>
-<span class="fc" id="L49">			return BodyContent.empty();</span>
+<span class="pc bpc" id="L83" title="1 of 4 branches missed.">		if (part == null || isAttachment(part)) {</span>
+<span class="fc" id="L84">			return BodyContent.empty();</span>
 		}
-<span class="fc" id="L51">		final String mimeType = mimeType(part);</span>
-<span class="fc bfc" id="L52" title="All 2 branches covered.">		if (&quot;text/plain&quot;.equals(mimeType)) {</span>
-<span class="fc" id="L53">			return textContent(decode(part));</span>
+<span class="fc" id="L86">		final String mimeType = mimeType(part);</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">		if (&quot;text/plain&quot;.equals(mimeType)) {</span>
+<span class="fc" id="L88">			return textContent(decode(part));</span>
 		}
-<span class="fc bfc" id="L55" title="All 2 branches covered.">		if (&quot;text/html&quot;.equals(mimeType)) {</span>
-<span class="fc" id="L56">			return htmlContent(decode(part));</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">		if (&quot;text/html&quot;.equals(mimeType)) {</span>
+<span class="fc" id="L91">			return htmlContent(decode(part));</span>
 		}
-<span class="fc" id="L58">		final List&lt;MessagePart&gt; parts = Optional.ofNullable(part.getParts()).orElseGet(List::of);</span>
-<span class="fc bfc" id="L59" title="All 2 branches covered.">		if (!parts.isEmpty()) {</span>
-<span class="fc" id="L60">			final List&lt;BodyContent&gt; candidates = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L61" title="All 2 branches covered.">			for (final MessagePart child : parts) {</span>
-<span class="fc" id="L62">				final BodyContent candidate = content(child);</span>
-<span class="fc bfc" id="L63" title="All 2 branches covered.">				if (!candidate.text().isBlank()) {</span>
-<span class="fc" id="L64">					candidates.add(candidate);</span>
+<span class="fc" id="L93">		final List&lt;MessagePart&gt; parts = Optional.ofNullable(part.getParts()).orElseGet(List::of);</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">		if (!parts.isEmpty()) {</span>
+<span class="fc" id="L95">			final List&lt;BodyContent&gt; candidates = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">			for (final MessagePart child : parts) {</span>
+<span class="fc" id="L97">				final BodyContent candidate = content(child);</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">				if (!candidate.text().isBlank()) {</span>
+<span class="fc" id="L99">					candidates.add(candidate);</span>
 				}
-<span class="fc" id="L66">			}</span>
-<span class="fc bfc" id="L67" title="All 2 branches covered.">			if (mimeType.startsWith(&quot;multipart/alternative&quot;)) {</span>
-<span class="fc" id="L68">				return preferredAlternative(candidates);</span>
+<span class="fc" id="L101">			}</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">			if (mimeType.startsWith(&quot;multipart/alternative&quot;)) {</span>
+<span class="fc" id="L103">				return preferredAlternative(candidates);</span>
 			}
-<span class="fc" id="L70">			return combine(candidates);</span>
+<span class="fc" id="L105">			return combine(candidates);</span>
 		}
-<span class="pc bpc" id="L72" title="1 of 6 branches missed.">		if ((mimeType.isBlank() || mimeType.startsWith(&quot;text/&quot;)) &amp;&amp; hasBodyData(part.getBody())) {</span>
-<span class="fc" id="L73">			return textContent(decode(part));</span>
+<span class="fc bfc" id="L107" title="All 6 branches covered.">		if ((mimeType.isBlank() || mimeType.startsWith(&quot;text/&quot;)) &amp;&amp; hasBodyData(part.getBody())) {</span>
+<span class="fc" id="L108">			return textContent(decode(part));</span>
 		}
-<span class="fc" id="L75">		return BodyContent.empty();</span>
+<span class="fc" id="L110">		return BodyContent.empty();</span>
 	}
 
 	private String decode(final MessagePart part) throws IOException {
-<span class="fc" id="L79">		final MessagePartBody body = part.getBody();</span>
-<span class="pc bpc" id="L80" title="1 of 2 branches missed.">		if (body == null) {</span>
-<span class="nc" id="L81">			return &quot;&quot;;</span>
+<span class="fc" id="L114">		final String data = encodedData(part);</span>
+<span class="pc bpc" id="L115" title="2 of 4 branches missed.">		if (data == null || data.isBlank()) {</span>
+<span class="nc" id="L116">			return &quot;&quot;;</span>
 		}
-<span class="fc" id="L83">		String data = body.getData();</span>
-<span class="pc bpc" id="L84" title="3 of 8 branches missed.">		if ((data == null || data.isBlank()) &amp;&amp; body.getAttachmentId() != null &amp;&amp; !body.getAttachmentId().isBlank()) {</span>
-<span class="fc" id="L85">			final MessagePartBody attachment = gmail.users().messages().attachments()</span>
-<span class="fc" id="L86">					.get(&quot;me&quot;, messageId, body.getAttachmentId())</span>
-<span class="fc" id="L87">					.execute();</span>
-<span class="pc bpc" id="L88" title="1 of 2 branches missed.">			data = attachment == null ? null : attachment.getData();</span>
+<span class="fc" id="L118">		return new String(Base64.getUrlDecoder().decode(data), charset(part));</span>
+	}
+
+	private String encodedData(final MessagePart part) throws IOException {
+<span class="fc" id="L122">		final MessagePartBody body = part.getBody();</span>
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">		if (body == null) {</span>
+<span class="nc" id="L124">			return &quot;&quot;;</span>
 		}
-<span class="pc bpc" id="L90" title="2 of 4 branches missed.">		if (data == null || data.isBlank()) {</span>
-<span class="nc" id="L91">			return &quot;&quot;;</span>
+<span class="fc" id="L126">		String data = body.getData();</span>
+<span class="pc bpc" id="L127" title="3 of 8 branches missed.">		if ((data == null || data.isBlank()) &amp;&amp; body.getAttachmentId() != null &amp;&amp; !body.getAttachmentId().isBlank()) {</span>
+<span class="fc" id="L128">			final MessagePartBody attachment = gmail.users().messages().attachments()</span>
+<span class="fc" id="L129">					.get(&quot;me&quot;, messageId, body.getAttachmentId())</span>
+<span class="fc" id="L130">					.execute();</span>
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">			data = attachment == null ? null : attachment.getData();</span>
 		}
-<span class="fc" id="L93">		return new String(Base64.getUrlDecoder().decode(data), charset(part));</span>
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">		return data == null ? &quot;&quot; : data;</span>
 	}
 
 	private static BodyContent textContent(final String decoded) {
-<span class="fc bfc" id="L97" title="All 2 branches covered.">		if (looksLikeHtml(decoded)) {</span>
-<span class="fc" id="L98">			return htmlContent(decoded);</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">		if (looksLikeHtml(decoded)) {</span>
+<span class="fc" id="L138">			return htmlContent(decoded);</span>
 		}
-<span class="fc" id="L100">		final String text = normalizePlainText(decoded);</span>
-<span class="fc" id="L101">		return new BodyContent(text, false, HtmlEmailTextExtractor.plainTextAsHtml(text));</span>
+<span class="fc" id="L140">		final String text = normalizePlainText(decoded);</span>
+<span class="fc" id="L141">		return new BodyContent(text, false, HtmlEmailTextExtractor.plainTextAsHtml(text));</span>
 	}
 
 	private static BodyContent htmlContent(final String html) {
-<span class="fc" id="L105">		return new BodyContent(HtmlEmailTextExtractor.extract(html), true,</span>
-<span class="fc" id="L106">				HtmlEmailTextExtractor.sanitizeForDisplay(html));</span>
+<span class="fc" id="L145">		return new BodyContent(HtmlEmailTextExtractor.extract(html), true, html);</span>
 	}
 
 	private static Charset charset(final MessagePart part) {
-<span class="fc" id="L110">		final String contentType = header(part, &quot;Content-Type&quot;);</span>
-<span class="fc" id="L111">		final var matcher = CHARSET_PATTERN.matcher(contentType);</span>
-<span class="pc bpc" id="L112" title="1 of 2 branches missed.">		if (matcher.find()) {</span>
+<span class="fc" id="L149">		final String contentType = header(part, &quot;Content-Type&quot;);</span>
+<span class="fc" id="L150">		final var matcher = CHARSET_PATTERN.matcher(contentType);</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">		if (matcher.find()) {</span>
 			try {
-<span class="fc" id="L114">				return Charset.forName(matcher.group(1));</span>
-<span class="nc" id="L115">			} catch (final IllegalArgumentException ignored) {</span>
+<span class="fc" id="L153">				return Charset.forName(matcher.group(1));</span>
+<span class="nc" id="L154">			} catch (final IllegalArgumentException ignored) {</span>
 				// Malformed or unsupported charsets are common in mail; UTF-8 is the safest fallback.
 			}
 		}
-<span class="nc" id="L119">		return StandardCharsets.UTF_8;</span>
+<span class="nc" id="L158">		return StandardCharsets.UTF_8;</span>
 	}
 
 	private static BodyContent preferredAlternative(final List&lt;BodyContent&gt; candidates) {
-<span class="fc" id="L123">		return candidates.reversed().stream()</span>
-<span class="fc" id="L124">				.filter(BodyContent::html)</span>
-<span class="fc" id="L125">				.findFirst()</span>
-<span class="pc bnc" id="L126" title="All 2 branches missed.">				.orElseGet(() -&gt; candidates.isEmpty() ? BodyContent.empty() : candidates.getLast());</span>
+<span class="fc" id="L162">		return candidates.reversed().stream()</span>
+<span class="fc" id="L163">				.filter(BodyContent::html)</span>
+<span class="fc" id="L164">				.findFirst()</span>
+<span class="pc bnc" id="L165" title="All 2 branches missed.">				.orElseGet(() -&gt; candidates.isEmpty() ? BodyContent.empty() : candidates.getLast());</span>
 	}
 
 	private static BodyContent combine(final List&lt;BodyContent&gt; candidates) {
-<span class="fc" id="L130">		final var output = new StringBuilder();</span>
-<span class="fc" id="L131">		final var htmlOutput = new StringBuilder();</span>
-<span class="fc" id="L132">		final Set&lt;String&gt; included = new HashSet&lt;&gt;();</span>
-<span class="fc" id="L133">		boolean html = false;</span>
-<span class="fc bfc" id="L134" title="All 2 branches covered.">		for (final BodyContent candidate : candidates) {</span>
-<span class="fc" id="L135">			final String text = candidate.text().strip();</span>
-<span class="pc bpc" id="L136" title="2 of 4 branches missed.">			if (text.isEmpty() || !included.add(text)) {</span>
-<span class="nc" id="L137">				continue;</span>
+<span class="fc" id="L169">		final var output = new StringBuilder();</span>
+<span class="fc" id="L170">		final var htmlOutput = new StringBuilder();</span>
+<span class="fc" id="L171">		final Set&lt;String&gt; included = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L172">		boolean html = false;</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">		for (final BodyContent candidate : candidates) {</span>
+<span class="fc" id="L174">			final String text = candidate.text().strip();</span>
+<span class="pc bpc" id="L175" title="2 of 4 branches missed.">			if (text.isEmpty() || !included.add(text)) {</span>
+<span class="nc" id="L176">				continue;</span>
 			}
-<span class="pc bpc" id="L139" title="1 of 2 branches missed.">			if (!output.isEmpty()) {</span>
-<span class="nc" id="L140">				output.append(&quot;\n\n&quot;);</span>
+<span class="pc bpc" id="L178" title="1 of 2 branches missed.">			if (!output.isEmpty()) {</span>
+<span class="nc" id="L179">				output.append(&quot;\n\n&quot;);</span>
 			}
-<span class="fc" id="L142">			output.append(text);</span>
-<span class="pc bpc" id="L143" title="1 of 2 branches missed.">			if (!candidate.htmlBody().isBlank()) {</span>
-<span class="fc" id="L144">				htmlOutput.append(&quot;&lt;div&gt;&quot;).append(candidate.htmlBody()).append(&quot;&lt;/div&gt;&quot;);</span>
+<span class="fc" id="L181">			output.append(text);</span>
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">			if (!candidate.htmlBody().isBlank()) {</span>
+<span class="fc" id="L183">				htmlOutput.append(&quot;&lt;div&gt;&quot;).append(candidate.htmlBody()).append(&quot;&lt;/div&gt;&quot;);</span>
 			}
-<span class="fc" id="L146">			html |= candidate.html();</span>
-<span class="fc" id="L147">		}</span>
-<span class="fc" id="L148">		return new BodyContent(output.toString(), html, htmlOutput.toString());</span>
+<span class="fc" id="L185">			html |= candidate.html();</span>
+<span class="fc" id="L186">		}</span>
+<span class="fc" id="L187">		return new BodyContent(output.toString(), html, htmlOutput.toString());</span>
 	}
 
 	private static String normalizePlainText(final String text) {
-<span class="fc" id="L152">		return text.replace(&quot;\r\n&quot;, &quot;\n&quot;)</span>
-<span class="fc" id="L153">				.replace('\r', '\n')</span>
-<span class="fc" id="L154">				.replace('\u00a0', ' ')</span>
-<span class="fc" id="L155">				.replaceAll(&quot;[\\t\\x0B\\f ]+&quot;, &quot; &quot;)</span>
-<span class="fc" id="L156">				.lines().map(String::strip).collect(java.util.stream.Collectors.joining(&quot;\n&quot;))</span>
-<span class="fc" id="L157">				.replaceAll(&quot;\\n{3,}&quot;, &quot;\n\n&quot;)</span>
-<span class="fc" id="L158">				.strip();</span>
+<span class="fc" id="L191">		return text.replace(&quot;\r\n&quot;, &quot;\n&quot;)</span>
+<span class="fc" id="L192">				.replace('\r', '\n')</span>
+<span class="fc" id="L193">				.replace('\u00a0', ' ')</span>
+<span class="fc" id="L194">				.replaceAll(&quot;[\\t\\x0B\\f ]+&quot;, &quot; &quot;)</span>
+<span class="fc" id="L195">				.lines().map(String::strip).collect(java.util.stream.Collectors.joining(&quot;\n&quot;))</span>
+<span class="fc" id="L196">				.replaceAll(&quot;\\n{3,}&quot;, &quot;\n\n&quot;)</span>
+<span class="fc" id="L197">				.strip();</span>
 	}
 
 	private static String limit(final String text) {
-<span class="fc" id="L162">		final String normalized = text.strip();</span>
-<span class="fc bfc" id="L163" title="All 2 branches covered.">		if (normalized.length() &lt;= MAX_BODY_CHARACTERS) {</span>
-<span class="fc" id="L164">			return normalized;</span>
+<span class="fc" id="L201">		final String normalized = text.strip();</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">		if (normalized.length() &lt;= MAX_BODY_CHARACTERS) {</span>
+<span class="fc" id="L203">			return normalized;</span>
 		}
-<span class="fc" id="L166">		final int preferredBoundary = normalized.lastIndexOf('\n', MAX_BODY_CHARACTERS - TRUNCATION_MARKER.length());</span>
-<span class="fc" id="L167">		final int minimumBoundary = MAX_BODY_CHARACTERS * 3 / 4;</span>
-<span class="pc bpc" id="L168" title="1 of 2 branches missed.">		final int boundary = preferredBoundary &gt;= minimumBoundary</span>
-<span class="nc" id="L169">				? preferredBoundary</span>
-<span class="fc" id="L170">				: MAX_BODY_CHARACTERS - TRUNCATION_MARKER.length();</span>
-<span class="fc" id="L171">		return normalized.substring(0, boundary).stripTrailing() + TRUNCATION_MARKER;</span>
+<span class="fc" id="L205">		final int preferredBoundary = normalized.lastIndexOf('\n', MAX_BODY_CHARACTERS - TRUNCATION_MARKER.length());</span>
+<span class="fc" id="L206">		final int minimumBoundary = MAX_BODY_CHARACTERS * 3 / 4;</span>
+<span class="pc bpc" id="L207" title="1 of 2 branches missed.">		final int boundary = preferredBoundary &gt;= minimumBoundary</span>
+<span class="nc" id="L208">				? preferredBoundary</span>
+<span class="fc" id="L209">				: MAX_BODY_CHARACTERS - TRUNCATION_MARKER.length();</span>
+<span class="fc" id="L210">		return normalized.substring(0, boundary).stripTrailing() + TRUNCATION_MARKER;</span>
 	}
 
 	private static boolean isAttachment(final MessagePart part) {
-<span class="fc" id="L175">		return header(part, &quot;Content-Disposition&quot;).toLowerCase(Locale.ROOT).startsWith(&quot;attachment&quot;);</span>
+<span class="fc" id="L214">		return header(part, &quot;Content-Disposition&quot;).toLowerCase(Locale.ROOT).startsWith(&quot;attachment&quot;);</span>
 	}
 
 	private static String mimeType(final MessagePart part) {
-<span class="fc" id="L179">		return Optional.ofNullable(part.getMimeType()).orElse(&quot;&quot;).split(&quot;;&quot;, 2)[0].strip().toLowerCase(Locale.ROOT);</span>
+<span class="fc" id="L218">		return Optional.ofNullable(part.getMimeType()).orElse(&quot;&quot;).split(&quot;;&quot;, 2)[0].strip().toLowerCase(Locale.ROOT);</span>
 	}
 
 	private static String header(final MessagePart part, final String name) {
-<span class="fc" id="L183">		return Optional.ofNullable(part.getHeaders()).orElseGet(List::of).stream()</span>
-<span class="fc" id="L184">				.filter(header -&gt; name.equalsIgnoreCase(header.getName()))</span>
-<span class="fc" id="L185">				.map(MessagePartHeader::getValue)</span>
-<span class="fc" id="L186">				.findFirst()</span>
-<span class="fc" id="L187">				.orElse(&quot;&quot;);</span>
+<span class="fc" id="L222">		return Optional.ofNullable(part.getHeaders()).orElseGet(List::of).stream()</span>
+<span class="fc" id="L223">				.filter(header -&gt; name.equalsIgnoreCase(header.getName()))</span>
+<span class="fc" id="L224">				.map(MessagePartHeader::getValue)</span>
+<span class="fc" id="L225">				.findFirst()</span>
+<span class="fc" id="L226">				.orElse(&quot;&quot;);</span>
 	}
 
 	private static boolean hasBodyData(final MessagePartBody body) {
-<span class="pc bpc" id="L191" title="2 of 6 branches missed.">		return body != null &amp;&amp; ((body.getData() != null &amp;&amp; !body.getData().isBlank())</span>
-<span class="pc bnc" id="L192" title="All 4 branches missed.">				|| (body.getAttachmentId() != null &amp;&amp; !body.getAttachmentId().isBlank()));</span>
+<span class="pc bpc" id="L230" title="1 of 6 branches missed.">		return body != null &amp;&amp; ((body.getData() != null &amp;&amp; !body.getData().isBlank())</span>
+<span class="pc bpc" id="L231" title="2 of 4 branches missed.">				|| (body.getAttachmentId() != null &amp;&amp; !body.getAttachmentId().isBlank()));</span>
 	}
 
 	private static boolean looksLikeHtml(final String value) {
-<span class="fc" id="L196">		return EmailHtmlMarkup.startsWithMarkup(value);</span>
+<span class="fc" id="L235">		return EmailHtmlMarkup.startsWithMarkup(value);</span>
 	}
 
-<span class="fc" id="L199">	private record BodyContent(String text, boolean html, String htmlBody) {</span>
+<span class="fc" id="L238">	private record BodyContent(String text, boolean html, String htmlBody) {</span>
 		private static BodyContent empty() {
-<span class="fc" id="L201">			return new BodyContent(&quot;&quot;, false, &quot;&quot;);</span>
+<span class="fc" id="L240">			return new BodyContent(&quot;&quot;, false, &quot;&quot;);</span>
 		}
 	}
 }

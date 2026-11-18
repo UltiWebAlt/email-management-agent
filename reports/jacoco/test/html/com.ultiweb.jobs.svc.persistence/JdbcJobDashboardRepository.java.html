@@ -17,7 +17,17 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 	private static final String JOB_COLUMNS = &quot;&quot;&quot;
 			p.id, p.title, p.company, r.name AS recruiter_name, r.email AS recruiter_email,
 			p.location, p.is_remote, p.source_received_at, p.created_at, p.summary, p.respond_to,
-			latest_response.response_status, latest_response.response_content
+			CASE WHEN latest_response.response_status = 'SENT_LABEL_FAILED'
+			AND latest_response.follow_up_status IS NULL THEN 'SENT_LABEL_FAILED'
+			WHEN latest_response.response_status IN ('SENT', 'SENT_LABEL_FAILED') THEN
+			CASE latest_response.follow_up_status
+			WHEN 'REPLIED' THEN 'REPLIED'
+			WHEN 'SENT' THEN 'FOLLOW_UP_SENT'
+			WHEN 'FAILED' THEN 'FOLLOW_UP_FAILED'
+			WHEN 'CHECKING' THEN 'CHECKING_RESPONSE'
+			ELSE 'AWAITING_REPLY' END
+			ELSE latest_response.response_status END AS response_status,
+			latest_response.response_content
 			&quot;&quot;&quot;;
 	private static final String JOB_FROM = &quot;&quot;&quot;
 			FROM positions p
@@ -28,46 +38,48 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 
 	private final JdbcOperations jdbcTemplate;
 
-<span class="fc" id="L31">	public JdbcJobDashboardRepository(final JdbcOperations jdbcTemplate) {</span>
-<span class="fc" id="L32">		this.jdbcTemplate = jdbcTemplate;</span>
-<span class="fc" id="L33">	}</span>
+<span class="fc" id="L41">	public JdbcJobDashboardRepository(final JdbcOperations jdbcTemplate) {</span>
+<span class="fc" id="L42">		this.jdbcTemplate = jdbcTemplate;</span>
+<span class="fc" id="L43">	}</span>
 
 	@Override
 	public JobDashboardMetricsRow metrics(final Instant recentSince) {
-<span class="fc" id="L37">		return jdbcTemplate.queryForObject(&quot;&quot;&quot;</span>
+<span class="fc" id="L47">		return jdbcTemplate.queryForObject(&quot;&quot;&quot;</span>
 				SELECT
 				COUNT(*) AS total_jobs,
 				SUM(CASE WHEN datetime(p.created_at) &gt;= datetime(?) THEN 1 ELSE 0 END) AS recent_jobs,
 				COUNT(DISTINCT p.recruiter_id) AS recruiters,
-				(SELECT COUNT(*) FROM responses WHERE follow_up_needed = 1) AS follow_ups,
+				(SELECT COUNT(*) FROM responses response JOIN positions position ON position.id = response.position_id
+				WHERE response.follow_up_needed = 1 AND position.dismissed = 0) AS follow_ups,
 				MAX(p.created_at) AS last_saved_at
 				FROM positions p
-<span class="fc" id="L45">				&quot;&quot;&quot;, (resultSet, rowNumber) -&gt; new JobDashboardMetricsRow(</span>
-<span class="fc" id="L46">				resultSet.getLong(&quot;total_jobs&quot;),</span>
-<span class="fc" id="L47">				resultSet.getLong(&quot;recent_jobs&quot;),</span>
-<span class="fc" id="L48">				resultSet.getLong(&quot;recruiters&quot;),</span>
-<span class="fc" id="L49">				resultSet.getLong(&quot;follow_ups&quot;),</span>
-<span class="fc" id="L50">				instant(resultSet.getString(&quot;last_saved_at&quot;))), recentSince.toString());</span>
+				WHERE p.dismissed = 0
+<span class="fc" id="L57">				&quot;&quot;&quot;, (resultSet, rowNumber) -&gt; new JobDashboardMetricsRow(</span>
+<span class="fc" id="L58">				resultSet.getLong(&quot;total_jobs&quot;),</span>
+<span class="fc" id="L59">				resultSet.getLong(&quot;recent_jobs&quot;),</span>
+<span class="fc" id="L60">				resultSet.getLong(&quot;recruiters&quot;),</span>
+<span class="fc" id="L61">				resultSet.getLong(&quot;follow_ups&quot;),</span>
+<span class="fc" id="L62">				instant(resultSet.getString(&quot;last_saved_at&quot;))), recentSince.toString());</span>
 	}
 
 	@Override
 	public long countJobs(final String query) {
-<span class="pc bpc" id="L55" title="1 of 2 branches missed.">		final String normalizedQuery = query == null ? &quot;&quot; : query.strip();</span>
-<span class="pc bpc" id="L56" title="1 of 2 branches missed.">		if (normalizedQuery.isEmpty()) {</span>
-<span class="nc" id="L57">			return Objects.requireNonNull(jdbcTemplate.queryForObject(&quot;SELECT COUNT(*) FROM positions&quot;, Long.class),</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">		final String normalizedQuery = query == null ? &quot;&quot; : query.strip();</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">		if (normalizedQuery.isEmpty()) {</span>
+<span class="nc" id="L69">			return Objects.requireNonNull(jdbcTemplate.queryForObject(&quot;SELECT COUNT(*) FROM positions WHERE dismissed = 0&quot;, Long.class),</span>
 					&quot;Position count query returned no result&quot;);
 		}
-<span class="fc" id="L60">		final String pattern = &quot;%&quot; + normalizedQuery.toLowerCase(java.util.Locale.ROOT) + &quot;%&quot;;</span>
-<span class="fc" id="L61">		return Objects.requireNonNull(jdbcTemplate.queryForObject(&quot;&quot;&quot;</span>
+<span class="fc" id="L72">		final String pattern = &quot;%&quot; + normalizedQuery.toLowerCase(java.util.Locale.ROOT) + &quot;%&quot;;</span>
+<span class="fc" id="L73">		return Objects.requireNonNull(jdbcTemplate.queryForObject(&quot;&quot;&quot;</span>
 				SELECT COUNT(*)
 				FROM positions p
 				JOIN recruiters r ON r.id = p.recruiter_id
-				WHERE LOWER(COALESCE(p.title, '')) LIKE ?
+				WHERE p.dismissed = 0 AND (LOWER(COALESCE(p.title, '')) LIKE ?
 				OR LOWER(COALESCE(p.company, '')) LIKE ?
 				OR LOWER(COALESCE(p.location, '')) LIKE ?
 				OR LOWER(COALESCE(r.name, '')) LIKE ?
 				OR LOWER(COALESCE(r.email, '')) LIKE ?
-				OR LOWER(COALESCE(p.summary, '')) LIKE ?
+				OR LOWER(COALESCE(p.summary, '')) LIKE ?)
 				&quot;&quot;&quot;, Long.class, pattern, pattern, pattern, pattern, pattern, pattern),
 				&quot;Filtered position count query returned no result&quot;);
 	}
@@ -75,37 +87,38 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 	@Override
 	public List&lt;JobDashboardRow&gt; findJobs(final String query, final JobSortOrder sortOrder,
 			final int offset, final int limit) {
-<span class="pc bpc" id="L78" title="1 of 2 branches missed.">		final String normalizedQuery = query == null ? &quot;&quot; : query.strip();</span>
-<span class="fc bfc" id="L79" title="All 2 branches covered.">		if (normalizedQuery.isEmpty()) {</span>
-<span class="fc" id="L80">			return jdbcTemplate.query(&quot;&quot;&quot;</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">		final String normalizedQuery = query == null ? &quot;&quot; : query.strip();</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">		if (normalizedQuery.isEmpty()) {</span>
+<span class="fc" id="L92">			return jdbcTemplate.query(&quot;&quot;&quot;</span>
 					SELECT ${columns}
 					${from}
+					WHERE p.dismissed = 0
 					ORDER BY ${sortOrder}
 					LIMIT ? OFFSET ?
-<span class="fc" id="L85">					&quot;&quot;&quot;.replace(COLUMNS_PLACEHOLDER, JOB_COLUMNS).replace(&quot;${from}&quot;, JOB_FROM)</span>
-<span class="fc" id="L86">					.replace(&quot;${sortOrder}&quot;, sortOrder.sqlOrderBy()),</span>
-<span class="fc" id="L87">					JdbcJobDashboardRepository::jobRow, limit, offset);</span>
+<span class="fc" id="L98">					&quot;&quot;&quot;.replace(COLUMNS_PLACEHOLDER, JOB_COLUMNS).replace(&quot;${from}&quot;, JOB_FROM)</span>
+<span class="fc" id="L99">					.replace(&quot;${sortOrder}&quot;, sortOrder.sqlOrderBy()),</span>
+<span class="fc" id="L100">					JdbcJobDashboardRepository::jobRow, limit, offset);</span>
 		}
-<span class="fc" id="L89">		final String pattern = &quot;%&quot; + normalizedQuery.toLowerCase(java.util.Locale.ROOT) + &quot;%&quot;;</span>
-<span class="fc" id="L90">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
+<span class="fc" id="L102">		final String pattern = &quot;%&quot; + normalizedQuery.toLowerCase(java.util.Locale.ROOT) + &quot;%&quot;;</span>
+<span class="fc" id="L103">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
 				SELECT ${columns}
 				${from}
-				WHERE LOWER(COALESCE(p.title, '')) LIKE ?
+				WHERE p.dismissed = 0 AND (LOWER(COALESCE(p.title, '')) LIKE ?
 				OR LOWER(COALESCE(p.company, '')) LIKE ?
 				OR LOWER(COALESCE(p.location, '')) LIKE ?
 				OR LOWER(COALESCE(r.name, '')) LIKE ?
 				OR LOWER(COALESCE(r.email, '')) LIKE ?
-				OR LOWER(COALESCE(p.summary, '')) LIKE ?
+				OR LOWER(COALESCE(p.summary, '')) LIKE ?)
 				ORDER BY ${sortOrder}
 				LIMIT ? OFFSET ?
-<span class="fc" id="L101">				&quot;&quot;&quot;.replace(COLUMNS_PLACEHOLDER, JOB_COLUMNS).replace(&quot;${from}&quot;, JOB_FROM)</span>
-<span class="fc" id="L102">				.replace(&quot;${sortOrder}&quot;, sortOrder.sqlOrderBy()), JdbcJobDashboardRepository::jobRow,</span>
-<span class="fc" id="L103">				pattern, pattern, pattern, pattern, pattern, pattern, limit, offset);</span>
+<span class="fc" id="L114">				&quot;&quot;&quot;.replace(COLUMNS_PLACEHOLDER, JOB_COLUMNS).replace(&quot;${from}&quot;, JOB_FROM)</span>
+<span class="fc" id="L115">				.replace(&quot;${sortOrder}&quot;, sortOrder.sqlOrderBy()), JdbcJobDashboardRepository::jobRow,</span>
+<span class="fc" id="L116">				pattern, pattern, pattern, pattern, pattern, pattern, limit, offset);</span>
 	}
 
 	@Override
 	public Optional&lt;JobDashboardDetailsRow&gt; findById(final long id) {
-<span class="fc" id="L108">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
+<span class="fc" id="L121">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
 				SELECT ${columns}, p.description, p.html_body, p.requirements, p.salary_range, p.source_account,
 				p.source_subject, p.source_sender,
 				(SELECT COUNT(*) FROM responses response WHERE response.position_id = p.id) AS response_count,
@@ -114,64 +127,98 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 				JOIN recruiters r ON r.id = p.recruiter_id
 				LEFT JOIN responses latest_response ON latest_response.id = (
 				SELECT MAX(response.id) FROM responses response WHERE response.position_id = p.id)
-				WHERE p.id = ?
-<span class="fc" id="L118">				&quot;&quot;&quot;.replace(COLUMNS_PLACEHOLDER, JOB_COLUMNS), (resultSet, rowNumber) -&gt; new JobDashboardDetailsRow(</span>
-<span class="fc" id="L119">				resultSet.getLong(&quot;id&quot;),</span>
-<span class="fc" id="L120">				resultSet.getString(&quot;title&quot;),</span>
-<span class="fc" id="L121">				resultSet.getString(&quot;company&quot;),</span>
-<span class="fc" id="L122">				resultSet.getString(&quot;recruiter_name&quot;),</span>
-<span class="fc" id="L123">				resultSet.getString(&quot;recruiter_email&quot;),</span>
-<span class="fc" id="L124">				resultSet.getString(&quot;location&quot;),</span>
-<span class="fc" id="L125">				nullableBoolean(resultSet, &quot;is_remote&quot;),</span>
-<span class="fc" id="L126">				instant(resultSet.getString(&quot;source_received_at&quot;)),</span>
-<span class="fc" id="L127">				instant(resultSet.getString(&quot;created_at&quot;)),</span>
-<span class="fc" id="L128">				resultSet.getString(&quot;summary&quot;),</span>
-<span class="fc" id="L129">				resultSet.getString(&quot;description&quot;),</span>
-<span class="fc" id="L130">				resultSet.getString(&quot;html_body&quot;),</span>
-<span class="fc" id="L131">				resultSet.getString(&quot;requirements&quot;),</span>
-<span class="fc" id="L132">				resultSet.getString(&quot;salary_range&quot;),</span>
-<span class="fc" id="L133">				resultSet.getString(&quot;source_account&quot;),</span>
-<span class="fc" id="L134">				resultSet.getString(&quot;source_subject&quot;),</span>
-<span class="fc" id="L135">				resultSet.getString(&quot;source_sender&quot;),</span>
-<span class="fc" id="L136">				resultSet.getLong(&quot;response_count&quot;),</span>
-<span class="fc" id="L137">				resultSet.getString(&quot;response_status&quot;),</span>
-<span class="fc" id="L138">				resultSet.getString(&quot;response_content&quot;),</span>
-<span class="fc" id="L139">				resultSet.getString(&quot;gmail_draft_id&quot;)), id).stream().findFirst();</span>
+				WHERE p.id = ? AND p.dismissed = 0
+<span class="fc" id="L131">				&quot;&quot;&quot;.replace(COLUMNS_PLACEHOLDER, JOB_COLUMNS), (resultSet, rowNumber) -&gt; new JobDashboardDetailsRow(</span>
+<span class="fc" id="L132">				resultSet.getLong(&quot;id&quot;),</span>
+<span class="fc" id="L133">				resultSet.getString(&quot;title&quot;),</span>
+<span class="fc" id="L134">				resultSet.getString(&quot;company&quot;),</span>
+<span class="fc" id="L135">				resultSet.getString(&quot;recruiter_name&quot;),</span>
+<span class="fc" id="L136">				resultSet.getString(&quot;recruiter_email&quot;),</span>
+<span class="fc" id="L137">				resultSet.getString(&quot;location&quot;),</span>
+<span class="fc" id="L138">				nullableBoolean(resultSet, &quot;is_remote&quot;),</span>
+<span class="fc" id="L139">				instant(resultSet.getString(&quot;source_received_at&quot;)),</span>
+<span class="fc" id="L140">				instant(resultSet.getString(&quot;created_at&quot;)),</span>
+<span class="fc" id="L141">				resultSet.getString(&quot;summary&quot;),</span>
+<span class="fc" id="L142">				resultSet.getString(&quot;description&quot;),</span>
+<span class="fc" id="L143">				resultSet.getString(&quot;html_body&quot;),</span>
+<span class="fc" id="L144">				resultSet.getString(&quot;requirements&quot;),</span>
+<span class="fc" id="L145">				resultSet.getString(&quot;salary_range&quot;),</span>
+<span class="fc" id="L146">				resultSet.getString(&quot;source_account&quot;),</span>
+<span class="fc" id="L147">				resultSet.getString(&quot;source_subject&quot;),</span>
+<span class="fc" id="L148">				resultSet.getString(&quot;source_sender&quot;),</span>
+<span class="fc" id="L149">				resultSet.getLong(&quot;response_count&quot;),</span>
+<span class="fc" id="L150">				resultSet.getString(&quot;response_status&quot;),</span>
+<span class="fc" id="L151">				resultSet.getString(&quot;response_content&quot;),</span>
+<span class="fc" id="L152">				resultSet.getString(&quot;gmail_draft_id&quot;)), id).stream().findFirst();</span>
 	}
 
+	@Override
+	public Optional&lt;GmailSource&gt; findGmailSource(final long id) {
+<span class="nc" id="L157">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
+				SELECT source_account, source_message_id FROM positions
+				WHERE id = ? AND dismissed = 0 AND NULLIF(TRIM(source_account), '') IS NOT NULL
+				AND NULLIF(TRIM(source_message_id), '') IS NOT NULL
+<span class="nc" id="L161">				&quot;&quot;&quot;, (row, rowNumber) -&gt; new GmailSource(row.getString(1), row.getString(2)), id).stream().findFirst();</span>
+	}
+
+	@Override
+	public boolean reserveEmailTrash(final long id) {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">		return jdbcTemplate.update(&quot;&quot;&quot;</span>
+				UPDATE positions SET trash_pending = 1
+				WHERE id = ? AND dismissed = 0 AND trash_pending = 0
+				AND (respond_to = 0 OR EXISTS (
+				SELECT 1 FROM responses WHERE position_id = positions.id
+				AND response_type = 'INITIAL_RESPONSE'
+				AND response_status IN ('SAVED_FOR_REVIEW', 'DRAFT_CREATED', 'SENT', 'SENT_LABEL_FAILED')))
+				AND NOT EXISTS (
+				SELECT 1 FROM responses WHERE position_id = positions.id
+				AND response_status IN ('GENERATING', 'GENERATED', 'SENDING'))
+<span class="nc" id="L176">				&quot;&quot;&quot;, id) == 1;</span>
+	}
+
+	@Override
+	public void releaseEmailTrash(final long id) {
+<span class="nc" id="L181">		jdbcTemplate.update(&quot;UPDATE positions SET trash_pending = 0 WHERE id = ?&quot;, id);</span>
+<span class="nc" id="L182">	}</span>
+
+	@Override
+	public void dismiss(final long id) {
+<span class="nc" id="L186">		jdbcTemplate.update(&quot;UPDATE positions SET dismissed = 1, trash_pending = 0 WHERE id = ?&quot;, id);</span>
+<span class="nc" id="L187">	}</span>
+
 	private static JobDashboardRow jobRow(final ResultSet resultSet, final int rowNumber) throws SQLException {
-<span class="fc" id="L143">		return new JobDashboardRow(</span>
-<span class="fc" id="L144">				resultSet.getLong(&quot;id&quot;),</span>
-<span class="fc" id="L145">				resultSet.getString(&quot;title&quot;),</span>
-<span class="fc" id="L146">				resultSet.getString(&quot;company&quot;),</span>
-<span class="fc" id="L147">				resultSet.getString(&quot;recruiter_name&quot;),</span>
-<span class="fc" id="L148">				resultSet.getString(&quot;recruiter_email&quot;),</span>
-<span class="fc" id="L149">				resultSet.getString(&quot;location&quot;),</span>
-<span class="fc" id="L150">				nullableBoolean(resultSet, &quot;is_remote&quot;),</span>
-<span class="fc" id="L151">				instant(resultSet.getString(&quot;source_received_at&quot;)),</span>
-<span class="fc" id="L152">				instant(resultSet.getString(&quot;created_at&quot;)),</span>
-<span class="fc" id="L153">				resultSet.getString(&quot;summary&quot;),</span>
-<span class="fc" id="L154">				resultSet.getBoolean(&quot;respond_to&quot;),</span>
-<span class="fc" id="L155">				resultSet.getString(&quot;response_status&quot;),</span>
-<span class="fc" id="L156">				resultSet.getString(&quot;response_content&quot;));</span>
+<span class="fc" id="L190">		return new JobDashboardRow(</span>
+<span class="fc" id="L191">				resultSet.getLong(&quot;id&quot;),</span>
+<span class="fc" id="L192">				resultSet.getString(&quot;title&quot;),</span>
+<span class="fc" id="L193">				resultSet.getString(&quot;company&quot;),</span>
+<span class="fc" id="L194">				resultSet.getString(&quot;recruiter_name&quot;),</span>
+<span class="fc" id="L195">				resultSet.getString(&quot;recruiter_email&quot;),</span>
+<span class="fc" id="L196">				resultSet.getString(&quot;location&quot;),</span>
+<span class="fc" id="L197">				nullableBoolean(resultSet, &quot;is_remote&quot;),</span>
+<span class="fc" id="L198">				instant(resultSet.getString(&quot;source_received_at&quot;)),</span>
+<span class="fc" id="L199">				instant(resultSet.getString(&quot;created_at&quot;)),</span>
+<span class="fc" id="L200">				resultSet.getString(&quot;summary&quot;),</span>
+<span class="fc" id="L201">				resultSet.getBoolean(&quot;respond_to&quot;),</span>
+<span class="fc" id="L202">				resultSet.getString(&quot;response_status&quot;),</span>
+<span class="fc" id="L203">				resultSet.getString(&quot;response_content&quot;));</span>
 	}
 
 	private static Boolean nullableBoolean(final ResultSet resultSet, final String column) throws SQLException {
-<span class="fc" id="L160">		final boolean value = resultSet.getBoolean(column);</span>
-<span class="pc bpc" id="L161" title="1 of 2 branches missed.">		return resultSet.wasNull() ? null : value;</span>
+<span class="fc" id="L207">		final boolean value = resultSet.getBoolean(column);</span>
+<span class="pc bpc" id="L208" title="1 of 2 branches missed.">		return resultSet.wasNull() ? null : value;</span>
 	}
 
 	private static Instant instant(final String value) {
-<span class="pc bpc" id="L165" title="2 of 4 branches missed.">		if (value == null || value.isBlank()) {</span>
-<span class="nc" id="L166">			return null;</span>
+<span class="pc bpc" id="L212" title="2 of 4 branches missed.">		if (value == null || value.isBlank()) {</span>
+<span class="nc" id="L213">			return null;</span>
 		}
 		try {
-<span class="fc" id="L169">			return Instant.parse(value);</span>
-<span class="nc" id="L170">		} catch (final DateTimeParseException ignored) {</span>
+<span class="fc" id="L216">			return Instant.parse(value);</span>
+<span class="nc" id="L217">		} catch (final DateTimeParseException ignored) {</span>
 			try {
-<span class="nc" id="L172">				return Timestamp.valueOf(value.replace('T', ' ')).toInstant();</span>
-<span class="nc" id="L173">			} catch (final IllegalArgumentException invalidTimestamp) {</span>
-<span class="nc" id="L174">				return null;</span>
+<span class="nc" id="L219">				return Timestamp.valueOf(value.replace('T', ' ')).toInstant();</span>
+<span class="nc" id="L220">			} catch (final IllegalArgumentException invalidTimestamp) {</span>
+<span class="nc" id="L221">				return null;</span>
 			}
 		}
 	}

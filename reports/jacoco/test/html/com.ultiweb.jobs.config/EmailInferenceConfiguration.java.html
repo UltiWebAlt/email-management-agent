@@ -3,44 +3,99 @@
 import com.ultiweb.jobs.svc.ai.ConcurrencyLimitedEmailAiClient;
 import com.ultiweb.jobs.svc.ai.EmailAiClient;
 import com.ultiweb.jobs.svc.ai.SpringAiEmailClient;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.model.ollama.autoconfigure.OllamaChatProperties;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.setup.OpenAiSetup;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(OllamaChatProperties.class)
-<span class="fc" id="L20">public class EmailInferenceConfiguration {</span>
+public class EmailInferenceConfiguration {
+	private final Environment environment;
+
+<span class="fc" id="L30">	EmailInferenceConfiguration(final Environment environment) {</span>
+<span class="fc" id="L31">		this.environment = environment;</span>
+<span class="fc" id="L32">	}</span>
+
 	@Bean
 	OllamaChatModel ollamaChatModel(final OllamaApi api, final OllamaChatProperties properties) {
-<span class="fc" id="L23">		return OllamaChatModel.builder().ollamaApi(api).options(properties.toOptions()).build();</span>
+<span class="fc" id="L36">		return OllamaChatModel.builder().ollamaApi(api).options(properties.toOptions()).build();</span>
 	}
 
 	@Bean
+	@Profile(&quot;ollama &amp; !lmstudio &amp; !deepinfra-summary&quot;)
 	EmailAiClient summaryAiClient(final OllamaChatModel model,
 			@Value(&quot;${email.inference.local-max-concurrent-requests:2}&quot;) final int concurrency) {
-<span class="fc" id="L29">		return new ConcurrencyLimitedEmailAiClient(new SpringAiEmailClient(ChatClient.create(model)), concurrency);</span>
+<span class="fc" id="L43">		return new ConcurrencyLimitedEmailAiClient(new SpringAiEmailClient(ChatClient.create(model)), concurrency);</span>
+	}
+
+	@Bean(&quot;summaryAiClient&quot;)
+	@Profile(&quot;deepinfra-summary &amp; !lmstudio&quot;)
+	EmailAiClient deepInfraSummaryAiClient(@Qualifier(&quot;deepInfraSummaryChatModel&quot;) final OpenAiChatModel model,
+			@Value(&quot;${email.inference.deepinfra-summary-max-concurrent-requests:8}&quot;) final int concurrency) {
+<span class="nc" id="L50">		return new ConcurrencyLimitedEmailAiClient(new SpringAiEmailClient(ChatClient.create(model)), concurrency);</span>
+	}
+
+	@Bean(&quot;summaryAiClient&quot;)
+	@Profile(&quot;lmstudio&quot;)
+	EmailAiClient lmStudioSummaryAiClient(@Qualifier(&quot;lmStudioSummaryChatModel&quot;) final OpenAiChatModel model,
+			@Value(&quot;${email.inference.lmstudio-max-concurrent-requests:2}&quot;) final int concurrency,
+			@Value(&quot;${email.inference.lmstudio-disable-thinking:true}&quot;) final boolean disableThinking) {
+<span class="fc" id="L58">		final EmailAiClient delegate = new SpringAiEmailClient(ChatClient.create(model));</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">		final EmailAiClient summaryClient = disableThinking</span>
+<span class="fc" id="L60">				? (systemPrompt, userPrompt) -&gt; delegate.complete(&quot;/no_think\n&quot; + systemPrompt, userPrompt)</span>
+<span class="pc" id="L61">				: delegate;</span>
+<span class="fc" id="L62">		return new ConcurrencyLimitedEmailAiClient(summaryClient, concurrency);</span>
+	}
+
+	@Bean(&quot;lmStudioSummaryChatModel&quot;)
+	@Profile(&quot;lmstudio&quot;)
+	OpenAiChatModel lmStudioSummaryChatModel(@Value(&quot;${lmstudio.base-url}&quot;) final String baseUrl,
+			@Value(&quot;${lmstudio.api-key}&quot;) final String apiKey, @Value(&quot;${lmstudio.model}&quot;) final String modelName) {
+<span class="fc" id="L69">		return openAiModel(baseUrl, apiKey, modelName, 0.0);</span>
+	}
+
+	@Bean(&quot;deepInfraClassifierChatModel&quot;)
+	OpenAiChatModel deepInfraClassifierChatModel(@Value(&quot;${spring.ai.openai.base-url}&quot;) final String baseUrl,
+			@Value(&quot;${spring.ai.openai.chat.model}&quot;) final String modelName,
+			@Value(&quot;${spring.ai.openai.chat.temperature:0.0}&quot;) final double temperature) {
+<span class="fc" id="L76">		return openAiModel(baseUrl, environment.getRequiredProperty(&quot;DEEPINFRA_API_KEY&quot;), modelName, temperature);</span>
+	}
+
+	@Bean(&quot;deepInfraSummaryChatModel&quot;)
+	@Profile(&quot;deepinfra-summary &amp; !lmstudio&quot;)
+	OpenAiChatModel deepInfraSummaryChatModel(@Value(&quot;${deepinfra.summary.base-url}&quot;) final String baseUrl,
+			@Value(&quot;${deepinfra.summary.model}&quot;) final String modelName) {
+<span class="nc" id="L83">		return openAiModel(baseUrl, environment.getRequiredProperty(&quot;DEEPINFRA_API_KEY&quot;), modelName, 0.0);</span>
 	}
 
 	@Bean(&quot;tagAiClient&quot;)
-	@Profile(&quot;deepinfra&quot;)
-	EmailAiClient deepInfraTagAiClient(final OpenAiChatModel model,
+	EmailAiClient deepInfraTagAiClient(@Qualifier(&quot;deepInfraClassifierChatModel&quot;) final OpenAiChatModel model,
 			@Value(&quot;${email.inference.deepinfra-max-concurrent-requests:8}&quot;) final int concurrency) {
-<span class="fc" id="L36">		return new ConcurrencyLimitedEmailAiClient(new SpringAiEmailClient(ChatClient.create(model)), concurrency);</span>
+<span class="fc" id="L89">		return new ConcurrencyLimitedEmailAiClient(new SpringAiEmailClient(ChatClient.create(model)), concurrency);</span>
 	}
 
-	@Bean(&quot;tagAiClient&quot;)
-	@Profile(&quot;ollama&quot;)
-	EmailAiClient ollamaTagAiClient(@Qualifier(&quot;summaryAiClient&quot;)
-			final EmailAiClient summaryAiClient) {
-<span class="fc" id="L43">		return summaryAiClient;</span>
+	private static OpenAiChatModel openAiModel(final String baseUrl, final String apiKey,
+			final String modelName, final double temperature) {
+<span class="fc" id="L94">		final var openAiClient = OpenAiSetup.setupSyncClient(baseUrl, apiKey, null, null, null, null,</span>
+<span class="fc" id="L95">				false, false, modelName, Duration.ofSeconds(90), 2, null, Map.of(),</span>
+<span class="fc" id="L96">				ObservationRegistry.NOOP, null, List.of());</span>
+<span class="fc" id="L97">		return OpenAiChatModel.builder().openAiClient(openAiClient)</span>
+<span class="fc" id="L98">				.options(OpenAiChatOptions.builder().apiKey(apiKey).model(modelName).temperature(temperature).build()).build();</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -3,34 +3,176 @@
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Draft;
+import com.google.api.services.gmail.model.Label;
+import com.google.api.services.gmail.model.ListLabelsResponse;
 import com.google.api.services.gmail.model.Message;
+import com.google.api.services.gmail.model.ModifyMessageRequest;
+import com.google.api.services.gmail.model.MessagePartHeader;
+import com.google.api.services.gmail.model.Thread;
 import com.ultiweb.jobs.utils.email.CreateEmail;
 import com.ultiweb.jobs.utils.email.CreateMessage;
 import com.ultiweb.jobs.utils.email.GmailServiceFactory;
 import com.ultiweb.jobs.utils.oauth2.GMailOAuth;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GmailDraftSvc {
+<span class="fc" id="L28">	private static final Logger LOGGER = LoggerFactory.getLogger(GmailDraftSvc.class);</span>
 	private final GMailOAuth gmailOAuth;
 
-<span class="fc" id="L20">	public GmailDraftSvc(final GMailOAuth gmailOAuth) {</span>
-<span class="fc" id="L21">		this.gmailOAuth = gmailOAuth;</span>
-<span class="fc" id="L22">	}</span>
+<span class="fc" id="L31">	public GmailDraftSvc(final GMailOAuth gmailOAuth) {</span>
+<span class="fc" id="L32">		this.gmailOAuth = gmailOAuth;</span>
+<span class="fc" id="L33">	}</span>
 
 	public String createDraft(final String account, final String recipient, final String subject, final String body)
 			throws IOException, MessagingException {
-<span class="nc" id="L26">		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_COMPOSE), account);</span>
-<span class="nc" id="L27">		final var mimeMessage = CreateEmail.createEmail(recipient, account, subject, body);</span>
-<span class="nc" id="L28">		final Message message = CreateMessage.createMessageWithEmail(mimeMessage);</span>
-<span class="nc" id="L29">		final Draft draft = gmail.users().drafts().create(&quot;me&quot;, new Draft().setMessage(message)).execute();</span>
-<span class="nc bnc" id="L30" title="All 6 branches missed.">		if (draft == null || draft.getId() == null || draft.getId().isBlank()) {</span>
-<span class="nc" id="L31">			throw new IOException(&quot;Gmail returned no draft ID&quot;);</span>
+<span class="nc" id="L37">		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_COMPOSE), account);</span>
+<span class="nc" id="L38">		final var mimeMessage = CreateEmail.createEmail(recipient, account, subject, body);</span>
+<span class="nc" id="L39">		final Message message = CreateMessage.createMessageWithEmail(mimeMessage);</span>
+<span class="nc" id="L40">		final Draft draft = gmail.users().drafts().create(&quot;me&quot;, new Draft().setMessage(message)).execute();</span>
+<span class="nc bnc" id="L41" title="All 6 branches missed.">		if (draft == null || draft.getId() == null || draft.getId().isBlank()) {</span>
+<span class="nc" id="L42">			throw new IOException(&quot;Gmail returned no draft ID&quot;);</span>
 		}
-<span class="nc" id="L33">		return draft.getId();</span>
+<span class="nc" id="L44">		return draft.getId();</span>
+	}
+
+	public GmailSentMessage sendReply(final String account, final String draftId, final String recipient,
+			final String subject, final String body, final String labelName, final boolean redirectDraft)
+			throws IOException, MessagingException {
+<span class="nc" id="L50">		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_MODIFY), account);</span>
+<span class="nc" id="L51">		String effectiveDraftId = draftId;</span>
+<span class="nc bnc" id="L52" title="All 4 branches missed.">		if (effectiveDraftId == null || effectiveDraftId.isBlank()) {</span>
+<span class="nc" id="L53">			final Draft created = gmail.users().drafts().create(&quot;me&quot;, draft(account, recipient, subject, body)).execute();</span>
+<span class="nc bnc" id="L54" title="All 6 branches missed.">			if (created == null || created.getId() == null || created.getId().isBlank()) {</span>
+<span class="nc" id="L55">				throw new IOException(&quot;Gmail returned no draft ID&quot;);</span>
+			}
+<span class="nc" id="L57">			effectiveDraftId = created.getId();</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">		} else if (redirectDraft) {</span>
+<span class="nc" id="L59">			gmail.users().drafts().update(&quot;me&quot;, effectiveDraftId, draft(account, recipient, subject, body)).execute();</span>
+		}
+<span class="nc" id="L61">		final Message message = gmail.users().drafts().send(&quot;me&quot;, new Draft().setId(effectiveDraftId)).execute();</span>
+<span class="nc bnc" id="L62" title="All 6 branches missed.">		if (message == null || message.getId() == null || message.getId().isBlank()) {</span>
+<span class="nc" id="L63">			throw new IOException(&quot;Gmail returned no sent message ID&quot;);</span>
+		}
+<span class="nc bnc" id="L65" title="All 4 branches missed.">		boolean labelApplied = labelName == null || labelName.isBlank();</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">		if (!labelApplied) {</span>
+			try {
+<span class="nc" id="L68">				final String labelId = findOrCreateLabel(gmail, labelName);</span>
+<span class="nc" id="L69">				gmail.users().messages().modify(&quot;me&quot;, message.getId(),</span>
+<span class="nc" id="L70">						new ModifyMessageRequest().setAddLabelIds(List.of(labelId))).execute();</span>
+<span class="nc" id="L71">				labelApplied = true;</span>
+<span class="nc" id="L72">			} catch (final IOException exception) {</span>
+<span class="nc" id="L73">				LOGGER.error(&quot;Message {} was sent, but Gmail label '{}' could not be applied.&quot;, message.getId(), labelName, exception);</span>
+<span class="nc" id="L74">			}</span>
+		}
+<span class="nc" id="L76">		return new GmailSentMessage(effectiveDraftId, message.getId(), message.getThreadId(),</span>
+<span class="nc" id="L77">				internalDate(message), labelApplied);</span>
+	}
+
+	public Optional&lt;GmailIncomingReply&gt; findExternalReply(final String account, final String threadId,
+			final Instant after) throws IOException {
+<span class="nc" id="L82">		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_MODIFY), account);</span>
+<span class="nc" id="L83">		final Thread thread = gmail.users().threads().get(&quot;me&quot;, threadId)</span>
+<span class="nc" id="L84">				.setFormat(&quot;metadata&quot;).setMetadataHeaders(List.of(&quot;From&quot;)).execute();</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">		if (thread.getMessages() == null) {</span>
+<span class="nc" id="L86">			return Optional.empty();</span>
+		}
+<span class="nc" id="L88">		return thread.getMessages().stream().filter(message -&gt; {</span>
+<span class="nc bnc" id="L89" title="All 4 branches missed.">			if (message.getInternalDate() == null || message.getInternalDate() &lt;= after.toEpochMilli()</span>
+<span class="nc bnc" id="L90" title="All 4 branches missed.">					|| message.getLabelIds() != null &amp;&amp; message.getLabelIds().contains(&quot;SENT&quot;)) {</span>
+<span class="nc" id="L91">				return false;</span>
+			}
+<span class="nc" id="L93">			final String from = header(message, &quot;From&quot;);</span>
+<span class="nc bnc" id="L94" title="All 4 branches missed.">			return !from.isBlank() &amp;&amp; !from.toLowerCase(java.util.Locale.ROOT).contains(account.toLowerCase(java.util.Locale.ROOT));</span>
+<span class="nc" id="L95">		}).map(message -&gt; new GmailIncomingReply(message.getId(), Instant.ofEpochMilli(message.getInternalDate())))</span>
+<span class="nc" id="L96">				.findFirst();</span>
+	}
+
+	public GmailSentMessage sendFollowUp(final String account, final String recipient, final String threadId,
+			final long positionId, final String parentMessageId, final String subject, final String body, final String labelName)
+			throws IOException, MessagingException {
+<span class="nc" id="L102">		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_MODIFY), account);</span>
+<span class="nc" id="L103">		final Message parent = gmail.users().messages().get(&quot;me&quot;, parentMessageId)</span>
+<span class="nc" id="L104">				.setFormat(&quot;metadata&quot;).setMetadataHeaders(List.of(&quot;Message-ID&quot;, &quot;References&quot;)).execute();</span>
+<span class="nc" id="L105">		final String rfcMessageId = header(parent, &quot;Message-ID&quot;);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">		if (rfcMessageId.isBlank()) {</span>
+<span class="nc" id="L107">			throw new IOException(&quot;Gmail did not return the parent RFC Message-ID&quot;);</span>
+		}
+<span class="nc" id="L109">		final MimeMessage mimeMessage = CreateEmail.createEmail(recipient, account, subject, body);</span>
+<span class="nc" id="L110">		mimeMessage.setHeader(&quot;In-Reply-To&quot;, rfcMessageId);</span>
+<span class="nc" id="L111">		mimeMessage.setHeader(&quot;X-Email-Agent-Follow-Up&quot;, Long.toString(positionId));</span>
+<span class="nc" id="L112">		final String parentReferences = header(parent, &quot;References&quot;);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">		mimeMessage.setHeader(&quot;References&quot;, parentReferences.isBlank()</span>
+<span class="nc" id="L114">				? rfcMessageId</span>
+<span class="nc" id="L115">				: parentReferences + &quot; &quot; + rfcMessageId);</span>
+<span class="nc" id="L116">		final Message message = CreateMessage.createMessageWithEmail(mimeMessage).setThreadId(threadId);</span>
+<span class="nc" id="L117">		final Message sent = gmail.users().messages().send(&quot;me&quot;, message).execute();</span>
+<span class="nc bnc" id="L118" title="All 6 branches missed.">		if (sent == null || sent.getId() == null || sent.getId().isBlank()) {</span>
+<span class="nc" id="L119">			throw new IOException(&quot;Gmail returned no follow-up message ID&quot;);</span>
+		}
+<span class="nc bnc" id="L121" title="All 4 branches missed.">		boolean labelApplied = labelName == null || labelName.isBlank();</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">		if (!labelApplied) {</span>
+			try {
+<span class="nc" id="L124">				final String labelId = findOrCreateLabel(gmail, labelName);</span>
+<span class="nc" id="L125">				gmail.users().messages().modify(&quot;me&quot;, sent.getId(),</span>
+<span class="nc" id="L126">						new ModifyMessageRequest().setAddLabelIds(List.of(labelId))).execute();</span>
+<span class="nc" id="L127">				labelApplied = true;</span>
+<span class="nc" id="L128">			} catch (final IOException exception) {</span>
+<span class="nc" id="L129">				LOGGER.error(&quot;Follow-up {} was sent, but Gmail label '{}' could not be applied.&quot;, sent.getId(), labelName, exception);</span>
+<span class="nc" id="L130">			}</span>
+		}
+<span class="nc" id="L132">		return new GmailSentMessage(null, sent.getId(), sent.getThreadId(), internalDate(sent), labelApplied);</span>
+	}
+
+	public java.util.Optional&lt;GmailSentMessage&gt; findExistingFollowUp(final String account, final String threadId,
+			final long positionId) throws IOException {
+<span class="nc" id="L137">		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_MODIFY), account);</span>
+<span class="nc" id="L138">		final Thread thread = gmail.users().threads().get(&quot;me&quot;, threadId)</span>
+<span class="nc" id="L139">				.setFormat(&quot;metadata&quot;).setMetadataHeaders(List.of(&quot;X-Email-Agent-Follow-Up&quot;)).execute();</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">		if (thread.getMessages() == null) {</span>
+<span class="nc" id="L141">			return java.util.Optional.empty();</span>
+		}
+<span class="nc" id="L143">		return thread.getMessages().stream()</span>
+<span class="nc" id="L144">				.filter(message -&gt; Long.toString(positionId).equals(header(message, &quot;X-Email-Agent-Follow-Up&quot;)))</span>
+<span class="nc" id="L145">				.findFirst()</span>
+<span class="nc" id="L146">				.map(message -&gt; new GmailSentMessage(null, message.getId(), threadId,</span>
+<span class="nc" id="L147">						internalDate(message), true));</span>
+	}
+
+	private static Draft draft(final String account, final String recipient, final String subject, final String body)
+			throws IOException, MessagingException {
+<span class="nc" id="L152">		final var mimeMessage = CreateEmail.createEmail(recipient, account, subject, body);</span>
+<span class="nc" id="L153">		final Message message = CreateMessage.createMessageWithEmail(mimeMessage);</span>
+<span class="nc" id="L154">		return new Draft().setMessage(message);</span>
+	}
+
+	private static String findOrCreateLabel(final Gmail gmail, final String labelName) throws IOException {
+<span class="nc" id="L158">		final ListLabelsResponse response = gmail.users().labels().list(&quot;me&quot;).execute();</span>
+<span class="nc" id="L159">		final Optional&lt;Label&gt; existing = Optional.ofNullable(response.getLabels()).orElseGet(List::of).stream()</span>
+<span class="nc" id="L160">				.filter(label -&gt; labelName.equals(label.getName())).findFirst();</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">		if (existing.isPresent()) {</span>
+<span class="nc" id="L162">			return existing.get().getId();</span>
+		}
+<span class="nc" id="L164">		return gmail.users().labels().create(&quot;me&quot;, new Label().setName(labelName)).execute().getId();</span>
+	}
+
+	private static String header(final Message message, final String name) {
+<span class="nc bnc" id="L168" title="All 4 branches missed.">		return message.getPayload() == null || message.getPayload().getHeaders() == null ? &quot;&quot;</span>
+<span class="nc" id="L169">				: message.getPayload().getHeaders().stream()</span>
+<span class="nc" id="L170">						.filter(header -&gt; name.equalsIgnoreCase(header.getName()))</span>
+<span class="nc" id="L171">						.map(MessagePartHeader::getValue).findFirst().orElse(&quot;&quot;);</span>
+	}
+
+	private static Instant internalDate(final Message message) {
+<span class="nc bnc" id="L175" title="All 2 branches missed.">		return message.getInternalDate() == null ? null : Instant.ofEpochMilli(message.getInternalDate());</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

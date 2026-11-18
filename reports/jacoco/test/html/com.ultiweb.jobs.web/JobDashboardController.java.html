@@ -7,6 +7,11 @@ import com.ultiweb.jobs.svc.dashboard.JobDashboardSvc;
 import com.ultiweb.jobs.svc.dashboard.ResponsePreparationWorkflowSvc;
 import com.ultiweb.jobs.svc.dashboard.ResponseSelectionResult;
 import com.ultiweb.jobs.svc.dashboard.SaveResponseSelectionRequest;
+import java.io.IOException;
+import javax.mail.MessagingException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,15 +30,15 @@ public final class JobDashboardController {
 	private final DashboardEventStream eventStream;
 
 	public JobDashboardController(final JobDashboardSvc dashboardSvc,
-<span class="fc" id="L28">			final ResponsePreparationWorkflowSvc responseWorkflowSvc, final DashboardEventStream eventStream) {</span>
-<span class="fc" id="L29">		this.dashboardSvc = dashboardSvc;</span>
-<span class="fc" id="L30">		this.responseWorkflowSvc = responseWorkflowSvc;</span>
-<span class="fc" id="L31">		this.eventStream = eventStream;</span>
-<span class="fc" id="L32">	}</span>
+<span class="fc" id="L33">			final ResponsePreparationWorkflowSvc responseWorkflowSvc, final DashboardEventStream eventStream) {</span>
+<span class="fc" id="L34">		this.dashboardSvc = dashboardSvc;</span>
+<span class="fc" id="L35">		this.responseWorkflowSvc = responseWorkflowSvc;</span>
+<span class="fc" id="L36">		this.eventStream = eventStream;</span>
+<span class="fc" id="L37">	}</span>
 
 	@GetMapping(path = &quot;/events&quot;, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public SseEmitter events() {
-<span class="fc" id="L36">		return eventStream.connect();</span>
+<span class="fc" id="L41">		return eventStream.connect();</span>
 	}
 
 	@GetMapping
@@ -41,17 +46,35 @@ public final class JobDashboardController {
 			@RequestParam(defaultValue = &quot;0&quot;) final int page,
 			@RequestParam(defaultValue = &quot;20&quot;) final int pageSize,
 			@RequestParam(defaultValue = &quot;newest&quot;) final String sort) {
-<span class="fc" id="L44">		return dashboardSvc.dashboard(query, page, pageSize, sort);</span>
+<span class="fc" id="L49">		return dashboardSvc.dashboard(query, page, pageSize, sort);</span>
 	}
 
 	@GetMapping(&quot;/jobs/{id}&quot;)
 	public DashboardJobDetails job(@PathVariable final long id) {
-<span class="nc" id="L49">		return dashboardSvc.details(id);</span>
+<span class="nc" id="L54">		return dashboardSvc.details(id);</span>
 	}
 
 	@PostMapping(&quot;/selections&quot;)
 	public ResponseSelectionResult saveSelections(@RequestBody final SaveResponseSelectionRequest request) {
-<span class="nc" id="L54">		return responseWorkflowSvc.save(request.changes());</span>
+<span class="nc" id="L59">		return responseWorkflowSvc.save(request.changes());</span>
 	}
+
+	@PostMapping(&quot;/jobs/{id}/response&quot;)
+	public ResponseSelectionResult prepareResponse(@PathVariable final long id) {
+<span class="nc" id="L64">		return responseWorkflowSvc.prepare(id);</span>
+	}
+
+	@PostMapping(&quot;/jobs/{id}/response/send&quot;)
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void sendResponse(@PathVariable final long id) {
+		try {
+<span class="nc bnc" id="L71" title="All 2 branches missed.">			if (!responseWorkflowSvc.send(id)) {</span>
+<span class="nc" id="L72">				throw new ResponseStatusException(HttpStatus.CONFLICT,</span>
+						&quot;This response is already being sent or is not ready to send&quot;);
+			}
+<span class="nc" id="L75">		} catch (final IOException | MessagingException exception) {</span>
+<span class="nc" id="L76">			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, &quot;Gmail could not send this response&quot;, exception);</span>
+<span class="nc" id="L77">		}</span>
+<span class="nc" id="L78">	}</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

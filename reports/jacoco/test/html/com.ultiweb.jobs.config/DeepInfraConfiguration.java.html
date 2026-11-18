@@ -2,14 +2,12 @@
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.util.Assert;
 
 @Configuration(proxyBeanMethods = false)
-@Profile(&quot;deepinfra&quot;)
 public class DeepInfraConfiguration {
-<span class="fc" id="L11">	public DeepInfraConfiguration(@Value(&quot;${DEEPINFRA_API_KEY:}&quot;) final String apiKey) {</span>
-<span class="fc" id="L12">		Assert.hasText(apiKey, &quot;DEEPINFRA_API_KEY must be set when the deepinfra profile is active&quot;);</span>
-<span class="fc" id="L13">	}</span>
+<span class="fc" id="L9">	public DeepInfraConfiguration(@Value(&quot;${DEEPINFRA_API_KEY:}&quot;) final String apiKey) {</span>
+<span class="fc" id="L10">		Assert.hasText(apiKey, &quot;DEEPINFRA_API_KEY must be set; DeepInfra is the classifier for all profiles&quot;);</span>
+<span class="fc" id="L11">	}</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

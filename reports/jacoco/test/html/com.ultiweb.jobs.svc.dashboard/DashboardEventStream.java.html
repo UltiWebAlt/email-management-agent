@@ -49,25 +49,29 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 <span class="fc" id="L49">		emit(&quot;import-state&quot;, Map.of(&quot;running&quot;, running));</span>
 <span class="fc" id="L50">	}</span>
 
+	public void opportunityRemoved() {
+<span class="nc" id="L53">		emit(&quot;opportunity-removed&quot;);</span>
+<span class="nc" id="L54">	}</span>
+
 	@EventListener
 	public void responseUpdated(final DashboardResponseUpdatedEvent event) {
-<span class="fc" id="L54">		emit(&quot;response-updated&quot;);</span>
-<span class="fc" id="L55">	}</span>
-
-	private void emit(final String eventName) {
-<span class="fc" id="L58">		emit(eventName, Map.of(&quot;refresh&quot;, true));</span>
+<span class="fc" id="L58">		emit(&quot;response-updated&quot;);</span>
 <span class="fc" id="L59">	}</span>
 
+	private void emit(final String eventName) {
+<span class="fc" id="L62">		emit(eventName, Map.of(&quot;refresh&quot;, true));</span>
+<span class="fc" id="L63">	}</span>
+
 	private void emit(final String eventName, final Map&lt;String, Object&gt; data) {
-<span class="fc bfc" id="L62" title="All 2 branches covered.">		for (final SseEmitter emitter : emitters) {</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">		for (final SseEmitter emitter : emitters) {</span>
 			try {
-<span class="fc" id="L64">				emitter.send(SseEmitter.event().name(eventName).data(data));</span>
-<span class="fc" id="L65">			} catch (final IOException | IllegalStateException exception) {</span>
-<span class="fc" id="L66">				emitters.remove(emitter);</span>
-<span class="fc" id="L67">				LOGGER.debug(&quot;Removing disconnected dashboard event stream ({}).&quot;,</span>
-<span class="fc" id="L68">					exception.getClass().getSimpleName());</span>
-<span class="fc" id="L69">			}</span>
-<span class="fc" id="L70">		}</span>
-<span class="fc" id="L71">	}</span>
+<span class="fc" id="L68">				emitter.send(SseEmitter.event().name(eventName).data(data));</span>
+<span class="fc" id="L69">			} catch (final IOException | IllegalStateException exception) {</span>
+<span class="fc" id="L70">				emitters.remove(emitter);</span>
+<span class="fc" id="L71">				LOGGER.debug(&quot;Removing disconnected dashboard event stream ({}).&quot;,</span>
+<span class="fc" id="L72">					exception.getClass().getSimpleName());</span>
+<span class="fc" id="L73">			}</span>
+<span class="fc" id="L74">		}</span>
+<span class="fc" id="L75">	}</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

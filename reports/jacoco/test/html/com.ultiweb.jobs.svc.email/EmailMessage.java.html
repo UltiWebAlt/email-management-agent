@@ -3,7 +3,7 @@
 import java.time.Instant;
 
 /**
- * Gmail message with normalized text for inference and optional sanitized HTML for dashboard display.
+ * Gmail message with normalized text for inference and optional source HTML for sanitized dashboard display.
  */
 <span class="fc" id="L8">public record EmailMessage(</span>
 		String account, String id, String subject, String from, String body, Instant receivedAt, String htmlBody) {

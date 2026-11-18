@@ -18,12 +18,14 @@ import com.ultiweb.jobs.utils.oauth2.GmailOAuthProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableConfigurationProperties(GmailOAuthProperties.class)
-<span class="fc" id="L24">public class EmailManagementAgent {</span>
+@EnableScheduling
+<span class="fc" id="L26">public class EmailManagementAgent {</span>
 	public static void main(final String... args) {
-<span class="fc" id="L26">		SpringApplication.run(EmailManagementAgent.class, args);</span>
-<span class="fc" id="L27">	}</span>
+<span class="fc" id="L28">		SpringApplication.run(EmailManagementAgent.class, args);</span>
+<span class="fc" id="L29">	}</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

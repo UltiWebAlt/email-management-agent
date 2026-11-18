@@ -84,45 +84,46 @@ public final class DevelopmentArchitectEmailImportSvc {
 	private ImportOutcome importEmail(final EmailMessage email, final boolean manuallyTagged) {
 		try {
 <span class="fc bfc" id="L86" title="All 2 branches covered.">			if (persistenceSvc.isPersisted(email)) {</span>
-<span class="fc" id="L87">				return enrichPersistedEmail(email);</span>
+<span class="fc" id="L87">				persistenceSvc.refreshEmailContent(email);</span>
+<span class="fc" id="L88">				return enrichPersistedEmail(email);</span>
 			}
-<span class="fc" id="L89">			final String summary = emailSummarySvc.summarize(email);</span>
-<span class="fc bfc" id="L90" title="All 4 branches covered.">			if (!manuallyTagged &amp;&amp; emailTagSvc.suggestTag(summary).filter(EmailTag.ARCHITECT_JOBS::equals).isEmpty()) {</span>
-<span class="fc" id="L91">				return ImportOutcome.NOT_ARCHITECT;</span>
+<span class="fc" id="L90">			final String summary = emailSummarySvc.summarize(email);</span>
+<span class="fc bfc" id="L91" title="All 4 branches covered.">			if (!manuallyTagged &amp;&amp; emailTagSvc.suggestTag(summary).filter(EmailTag.ARCHITECT_JOBS::equals).isEmpty()) {</span>
+<span class="fc" id="L92">				return ImportOutcome.NOT_ARCHITECT;</span>
 			}
-<span class="fc bfc" id="L93" title="All 2 branches covered.">			return persistenceSvc.persist(email, summary, inferJobDetails(email))</span>
-<span class="fc" id="L94">					? ImportOutcome.IMPORTED : ImportOutcome.SKIPPED;</span>
-<span class="fc" id="L95">		} catch (final RuntimeException exception) {</span>
-<span class="fc" id="L96">			LOGGER.warn(&quot;Development import failed for account={}, email id={} ({}).&quot;,</span>
-<span class="fc" id="L97">					email.account(), email.id(), exception.getClass().getSimpleName());</span>
-<span class="fc" id="L98">			return ImportOutcome.FAILED;</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">			return persistenceSvc.persist(email, summary, inferJobDetails(email))</span>
+<span class="fc" id="L95">					? ImportOutcome.IMPORTED : ImportOutcome.SKIPPED;</span>
+<span class="fc" id="L96">		} catch (final RuntimeException exception) {</span>
+<span class="fc" id="L97">			LOGGER.warn(&quot;Development import failed for account={}, email id={} ({}).&quot;,</span>
+<span class="fc" id="L98">					email.account(), email.id(), exception.getClass().getSimpleName());</span>
+<span class="fc" id="L99">			return ImportOutcome.FAILED;</span>
 		}
 	}
 
 	private ImportOutcome enrichPersistedEmail(final EmailMessage email) {
-<span class="fc bfc" id="L103" title="All 2 branches covered.">		if (!persistenceSvc.needsEnrichment(email)) {</span>
-<span class="fc" id="L104">			return ImportOutcome.SKIPPED;</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">		if (!persistenceSvc.needsEnrichment(email)) {</span>
+<span class="fc" id="L105">			return ImportOutcome.SKIPPED;</span>
 		}
-<span class="fc" id="L106">		persistenceSvc.enrichExisting(email, inferJobDetails(email));</span>
-<span class="fc" id="L107">		return ImportOutcome.ENRICHED;</span>
+<span class="fc" id="L107">		persistenceSvc.enrichExisting(email, inferJobDetails(email));</span>
+<span class="fc" id="L108">		return ImportOutcome.ENRICHED;</span>
 	}
 
-<span class="fc" id="L110">	private enum ImportOutcome {</span>
-<span class="fc" id="L111">		IMPORTED, ENRICHED, SKIPPED, NOT_ARCHITECT, FAILED</span>
+<span class="fc" id="L111">	private enum ImportOutcome {</span>
+<span class="fc" id="L112">		IMPORTED, ENRICHED, SKIPPED, NOT_ARCHITECT, FAILED</span>
 	}
 
 	private JobOpportunityDetails inferJobDetails(final EmailMessage email) {
 		try {
-<span class="fc" id="L116">			return jobDetailsInferenceSvc.infer(email);</span>
-<span class="fc" id="L117">		} catch (final RuntimeException exception) {</span>
-<span class="fc" id="L118">			LOGGER.warn(&quot;Development job detail inference failed for account={}, email id={} ({}).&quot;,</span>
-<span class="fc" id="L119">					email.account(), email.id(), exception.getClass().getSimpleName());</span>
-<span class="fc" id="L120">			return JobOpportunityDetails.empty();</span>
+<span class="fc" id="L117">			return jobDetailsInferenceSvc.infer(email);</span>
+<span class="fc" id="L118">		} catch (final RuntimeException exception) {</span>
+<span class="fc" id="L119">			LOGGER.warn(&quot;Development job detail inference failed for account={}, email id={} ({}).&quot;,</span>
+<span class="fc" id="L120">					email.account(), email.id(), exception.getClass().getSimpleName());</span>
+<span class="fc" id="L121">			return JobOpportunityDetails.empty();</span>
 		}
 	}
 
 	private static String key(final EmailMessage email) {
-<span class="fc" id="L125">		return email.account() + &quot;\u0000&quot; + email.id();</span>
+<span class="fc" id="L126">		return email.account() + &quot;\u0000&quot; + email.id();</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
