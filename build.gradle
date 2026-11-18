@@ -10,7 +10,97 @@ plugins {
 }
 
 group = 'com.ultiweb.jobs'
-version = '1.0.0'
+version = providers.gradleProperty('projectVersion').get()
+
+tasks.register('release') {
+    group = 'build'
+    description = 'Bumps the version, creates a signed Git tag, pushes it, and publishes a GitHub Release.'
+
+    doLast {
+        def runCommand = { List<String> command ->
+            def process = new ProcessBuilder(command)
+                    .directory(rootDir)
+                    .redirectErrorStream(true)
+                    .start()
+            def output = process.inputStream.getText('UTF-8').trim()
+            def exitCode = process.waitFor()
+            if (exitCode != 0) {
+                throw new GradleException("Command failed (${exitCode}): ${command.join(' ')}\n${output}")
+            }
+            output
+        }
+
+        def releaseType = providers.gradleProperty('releaseType').getOrElse('patch')
+        if (!(releaseType in ['major', 'minor', 'patch'])) {
+            throw new GradleException("Invalid releaseType '${releaseType}'. Use major, minor, or patch.")
+        }
+
+        def changes = runCommand(['git', 'status', '--porcelain'])
+        if (changes) {
+            throw new GradleException('Release requires a clean working tree. Commit or stash changes, then retry.')
+        }
+        def branch = runCommand(['git', 'branch', '--show-current'])
+        if (!branch) {
+            throw new GradleException('Release requires a checked-out branch; detached HEAD is not supported.')
+        }
+        if (branch != 'main') {
+            throw new GradleException("Release must run from the 'main' branch; current branch is '${branch}'.")
+        }
+        runCommand(['git', 'remote', 'get-url', 'origin'])
+        runCommand(['gh', 'auth', 'status'])
+
+        def currentVersion = providers.gradleProperty('projectVersion').get()
+        def matcher = currentVersion =~ /^(\d+)\.(\d+)\.(\d+)$/
+        if (!matcher.matches()) {
+            throw new GradleException("projectVersion '${currentVersion}' must use MAJOR.MINOR.PATCH format.")
+        }
+
+        def major = matcher[0][1].toInteger()
+        def minor = matcher[0][2].toInteger()
+        def patch = matcher[0][3].toInteger()
+        switch (releaseType) {
+            case 'major':
+                major++
+                minor = 0
+                patch = 0
+                break
+            case 'minor':
+                minor++
+                patch = 0
+                break
+            case 'patch':
+                patch++
+                break
+        }
+
+        def nextVersion = "${major}.${minor}.${patch}"
+        def tag = "v${nextVersion}"
+        def existingTag = new ProcessBuilder(['git', 'rev-parse', '--verify', '--quiet', "refs/tags/${tag}"])
+                .directory(rootDir)
+                .redirectErrorStream(true)
+                .start()
+        existingTag.inputStream.getText('UTF-8')
+        if (existingTag.waitFor() == 0) {
+            throw new GradleException("Tag '${tag}' already exists.")
+        }
+
+        def propertiesFile = layout.projectDirectory.file('gradle.properties').asFile
+        def propertiesText = propertiesFile.getText('UTF-8')
+        def updatedProperties = propertiesText.replaceFirst(/(?m)^projectVersion=.*/, "projectVersion=${nextVersion}")
+        if (updatedProperties == propertiesText) {
+            throw new GradleException('Could not find projectVersion in gradle.properties.')
+        }
+        propertiesFile.write(updatedProperties, 'UTF-8')
+
+        runCommand(['git', 'add', 'gradle.properties'])
+        runCommand(['git', 'commit', '-S', '-m', "chore: release ${tag}"])
+        runCommand(['git', 'tag', '-s', tag, '-m', "Release ${tag}"])
+        runCommand(['git', 'push', 'origin', branch, tag])
+        runCommand(['gh', 'release', 'create', tag, '--title', "Release ${tag}", '--generate-notes'])
+
+        logger.lifecycle("Published GitHub Release ${tag} from ${currentVersion}")
+    }
+}
 
 java {
     toolchain {
