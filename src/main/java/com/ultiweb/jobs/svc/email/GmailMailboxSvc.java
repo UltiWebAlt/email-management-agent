@@ -1,5 +1,9 @@
 package com.ultiweb.jobs.svc.email;
 
+import com.google.api.client.googleapis.batch.BatchRequest;
+import com.google.api.client.googleapis.batch.json.JsonBatchCallback;
+import com.google.api.client.googleapis.json.GoogleJsonError;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Label;
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Service;
 public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GmailMailboxSvc.class);
 	private static final String USER_ID = "me";
+	private static final int GMAIL_BATCH_SIZE = 20;
 	private static final List<String> GMAIL_SCOPES = List.of(GmailScopes.GMAIL_MODIFY);
 
 	private final GMailOAuth gmailOAuth;
@@ -118,9 +123,45 @@ public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 		if (response.getMessages() == null) {
 			return List.of();
 		}
-		return response.getMessages().stream()
-				.map(message -> getEmail(gmail, account, message.getId()))
-				.toList();
+		final List<String> messageIds = response.getMessages().stream().map(com.google.api.services.gmail.model.Message::getId).toList();
+		final List<com.google.api.services.gmail.model.Message> messages = getMessagesInBatches(gmail, messageIds);
+		return messages.stream().map(message -> toEmail(gmail, account, message)).toList();
+	}
+
+	private List<com.google.api.services.gmail.model.Message> getMessagesInBatches(final Gmail gmail,
+			final List<String> messageIds) {
+		final List<com.google.api.services.gmail.model.Message> messages = new ArrayList<>(messageIds.size());
+		for (int start = 0; start < messageIds.size(); start += GMAIL_BATCH_SIZE) {
+			final List<String> batchIds = messageIds.subList(start, Math.min(start + GMAIL_BATCH_SIZE, messageIds.size()));
+			final List<com.google.api.services.gmail.model.Message> batchMessages = new ArrayList<>(batchIds.size());
+			final List<String> errors = new ArrayList<>();
+			final BatchRequest batch = gmail.batch();
+			final JsonBatchCallback<com.google.api.services.gmail.model.Message> callback = new JsonBatchCallback<>() {
+				@Override
+				public void onSuccess(final com.google.api.services.gmail.model.Message message, final HttpHeaders responseHeaders) {
+					batchMessages.add(message);
+				}
+
+				@Override
+				public void onFailure(final GoogleJsonError error, final HttpHeaders responseHeaders) {
+					errors.add(error.getMessage());
+				}
+			};
+			try {
+				for (final String messageId : batchIds) {
+					gmail.users().messages().get(USER_ID, messageId).setFormat("full").queue(batch, callback);
+				}
+				batch.execute();
+			} catch (final IOException exception) {
+				throw new EmailTriageException("Unable to fetch Gmail messages in batch", exception);
+			}
+			if (!errors.isEmpty() || batchMessages.size() != batchIds.size()) {
+				throw new EmailTriageException("Unable to fetch all Gmail messages in batch: " + errors,
+						new IOException("Received " + batchMessages.size() + " of " + batchIds.size() + " messages"));
+			}
+			messages.addAll(batchMessages);
+		}
+		return messages;
 	}
 
 	@Override
@@ -131,22 +172,24 @@ public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 				new ModifyMessageRequest().setAddLabelIds(List.of(labelId))).execute();
 	}
 
+	public void moveToTrash(final String account, final String messageId) throws IOException {
+		gmail(account).users().messages().trash(USER_ID, messageId).execute();
+	}
+
 	Gmail gmail(final String account) throws IOException {
 		return GmailServiceFactory.create(gmailOAuth, GMAIL_SCOPES, account);
 	}
 
-	private EmailMessage getEmail(final Gmail gmail, final String account, final String messageId) {
+	private EmailMessage toEmail(final Gmail gmail, final String account,
+			final com.google.api.services.gmail.model.Message message) {
 		try {
-			final com.google.api.services.gmail.model.Message message = gmail.users().messages().get(USER_ID, messageId)
-					.setFormat("full")
-					.execute();
 			final MessagePart payload = message.getPayload();
 			final Instant receivedAt = message.getInternalDate() == null ? null : Instant.ofEpochMilli(message.getInternalDate());
-			final ExtractedEmailBody body = new GmailMessageBodyExtractor(gmail, messageId).extractContent(payload);
+			final ExtractedEmailBody body = new GmailMessageBodyExtractor(gmail, message.getId()).extractContent(payload);
 			return new EmailMessage(account, message.getId(), header(payload, "Subject"), header(payload, "From"),
 					body.text(), receivedAt, body.html());
 		} catch (final IOException | IllegalArgumentException exception) {
-			throw new EmailTriageException("Unable to read message " + messageId + " for account " + account, exception);
+			throw new EmailTriageException("Unable to read message " + message.getId() + " for account " + account, exception);
 		}
 	}
 

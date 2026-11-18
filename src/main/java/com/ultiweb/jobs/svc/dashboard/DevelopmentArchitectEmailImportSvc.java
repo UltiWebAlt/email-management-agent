@@ -84,6 +84,7 @@ public final class DevelopmentArchitectEmailImportSvc {
 	private ImportOutcome importEmail(final EmailMessage email, final boolean manuallyTagged) {
 		try {
 			if (persistenceSvc.isPersisted(email)) {
+				persistenceSvc.refreshEmailContent(email);
 				return enrichPersistedEmail(email);
 			}
 			final String summary = emailSummarySvc.summarize(email);

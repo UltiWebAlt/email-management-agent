@@ -52,24 +52,28 @@ class HtmlEmailTextExtractorTest {
 	}
 
 	@Test
-	void sanitizesRenderedHtmlWhilePreservingLinksListsAndTables() {
+	void sanitizesRenderedHtmlWhilePreservingStylesImagesLinksListsAndTables() {
 		// given
-		final String html = "<script>alert('x')</script><p onclick='steal()' style='width:1800px;color:red'>Role details</p>"
+			final String html = "<head><style>.notice{color:red}</style><link rel='stylesheet' href='https://example.com/email.css'></head>"
+				+ "<body background='https://example.com/background.png' bgcolor='#ffffff'><script>alert('x')</script>"
+				+ "<p class='notice' onclick='steal()' style='width:1800px;color:red'>Role details</p>"
 				+ "<ul><li>Design systems</li></ul><table style='width:1800px'><tr><th>Location</th><td>Boston</td></tr></table>"
-				+ "<a href='https://example.com/job'>Full posting</a><img src='https://example.com/pixel' alt='Job logo'>";
+				+ "<a href='https://example.com/job'>Full posting</a><img src='https://example.com/pixel' alt='Job logo'></body>";
 
 		// when
 		final String safeHtml = HtmlEmailTextExtractor.sanitizeForDisplay(html);
 
 		// then
 		assertTrue(safeHtml.contains("<li>Design systems</li>"));
-		assertTrue(safeHtml.contains("<table>"));
+		assertTrue(safeHtml.contains("<table"));
+		assertTrue(safeHtml.contains(".notice{color:red}"));
+		assertTrue(safeHtml.contains("href=\"https://example.com/email.css\""));
+		assertTrue(safeHtml.contains("background-image:url('https://example.com/background.png')"));
 		assertTrue(safeHtml.contains("href=\"https://example.com/job\""));
-		assertTrue(safeHtml.contains("[Image: Job logo]"));
+		assertTrue(safeHtml.contains("<img src=\"https://example.com/pixel\" alt=\"Job logo\">"));
 		assertFalse(safeHtml.contains("<script"));
 		assertFalse(safeHtml.contains("onclick"));
-		assertFalse(safeHtml.contains("style="));
-		assertFalse(safeHtml.contains("1800px"));
-		assertFalse(safeHtml.contains("pixel"));
+		assertTrue(safeHtml.contains("style=\"width:1800px;color:red\""));
+		assertTrue(safeHtml.contains("width:1800px"));
 	}
 }

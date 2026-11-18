@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -43,24 +44,90 @@ final class HtmlEmailTextExtractor {
 		if (html == null || html.isBlank()) {
 			return "";
 		}
-		final var document = Jsoup.parseBodyFragment(html);
-		document.select("head, script, style, noscript, template, iframe, object, embed, form, button, input, textarea, select, svg, canvas, video, audio, source, meta, link, base, [hidden], [aria-hidden=true]")
+		final Document document = Jsoup.parse(html);
+		final String emailStyles = document.select("style").stream().map(Element::outerHtml)
+				.collect(java.util.stream.Collectors.joining("\n"));
+		final String externalStylesheets = document.select("link").stream()
+				.filter(link -> hasRel(link, "stylesheet"))
+				.map(link -> link.absUrl("href"))
+				.filter(href -> !href.isBlank())
+				.map(href -> new Element("link").attr("rel", "stylesheet").attr("href", href).outerHtml())
+				.collect(java.util.stream.Collectors.joining("\n"));
+		final String bodyStyle = bodyStyle(document);
+		final String bodyClass = document.body().attr("class");
+		final String bodyId = document.body().attr("id");
+		document.select("style").remove();
+		document.select("script, noscript, template, iframe, object, embed, form, button, input, textarea, select, svg, canvas, video, audio, source, meta, link, base, [hidden]")
 				.remove();
-		document.select("[style]").removeAttr("style");
-		document.select("img").forEach(image -> {
-			final String alt = image.attr("alt").strip();
-			if (alt.isBlank()) {
-				image.remove();
-			} else {
-				image.replaceWith(new TextNode("[Image: " + alt + "]"));
-			}
-		});
 		final Safelist safelist = Safelist.relaxed()
 				.addTags("table", "thead", "tbody", "tfoot", "tr", "td", "th", "colgroup", "col")
+				.addAttributes(":all", "style", "class", "id", "width", "height", "align", "valign", "bgcolor",
+						"border", "cellpadding", "cellspacing", "dir", "role", "nowrap", "vspace", "hspace",
+						"aria-hidden", "aria-label")
+				.addAttributes("table", "background")
+				.addAttributes("tr", "background")
+				.addAttributes("td", "background")
+				.addAttributes("th", "background")
+				.addProtocols("img", "src", "http", "https", "data")
+				.addProtocols("table", "background", "http", "https", "data")
+				.addProtocols("tr", "background", "http", "https", "data")
+				.addProtocols("td", "background", "http", "https", "data")
+				.addProtocols("th", "background", "http", "https", "data")
 				.addAttributes("td", "colspan", "rowspan")
 				.addAttributes("th", "colspan", "rowspan")
-				.addAttributes("a", "target", "rel");
-		return Jsoup.clean(document.body().html(), "", safelist);
+				.addAttributes("a", "target", "rel", "tabindex");
+		final String body = Jsoup.clean(document.body().html(), "", safelist);
+		final Element renderedBody = new Element("div").html(body);
+		if (!bodyClass.isBlank()) {
+			renderedBody.attr("class", bodyClass);
+		}
+		if (!bodyId.isBlank()) {
+			renderedBody.attr("id", bodyId);
+		}
+		if (!bodyStyle.isBlank()) {
+			renderedBody.attr("style", bodyStyle);
+		}
+		final String styles = String.join("\n", externalStylesheets, emailStyles).strip();
+		return styles.isBlank() ? renderedBody.outerHtml() : styles + "\n" + renderedBody.outerHtml();
+	}
+
+	private static String bodyStyle(final Document document) {
+		final Element body = document.body();
+		final var styles = new StringBuilder(body.attr("style").strip());
+		final String background = body.attr("background").strip();
+		if (isWebOrDataUrl(background)) {
+			appendStyle(styles, "background-image:url('" + background.replace("'", "%27") + "')");
+		}
+		final String backgroundColor = body.attr("bgcolor").strip();
+		if (backgroundColor.matches("(?i)(?:#[0-9a-f]{3,8}|[a-z]{1,24})")) {
+			appendStyle(styles, "background-color:" + backgroundColor);
+		}
+		final String textColor = body.attr("text").strip();
+		if (textColor.matches("(?i)(?:#[0-9a-f]{3,8}|[a-z]{1,24})")) {
+			appendStyle(styles, "color:" + textColor);
+		}
+		return styles.toString();
+	}
+
+	private static boolean hasRel(final Element element, final String expected) {
+		return java.util.Arrays.stream(element.attr("rel").split("\\s+"))
+				.anyMatch(value -> expected.equalsIgnoreCase(value));
+	}
+
+	private static boolean isWebOrDataUrl(final String value) {
+		try {
+			final String scheme = new URI(value).getScheme();
+			return scheme != null && Set.of("http", "https", "data").contains(scheme.toLowerCase(Locale.ROOT));
+		} catch (final URISyntaxException exception) {
+			return false;
+		}
+	}
+
+	private static void appendStyle(final StringBuilder styles, final String style) {
+		if (!styles.isEmpty() && !styles.toString().stripTrailing().endsWith(";")) {
+			styles.append(';');
+		}
+		styles.append(style);
 	}
 
 	static String plainTextAsHtml(final String text) {

@@ -5,6 +5,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import com.google.api.client.googleapis.batch.BatchRequest;
+import com.google.api.client.googleapis.batch.json.JsonBatchCallback;
+import com.google.api.client.googleapis.json.GoogleJsonError;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListLabelsResponse;
@@ -14,6 +18,8 @@ import com.google.api.services.gmail.model.MessagePart;
 import com.ultiweb.jobs.svc.ai.EmailTag;
 import com.ultiweb.jobs.utils.oauth2.GMailOAuth;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,8 +56,7 @@ class GmailMailboxSvcTest {
 				when(list.setQ("in:inbox newer_than:14d -label:" + EmailWorkflowLabels.PROCESSED)).thenReturn(list);
 			}
 			when(list.execute()).thenReturn(new ListMessagesResponse().setMessages(List.of(new Message().setId("same-id"))));
-			when(gmail.users().messages().get("me", "same-id").setFormat("full").execute())
-					.thenReturn(new Message().setId("same-id").setPayload(new MessagePart()));
+			stubBatchFetch(gmail, Map.of("same-id", new Message().setId("same-id").setPayload(new MessagePart())));
 		}
 
 		// when
@@ -92,10 +97,9 @@ class GmailMailboxSvcTest {
 		when(request.execute())
 				.thenReturn(new ListMessagesResponse().setMessages(List.of(new Message().setId("first"))).setNextPageToken("next-page"))
 				.thenReturn(new ListMessagesResponse().setMessages(List.of(new Message().setId("second"))));
-		for (final String id : List.of("first", "second")) {
-			when(firstGmail.users().messages().get("me", id).setFormat("full").execute())
-					.thenReturn(new Message().setId(id).setPayload(new MessagePart()));
-		}
+		stubBatchFetch(firstGmail, Map.of(
+				"first", new Message().setId("first").setPayload(new MessagePart()),
+				"second", new Message().setId("second").setPayload(new MessagePart())));
 
 		// when
 		final List<EmailMessage> messages = service.readEmailsForTriage();
@@ -104,6 +108,7 @@ class GmailMailboxSvcTest {
 		assertEquals(List.of("first", "second"), messages.stream().map(EmailMessage::id).toList());
 		verify(request).setPageToken("next-page");
 		verify(request, times(2)).execute();
+		verify(firstGmail, times(2)).batch();
 	}
 
 	@Test
@@ -115,8 +120,7 @@ class GmailMailboxSvcTest {
 		final var request = secondGmail.users().messages().list("me");
 		when(request.setQ("in:inbox newer_than:14d -label:" + EmailWorkflowLabels.PROCESSED)).thenReturn(request);
 		when(request.execute()).thenReturn(new ListMessagesResponse().setMessages(List.of(new Message().setId("id"))));
-		when(secondGmail.users().messages().get("me", "id").setFormat("full").execute())
-				.thenReturn(new Message().setId("id").setPayload(new MessagePart()));
+		stubBatchFetch(secondGmail, Map.of("id", new Message().setId("id").setPayload(new MessagePart())));
 
 		// when
 		final List<EmailMessage> messages = service.readEmailsForTriage();
@@ -136,9 +140,8 @@ class GmailMailboxSvcTest {
 				+ " -label:" + EmailWorkflowLabels.ARCHITECT_PERSISTED)).thenReturn(request);
 		when(request.execute()).thenReturn(new ListMessagesResponse()
 				.setMessages(List.of(new Message().setId("historical-id"))));
-		when(firstGmail.users().messages().get("me", "historical-id").setFormat("full").execute())
-				.thenReturn(new Message().setId("historical-id").setInternalDate(1_727_372_600_000L)
-						.setPayload(new MessagePart()));
+		stubBatchFetch(firstGmail, Map.of("historical-id", new Message().setId("historical-id")
+				.setInternalDate(1_727_372_600_000L).setPayload(new MessagePart())));
 
 		// when
 		final List<EmailMessage> messages = service.readArchitectEmailsPendingPersistence();
@@ -155,5 +158,31 @@ class GmailMailboxSvcTest {
 			org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
 					() -> new GmailMailboxSvc(oauth, days));
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void stubBatchFetch(final Gmail gmail, final Map<String, Message> messages) throws Exception {
+		final BatchRequest batch = mock(BatchRequest.class);
+		when(gmail.batch()).thenReturn(batch);
+		final List<Runnable> callbacks = new ArrayList<>();
+		for (final Map.Entry<String, Message> entry : messages.entrySet()) {
+			final var request = gmail.users().messages().get("me", entry.getKey());
+			when(request.setFormat("full")).thenReturn(request);
+			doAnswer(invocation -> {
+				final JsonBatchCallback<Message> callback = invocation.getArgument(1);
+				callbacks.add(() -> {
+					try {
+						callback.onSuccess(entry.getValue(), new HttpHeaders());
+					} catch (final java.io.IOException exception) {
+						throw new RuntimeException(exception);
+					}
+				});
+				return null;
+			}).when(request).queue(eq(batch), any(JsonBatchCallback.class));
+		}
+		doAnswer(invocation -> {
+			callbacks.forEach(Runnable::run);
+			return null;
+		}).when(batch).execute();
 	}
 }

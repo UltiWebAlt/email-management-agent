@@ -54,6 +54,17 @@ public class JdbcArchitectJobRepository implements ArchitectJobRepository {
 	}
 
 	@Override
+	public void refreshEmailContent(final String account, final String messageId,
+			final String description, final String htmlBody) {
+		jdbcTemplate.update("""
+				UPDATE positions SET
+				description = COALESCE(NULLIF(?, ''), description),
+				html_body = COALESCE(NULLIF(?, ''), html_body)
+				WHERE source_account = ? AND source_message_id = ?
+				""", description, htmlBody, account, messageId);
+	}
+
+	@Override
 	public void enrichExisting(final ArchitectJobRecord job) {
 		jdbcTemplate.update("""
 				UPDATE positions SET

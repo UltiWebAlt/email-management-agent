@@ -35,13 +35,48 @@ final class GmailMessageBodyExtractor {
 	}
 
 	ExtractedEmailBody extractContent(final MessagePart payload) throws IOException {
+		final var inlineImages = new java.util.HashMap<String, String>();
+		collectInlineImages(payload, inlineImages);
 		final BodyContent content = content(payload);
 		final String text = limit(content.text());
-		String html = content.htmlBody();
-		if (html.length() > 100_000) {
-			html = HtmlEmailTextExtractor.plainTextAsHtml(text);
-		}
+		final String html = replaceInlineImageReferences(content.htmlBody(), inlineImages);
 		return new ExtractedEmailBody(text, html);
+	}
+
+	private void collectInlineImages(final MessagePart part, final java.util.Map<String, String> inlineImages)
+			throws IOException {
+		if (part == null) {
+			return;
+		}
+		final String contentId = header(part, "Content-ID").strip().replaceAll("^<|>$", "");
+		if (!contentId.isBlank() && mimeType(part).startsWith("image/") && hasBodyData(part.getBody())) {
+			final String encodedData = encodedData(part);
+			if (!encodedData.isBlank()) {
+				final byte[] imageBytes = Base64.getUrlDecoder().decode(encodedData);
+				final String dataUri = "data:" + mimeType(part) + ";base64," + Base64.getEncoder().encodeToString(imageBytes);
+				inlineImages.put(contentId.toLowerCase(Locale.ROOT), dataUri);
+			}
+		}
+		for (final MessagePart child : Optional.ofNullable(part.getParts()).orElseGet(List::of)) {
+			collectInlineImages(child, inlineImages);
+		}
+	}
+
+	private static String replaceInlineImageReferences(final String html,
+			final java.util.Map<String, String> inlineImages) {
+		if (html.isBlank() || inlineImages.isEmpty()) {
+			return html;
+		}
+		final var output = new StringBuilder();
+		final var matcher = Pattern.compile("(?i)cid:([^\\s\\\"'<>\\)]+)").matcher(html);
+		while (matcher.find()) {
+			final String dataUri = inlineImages.get(matcher.group(1).replaceAll("^<|>$", "").toLowerCase(Locale.ROOT));
+			if (dataUri != null) {
+				matcher.appendReplacement(output, java.util.regex.Matcher.quoteReplacement(dataUri));
+			}
+		}
+		matcher.appendTail(output);
+		return output.toString();
 	}
 
 	private BodyContent content(final MessagePart part) throws IOException {
@@ -76,6 +111,14 @@ final class GmailMessageBodyExtractor {
 	}
 
 	private String decode(final MessagePart part) throws IOException {
+		final String data = encodedData(part);
+		if (data == null || data.isBlank()) {
+			return "";
+		}
+		return new String(Base64.getUrlDecoder().decode(data), charset(part));
+	}
+
+	private String encodedData(final MessagePart part) throws IOException {
 		final MessagePartBody body = part.getBody();
 		if (body == null) {
 			return "";
@@ -87,10 +130,7 @@ final class GmailMessageBodyExtractor {
 					.execute();
 			data = attachment == null ? null : attachment.getData();
 		}
-		if (data == null || data.isBlank()) {
-			return "";
-		}
-		return new String(Base64.getUrlDecoder().decode(data), charset(part));
+		return data == null ? "" : data;
 	}
 
 	private static BodyContent textContent(final String decoded) {
@@ -102,8 +142,7 @@ final class GmailMessageBodyExtractor {
 	}
 
 	private static BodyContent htmlContent(final String html) {
-		return new BodyContent(HtmlEmailTextExtractor.extract(html), true,
-				HtmlEmailTextExtractor.sanitizeForDisplay(html));
+		return new BodyContent(HtmlEmailTextExtractor.extract(html), true, html);
 	}
 
 	private static Charset charset(final MessagePart part) {

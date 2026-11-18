@@ -105,8 +105,11 @@ public class EmailTriageSvc {
 					architectJobPersistenceSvc.persist(email, summary, inferJobDetails(email));
 					results.add(new EmailTriageResult(email.account(), email.id(), summary,
 							EmailTag.ARCHITECT_JOBS.labelName()));
-				} else if (architectJobPersistenceSvc.needsEnrichment(email)) {
-					architectJobPersistenceSvc.enrichExisting(email, inferJobDetails(email));
+				} else {
+					architectJobPersistenceSvc.refreshEmailContent(email);
+					if (architectJobPersistenceSvc.needsEnrichment(email)) {
+						architectJobPersistenceSvc.enrichExisting(email, inferJobDetails(email));
+					}
 				}
 				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.ARCHITECT_PERSISTED);
 				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.PROCESSED);

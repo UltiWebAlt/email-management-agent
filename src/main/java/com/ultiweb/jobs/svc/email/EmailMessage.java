@@ -3,7 +3,7 @@ package com.ultiweb.jobs.svc.email;
 import java.time.Instant;
 
 /**
- * Gmail message with normalized text for inference and optional sanitized HTML for dashboard display.
+ * Gmail message with normalized text for inference and optional source HTML for sanitized dashboard display.
  */
 public record EmailMessage(
 		String account, String id, String subject, String from, String body, Instant receivedAt, String htmlBody) {

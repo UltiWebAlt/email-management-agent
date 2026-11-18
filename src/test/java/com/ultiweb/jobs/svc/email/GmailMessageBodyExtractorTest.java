@@ -47,7 +47,7 @@ class GmailMessageBodyExtractorTest {
 	}
 
 	@Test
-	void retainsSafeFormattedHtmlAlongsideNormalizedText() throws Exception {
+	void retainsSourceHtmlAlongsideNormalizedTextForSanitizedRendering() throws Exception {
 		// given
 		final String html = "<html><body><h2>Architect opening</h2><ul><li>Design leadership</li></ul>"
 				+ "<script>doNotRun()</script><a href='https://example.com/job'>Job details</a></body></html>";
@@ -61,8 +61,7 @@ class GmailMessageBodyExtractorTest {
 		assertTrue(body.html().contains("<h2>Architect opening</h2>"));
 		assertTrue(body.html().contains("<li>Design leadership</li>"));
 		assertTrue(body.html().contains("href=\"https://example.com/job\""));
-		assertFalse(body.html().contains("<script"));
-		assertFalse(body.html().contains("doNotRun"));
+		assertTrue(body.html().contains("<script>doNotRun()</script>"));
 	}
 
 	@Test
@@ -80,7 +79,27 @@ class GmailMessageBodyExtractorTest {
 		assertFalse(body.text().contains("<html"));
 		assertTrue(body.html().contains("<p>Architect opening</p>"));
 		assertTrue(body.html().contains("<li>Design leadership</li>"));
-		assertFalse(body.html().contains("<script"));
+		assertTrue(body.html().contains("<script>doNotRun()</script>"));
+	}
+
+	@Test
+	void embedsInlineCidImagesInTheStoredHtml() throws Exception {
+		// given
+		final MessagePart html = textPart("text/html", "<p>Architect opening</p><img src='cid:logo@example.com'>",
+				StandardCharsets.UTF_8);
+		final MessagePart inlineImage = new MessagePart().setMimeType("image/png")
+				.setHeaders(List.of(new MessagePartHeader().setName("Content-ID").setValue("<logo@example.com>"),
+						new MessagePartHeader().setName("Content-Disposition").setValue("inline")))
+				.setBody(new MessagePartBody().setAttachmentId("inline-logo"));
+		final MessagePart payload = new MessagePart().setMimeType("multipart/related").setParts(List.of(html, inlineImage));
+		when(gmail.users().messages().attachments().get("me", "message-id", "inline-logo").execute())
+				.thenReturn(new MessagePartBody().setData(Base64.getUrlEncoder().withoutPadding().encodeToString(new byte[] {1, 2, 3})));
+
+		// when
+		final ExtractedEmailBody body = new GmailMessageBodyExtractor(gmail, "message-id").extractContent(payload);
+
+		// then
+		assertTrue(body.html().contains("src=\"data:image/png;base64,AQID\""));
 	}
 
 	@Test

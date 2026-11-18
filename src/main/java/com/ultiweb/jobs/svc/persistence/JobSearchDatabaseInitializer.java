@@ -29,9 +29,21 @@ public final class JobSearchDatabaseInitializer {
 		addPositionColumn("summary", "ALTER TABLE positions ADD COLUMN summary TEXT");
 		addPositionColumn("html_body", "ALTER TABLE positions ADD COLUMN html_body TEXT");
 		addPositionColumn("respond_to", "ALTER TABLE positions ADD COLUMN respond_to INTEGER NOT NULL DEFAULT 0");
+		addPositionColumn("dismissed", "ALTER TABLE positions ADD COLUMN dismissed INTEGER NOT NULL DEFAULT 0");
+		addPositionColumn("trash_pending", "ALTER TABLE positions ADD COLUMN trash_pending INTEGER NOT NULL DEFAULT 0");
+		jdbcTemplate.update("UPDATE positions SET trash_pending = 0 WHERE trash_pending = 1");
 		addResponseColumn("response_status", "ALTER TABLE responses ADD COLUMN response_status TEXT NOT NULL DEFAULT 'RECORDED'");
 		addResponseColumn("gmail_draft_id", "ALTER TABLE responses ADD COLUMN gmail_draft_id TEXT");
+		addResponseColumn("gmail_message_id", "ALTER TABLE responses ADD COLUMN gmail_message_id TEXT");
+		addResponseColumn("gmail_thread_id", "ALTER TABLE responses ADD COLUMN gmail_thread_id TEXT");
 		addResponseColumn("updated_at", "ALTER TABLE responses ADD COLUMN updated_at TEXT");
+		addResponseColumn("sent_at", "ALTER TABLE responses ADD COLUMN sent_at TIMESTAMP");
+		addResponseColumn("follow_up_status", "ALTER TABLE responses ADD COLUMN follow_up_status TEXT");
+		addResponseColumn("follow_up_content", "ALTER TABLE responses ADD COLUMN follow_up_content TEXT");
+		addResponseColumn("follow_up_sent_at", "ALTER TABLE responses ADD COLUMN follow_up_sent_at TIMESTAMP");
+		addResponseColumn("follow_up_message_id", "ALTER TABLE responses ADD COLUMN follow_up_message_id TEXT");
+		addResponseColumn("recruiter_reply_at", "ALTER TABLE responses ADD COLUMN recruiter_reply_at TIMESTAMP");
+		addResponseColumn("recruiter_reply_message_id", "ALTER TABLE responses ADD COLUMN recruiter_reply_message_id TEXT");
 		removeSummaryIntroductions();
 		createIndexes();
 	}
@@ -84,6 +96,8 @@ public final class JobSearchDatabaseInitializer {
 				summary TEXT,
 				html_body TEXT,
 				respond_to INTEGER NOT NULL DEFAULT 0,
+				dismissed INTEGER NOT NULL DEFAULT 0,
+				trash_pending INTEGER NOT NULL DEFAULT 0,
 				FOREIGN KEY (recruiter_id) REFERENCES recruiters(id)
 				)
 				""");
@@ -97,8 +111,16 @@ public final class JobSearchDatabaseInitializer {
 				'INITIAL_RESPONSE', 'FOLLOW_UP', 'INTERVIEW_CONFIRMATION', 'THANK_YOU', 'DECLINED')),
 				response_status TEXT NOT NULL DEFAULT 'RECORDED',
 				gmail_draft_id TEXT,
+				gmail_message_id TEXT,
+				gmail_thread_id TEXT,
 				updated_at TEXT,
 				sent_at TIMESTAMP,
+				follow_up_status TEXT,
+				follow_up_content TEXT,
+				follow_up_sent_at TIMESTAMP,
+				follow_up_message_id TEXT,
+				recruiter_reply_at TIMESTAMP,
+				recruiter_reply_message_id TEXT,
 				position_id BIGINT NOT NULL,
 				recruiter_id BIGINT NOT NULL,
 				FOREIGN KEY (position_id) REFERENCES positions(id),

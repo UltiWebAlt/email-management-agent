@@ -7,5 +7,7 @@ public interface ArchitectJobRepository {
 
 	boolean needsEnrichment(String account, String messageId);
 
+	void refreshEmailContent(String account, String messageId, String description, String htmlBody);
+
 	void enrichExisting(ArchitectJobRecord job);
 }

@@ -46,6 +46,10 @@ public class ArchitectJobPersistenceSvc {
 		return repository.needsEnrichment(email.account(), email.id());
 	}
 
+	public void refreshEmailContent(final EmailMessage email) {
+		repository.refreshEmailContent(email.account(), email.id(), email.body(), email.htmlBody());
+	}
+
 	@Transactional
 	public boolean persist(final EmailMessage email, final String summary) {
 		return saveOpportunity(email, summary, JobOpportunityDetails.empty());
