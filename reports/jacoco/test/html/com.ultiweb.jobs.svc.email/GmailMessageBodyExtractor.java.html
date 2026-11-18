@@ -48,7 +48,7 @@ final class GmailMessageBodyExtractor {
 <span class="pc bpc" id="L48" title="1 of 2 branches missed.">		if (part == null) {</span>
 <span class="nc" id="L49">			return;</span>
 		}
-<span class="fc" id="L51">		final String contentId = header(part, &quot;Content-ID&quot;).strip().replaceAll(&quot;^&lt;|&gt;$&quot;, &quot;&quot;);</span>
+<span class="fc" id="L51">		final String contentId = header(part, &quot;Content-ID&quot;).strip().replaceAll(&quot;(^&lt;)|(&gt;$)&quot;, &quot;&quot;);</span>
 <span class="pc bpc" id="L52" title="2 of 6 branches missed.">		if (!contentId.isBlank() &amp;&amp; mimeType(part).startsWith(&quot;image/&quot;) &amp;&amp; hasBodyData(part.getBody())) {</span>
 <span class="fc" id="L53">			final String encodedData = encodedData(part);</span>
 <span class="pc bpc" id="L54" title="1 of 2 branches missed.">			if (!encodedData.isBlank()) {</span>
@@ -70,7 +70,7 @@ final class GmailMessageBodyExtractor {
 <span class="fc" id="L70">		final var output = new StringBuilder();</span>
 <span class="fc" id="L71">		final var matcher = Pattern.compile(&quot;(?i)cid:([^\\s\\\&quot;'&lt;&gt;\\)]+)&quot;).matcher(html);</span>
 <span class="fc bfc" id="L72" title="All 2 branches covered.">		while (matcher.find()) {</span>
-<span class="fc" id="L73">			final String dataUri = inlineImages.get(matcher.group(1).replaceAll(&quot;^&lt;|&gt;$&quot;, &quot;&quot;).toLowerCase(Locale.ROOT));</span>
+<span class="fc" id="L73">			final String dataUri = inlineImages.get(matcher.group(1).replaceAll(&quot;(^&lt;)|(&gt;$)&quot;, &quot;&quot;).toLowerCase(Locale.ROOT));</span>
 <span class="pc bpc" id="L74" title="1 of 2 branches missed.">			if (dataUri != null) {</span>
 <span class="fc" id="L75">				matcher.appendReplacement(output, java.util.regex.Matcher.quoteReplacement(dataUri));</span>
 			}
@@ -112,7 +112,7 @@ final class GmailMessageBodyExtractor {
 
 	private String decode(final MessagePart part) throws IOException {
 <span class="fc" id="L114">		final String data = encodedData(part);</span>
-<span class="pc bpc" id="L115" title="2 of 4 branches missed.">		if (data == null || data.isBlank()) {</span>
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">		if (data.isBlank()) {</span>
 <span class="nc" id="L116">			return &quot;&quot;;</span>
 		}
 <span class="fc" id="L118">		return new String(Base64.getUrlDecoder().decode(data), charset(part));</span>

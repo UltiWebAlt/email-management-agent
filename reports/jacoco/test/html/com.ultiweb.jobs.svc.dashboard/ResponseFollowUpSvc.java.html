@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResponseFollowUpSvc.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">email-management-agent</a> &gt; <a href="index.source.html" class="el_package">com.ultiweb.jobs.svc.dashboard</a> &gt; <span class="el_source">ResponseFollowUpSvc.java</span></div><h1>ResponseFollowUpSvc.java</h1><pre class="source lang-java linenums">package com.ultiweb.jobs.svc.dashboard;
 
 import com.ultiweb.jobs.svc.email.EmailWorkflowLabels;
+import com.ultiweb.jobs.svc.email.FollowUpEmail;
 import com.ultiweb.jobs.svc.email.GmailDraftSvc;
 import com.ultiweb.jobs.svc.persistence.JobResponseRepository;
 import com.ultiweb.jobs.svc.persistence.ResponseFollowUpCandidate;
@@ -18,8 +19,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public final class ResponseFollowUpSvc {
-<span class="fc" id="L21">	private static final Logger LOGGER = LoggerFactory.getLogger(ResponseFollowUpSvc.class);</span>
-<span class="fc" id="L22">	private static final Duration FOLLOW_UP_DELAY = Duration.ofHours(48);</span>
+<span class="fc" id="L22">	private static final Logger LOGGER = LoggerFactory.getLogger(ResponseFollowUpSvc.class);</span>
+<span class="fc" id="L23">	private static final Duration FOLLOW_UP_DELAY = Duration.ofHours(48);</span>
 	private final JobResponseRepository repository;
 	private final GmailDraftSvc gmailDraftSvc;
 	private final DeepInfraEmailReplyGenerator replyGenerator;
@@ -31,96 +32,96 @@ public final class ResponseFollowUpSvc {
 	public ResponseFollowUpSvc(final JobResponseRepository repository, final GmailDraftSvc gmailDraftSvc,
 			final DeepInfraEmailReplyGenerator replyGenerator, final ApplicationEventPublisher eventPublisher,
 			final Environment environment) {
-<span class="fc" id="L34">		this(repository, gmailDraftSvc, replyGenerator, eventPublisher, Clock.systemUTC(),</span>
-<span class="fc" id="L35">			environment.acceptsProfiles(Profiles.of(&quot;production&quot;)));</span>
-<span class="fc" id="L36">	}</span>
+<span class="fc" id="L35">		this(repository, gmailDraftSvc, replyGenerator, eventPublisher, Clock.systemUTC(),</span>
+<span class="fc" id="L36">			environment.acceptsProfiles(Profiles.of(&quot;production&quot;)));</span>
+<span class="fc" id="L37">	}</span>
 
 	ResponseFollowUpSvc(final JobResponseRepository repository, final GmailDraftSvc gmailDraftSvc,
 			final DeepInfraEmailReplyGenerator replyGenerator, final ApplicationEventPublisher eventPublisher,
-<span class="fc" id="L40">			final Clock clock, final boolean productionMode) {</span>
-<span class="fc" id="L41">		this.repository = repository;</span>
-<span class="fc" id="L42">		this.gmailDraftSvc = gmailDraftSvc;</span>
-<span class="fc" id="L43">		this.replyGenerator = replyGenerator;</span>
-<span class="fc" id="L44">		this.eventPublisher = eventPublisher;</span>
-<span class="fc" id="L45">		this.clock = clock;</span>
-<span class="fc" id="L46">		this.productionMode = productionMode;</span>
-<span class="fc" id="L47">	}</span>
+<span class="fc" id="L41">			final Clock clock, final boolean productionMode) {</span>
+<span class="fc" id="L42">		this.repository = repository;</span>
+<span class="fc" id="L43">		this.gmailDraftSvc = gmailDraftSvc;</span>
+<span class="fc" id="L44">		this.replyGenerator = replyGenerator;</span>
+<span class="fc" id="L45">		this.eventPublisher = eventPublisher;</span>
+<span class="fc" id="L46">		this.clock = clock;</span>
+<span class="fc" id="L47">		this.productionMode = productionMode;</span>
+<span class="fc" id="L48">	}</span>
 
 	public void checkForResponsesAndSendDueFollowUps() {
-<span class="nc" id="L50">		final var now = clock.instant();</span>
-<span class="nc" id="L51">		final var dueBefore = now.minus(FOLLOW_UP_DELAY);</span>
-<span class="nc" id="L52">		repository.releaseStaleFollowUpChecks(now.minus(Duration.ofHours(2)), now);</span>
-<span class="nc bnc" id="L53" title="All 2 branches missed.">		for (final var candidate : repository.findResponsesForFollowUp(dueBefore)) {</span>
+<span class="fc" id="L51">		final var now = clock.instant();</span>
+<span class="fc" id="L52">		final var dueBefore = now.minus(FOLLOW_UP_DELAY);</span>
+<span class="fc" id="L53">		repository.releaseStaleFollowUpChecks(now.minus(Duration.ofHours(2)), now);</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">		for (final var candidate : repository.findResponsesForFollowUp(dueBefore)) {</span>
 			try {
-<span class="nc" id="L55">				repository.claimFollowUp(candidate.positionId(), clock.instant(), dueBefore)</span>
-<span class="nc" id="L56">						.ifPresent(this::processClaimedFollowUp);</span>
-<span class="nc" id="L57">			} catch (final RuntimeException exception) {</span>
-<span class="nc" id="L58">				LOGGER.error(&quot;Could not claim follow-up for position {}.&quot;, candidate.positionId(), exception);</span>
-<span class="nc" id="L59">			}</span>
-<span class="nc" id="L60">		}</span>
-<span class="nc" id="L61">	}</span>
+<span class="fc" id="L56">				repository.claimFollowUp(candidate.positionId(), clock.instant(), dueBefore)</span>
+<span class="fc" id="L57">						.ifPresent(this::processClaimedFollowUp);</span>
+<span class="fc" id="L58">			} catch (final RuntimeException exception) {</span>
+<span class="fc" id="L59">				LOGGER.error(&quot;Could not claim follow-up for position {}.&quot;, candidate.positionId(), exception);</span>
+<span class="fc" id="L60">			}</span>
+<span class="fc" id="L61">		}</span>
+<span class="fc" id="L62">	}</span>
 
 	private void processClaimedFollowUp(final ResponseFollowUpCandidate candidate) {
 		try {
-<span class="nc" id="L65">			final var existingFollowUp = gmailDraftSvc.findExistingFollowUp(candidate.sourceAccount(),</span>
-<span class="nc" id="L66">					candidate.gmailThreadId(), candidate.positionId());</span>
-<span class="nc bnc" id="L67" title="All 4 branches missed.">			if (existingFollowUp.isPresent() &amp;&amp; candidate.followUpSentAt() == null) {</span>
-<span class="nc" id="L68">				final var sent = existingFollowUp.orElseThrow();</span>
-<span class="nc" id="L69">				repository.markFollowUpSent(candidate.positionId(), candidate.followUpContent(), sent.messageId(),</span>
-<span class="nc bnc" id="L70" title="All 2 branches missed.">						sent.sentAt() == null ? clock.instant() : sent.sentAt());</span>
-<span class="nc" id="L71">				notifyResponseUpdated(candidate.positionId());</span>
-<span class="nc" id="L72">				return;</span>
+<span class="fc" id="L66">			final var existingFollowUp = gmailDraftSvc.findExistingFollowUp(candidate.sourceAccount(),</span>
+<span class="fc" id="L67">					candidate.gmailThreadId(), candidate.positionId());</span>
+<span class="pc bpc" id="L68" title="1 of 4 branches missed.">			if (existingFollowUp.isPresent() &amp;&amp; candidate.followUpSentAt() == null) {</span>
+<span class="fc" id="L69">				final var sent = existingFollowUp.orElseThrow();</span>
+<span class="fc" id="L70">				repository.markFollowUpSent(candidate.positionId(), candidate.followUpContent(), sent.messageId(),</span>
+<span class="pc bpc" id="L71" title="1 of 2 branches missed.">						sent.sentAt() == null ? clock.instant() : sent.sentAt());</span>
+<span class="fc" id="L72">				notifyResponseUpdated(candidate.positionId());</span>
+<span class="fc" id="L73">				return;</span>
 			}
-<span class="nc" id="L74">			final var incomingReply = gmailDraftSvc.findExternalReply(candidate.sourceAccount(),</span>
-<span class="nc" id="L75">					candidate.gmailThreadId(), candidate.sentAt());</span>
-<span class="nc bnc" id="L76" title="All 2 branches missed.">			if (incomingReply.isPresent()) {</span>
-<span class="nc" id="L77">				final var reply = incomingReply.orElseThrow();</span>
-<span class="nc" id="L78">				repository.markReplied(candidate.positionId(), reply.messageId(), reply.receivedAt());</span>
-<span class="nc" id="L79">				notifyResponseUpdated(candidate.positionId());</span>
-<span class="nc" id="L80">				LOGGER.info(&quot;Recruiter replied in the Gmail thread for position {}.&quot;, candidate.positionId());</span>
-<span class="nc" id="L81">				return;</span>
+<span class="fc" id="L75">			final var incomingReply = gmailDraftSvc.findExternalReply(candidate.sourceAccount(),</span>
+<span class="fc" id="L76">					candidate.gmailThreadId(), candidate.sentAt());</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">			if (incomingReply.isPresent()) {</span>
+<span class="fc" id="L78">				final var reply = incomingReply.orElseThrow();</span>
+<span class="fc" id="L79">				repository.markReplied(candidate.positionId(), reply.messageId(), reply.receivedAt());</span>
+<span class="fc" id="L80">				notifyResponseUpdated(candidate.positionId());</span>
+<span class="fc" id="L81">				LOGGER.info(&quot;Recruiter replied in the Gmail thread for position {}.&quot;, candidate.positionId());</span>
+<span class="fc" id="L82">				return;</span>
 			}
-<span class="nc bnc" id="L83" title="All 2 branches missed.">			if (candidate.followUpSentAt() != null) {</span>
-<span class="nc" id="L84">				repository.markFollowUpUnanswered(candidate.positionId(), clock.instant());</span>
-<span class="nc" id="L85">				return;</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">			if (candidate.followUpSentAt() != null) {</span>
+<span class="fc" id="L85">				repository.markFollowUpUnanswered(candidate.positionId(), clock.instant());</span>
+<span class="fc" id="L86">				return;</span>
 			}
-<span class="nc" id="L87">			sendFollowUp(candidate);</span>
-<span class="nc" id="L88">		} catch (final IOException | MessagingException | RuntimeException exception) {</span>
-<span class="nc" id="L89">			repository.markFollowUpFailed(candidate.positionId(), clock.instant());</span>
-<span class="nc" id="L90">			notifyResponseUpdated(candidate.positionId());</span>
-<span class="nc" id="L91">			LOGGER.error(&quot;Unable to check or send follow-up for position {} ({}).&quot;,</span>
-<span class="nc" id="L92">					candidate.positionId(), exception.getClass().getSimpleName(), exception);</span>
-<span class="nc" id="L93">		}</span>
-<span class="nc" id="L94">	}</span>
+<span class="fc" id="L88">			sendFollowUp(candidate);</span>
+<span class="fc" id="L89">		} catch (final IOException | MessagingException | RuntimeException exception) {</span>
+<span class="fc" id="L90">			repository.markFollowUpFailed(candidate.positionId(), clock.instant());</span>
+<span class="fc" id="L91">			notifyResponseUpdated(candidate.positionId());</span>
+<span class="fc" id="L92">			LOGGER.error(&quot;Unable to check or send follow-up for position {} ({}).&quot;,</span>
+<span class="fc" id="L93">					candidate.positionId(), exception.getClass().getSimpleName(), exception);</span>
+<span class="fc" id="L94">		}</span>
+<span class="fc" id="L95">	}</span>
 
 	private void sendFollowUp(final ResponseFollowUpCandidate candidate) throws IOException, MessagingException {
-<span class="nc bnc" id="L97" title="All 4 branches missed.">		final String body = candidate.followUpContent() == null || candidate.followUpContent().isBlank()</span>
-<span class="nc" id="L98">				? replyGenerator.generateFollowUp(candidate) : candidate.followUpContent();</span>
-<span class="nc bnc" id="L99" title="All 4 branches missed.">		if (candidate.followUpContent() == null || candidate.followUpContent().isBlank()) {</span>
-<span class="nc" id="L100">			repository.storeFollowUpContent(candidate.positionId(), body, clock.instant());</span>
+<span class="pc bpc" id="L98" title="1 of 4 branches missed.">		final String body = candidate.followUpContent() == null || candidate.followUpContent().isBlank()</span>
+<span class="fc" id="L99">				? replyGenerator.generateFollowUp(candidate) : candidate.followUpContent();</span>
+<span class="pc bpc" id="L100" title="1 of 4 branches missed.">		if (candidate.followUpContent() == null || candidate.followUpContent().isBlank()) {</span>
+<span class="fc" id="L101">			repository.storeFollowUpContent(candidate.positionId(), body, clock.instant());</span>
 		}
-<span class="nc bnc" id="L102" title="All 2 branches missed.">		final String recipient = productionMode ? candidate.recruiterEmail() : candidate.sourceAccount();</span>
-<span class="nc bnc" id="L103" title="All 2 branches missed.">		final String label = productionMode ? null : EmailWorkflowLabels.EMAIL_AGENT_TEST;</span>
-<span class="nc" id="L104">		final var sent = gmailDraftSvc.sendFollowUp(candidate.sourceAccount(), recipient,</span>
-<span class="nc" id="L105">				candidate.gmailThreadId(), candidate.positionId(), candidate.gmailMessageId(),</span>
-<span class="nc" id="L106">				replySubject(candidate.sourceSubject()), body, label);</span>
-<span class="nc" id="L107">		repository.markFollowUpSent(candidate.positionId(), body, sent.messageId(),</span>
-<span class="nc bnc" id="L108" title="All 2 branches missed.">				sent.sentAt() == null ? clock.instant() : sent.sentAt());</span>
-<span class="nc" id="L109">		notifyResponseUpdated(candidate.positionId());</span>
-<span class="nc" id="L110">		LOGGER.info(&quot;Sent automatic Gmail follow-up for position {} (message {}).&quot;,</span>
-<span class="nc" id="L111">				candidate.positionId(), sent.messageId());</span>
-<span class="nc" id="L112">	}</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">		final String recipient = productionMode ? candidate.recruiterEmail() : candidate.sourceAccount();</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">		final String label = productionMode ? null : EmailWorkflowLabels.EMAIL_AGENT_TEST;</span>
+<span class="fc" id="L105">		final var followUp = new FollowUpEmail(recipient, candidate.gmailThreadId(), candidate.positionId(),</span>
+<span class="fc" id="L106">				candidate.gmailMessageId(), replySubject(candidate.sourceSubject()), body);</span>
+<span class="fc" id="L107">		final var sent = gmailDraftSvc.sendFollowUp(candidate.sourceAccount(), followUp, label);</span>
+<span class="fc" id="L108">		repository.markFollowUpSent(candidate.positionId(), body, sent.messageId(),</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">				sent.sentAt() == null ? clock.instant() : sent.sentAt());</span>
+<span class="fc" id="L110">		notifyResponseUpdated(candidate.positionId());</span>
+<span class="fc" id="L111">		LOGGER.info(&quot;Sent automatic Gmail follow-up for position {} (message {}).&quot;,</span>
+<span class="fc" id="L112">				candidate.positionId(), sent.messageId());</span>
+<span class="fc" id="L113">	}</span>
 
 	private void notifyResponseUpdated(final long positionId) {
-<span class="nc" id="L115">		eventPublisher.publishEvent(new DashboardResponseUpdatedEvent(positionId));</span>
-<span class="nc" id="L116">	}</span>
+<span class="fc" id="L116">		eventPublisher.publishEvent(new DashboardResponseUpdatedEvent(positionId));</span>
+<span class="fc" id="L117">	}</span>
 
 	private static String replySubject(final String sourceSubject) {
-<span class="nc bnc" id="L119" title="All 4 branches missed.">		if (sourceSubject == null || sourceSubject.isBlank()) {</span>
-<span class="nc" id="L120">			return &quot;Re: Architect job opportunity&quot;;</span>
+<span class="pc bpc" id="L120" title="1 of 4 branches missed.">		if (sourceSubject == null || sourceSubject.isBlank()) {</span>
+<span class="fc" id="L121">			return &quot;Re: Architect job opportunity&quot;;</span>
 		}
-<span class="nc" id="L122">		final String subject = sourceSubject.replaceAll(&quot;[\\p{Cntrl}\\s]+&quot;, &quot; &quot;).strip();</span>
-<span class="nc bnc" id="L123" title="All 2 branches missed.">		return subject.regionMatches(true, 0, &quot;Re:&quot;, 0, 3) ? subject : &quot;Re: &quot; + subject;</span>
+<span class="fc" id="L123">		final String subject = sourceSubject.replaceAll(&quot;[\\p{Cntrl}\\s]+&quot;, &quot; &quot;).strip();</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">		return subject.regionMatches(true, 0, &quot;Re:&quot;, 0, 3) ? subject : &quot;Re: &quot; + subject;</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

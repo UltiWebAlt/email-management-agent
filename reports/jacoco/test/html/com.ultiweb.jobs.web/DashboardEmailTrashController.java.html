@@ -21,12 +21,12 @@ public final class DashboardEmailTrashController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void moveToTrash(@PathVariable final long id) {
 		try {
-<span class="nc bnc" id="L24" title="All 2 branches missed.">			if (!trashSvc.moveToTrash(id)) {</span>
-<span class="nc" id="L25">				throw new ResponseStatusException(HttpStatus.CONFLICT, &quot;A reply is selected or an action is already in progress&quot;);</span>
+<span class="fc bfc" id="L24" title="All 2 branches covered.">			if (!trashSvc.moveToTrash(id)) {</span>
+<span class="fc" id="L25">				throw new ResponseStatusException(HttpStatus.CONFLICT, &quot;A reply is selected or an action is already in progress&quot;);</span>
 			}
-<span class="nc" id="L27">		} catch (final IOException exception) {</span>
-<span class="nc" id="L28">			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, &quot;Could not move the source email to Gmail Trash&quot;, exception);</span>
-<span class="nc" id="L29">		}</span>
-<span class="nc" id="L30">	}</span>
+<span class="fc" id="L27">		} catch (final IOException exception) {</span>
+<span class="fc" id="L28">			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, &quot;Could not move the source email to Gmail Trash&quot;, exception);</span>
+<span class="fc" id="L29">		}</span>
+<span class="fc" id="L30">	}</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

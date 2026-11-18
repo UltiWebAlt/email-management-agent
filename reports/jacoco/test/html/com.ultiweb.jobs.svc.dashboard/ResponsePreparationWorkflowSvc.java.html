@@ -98,50 +98,50 @@ public class ResponsePreparationWorkflowSvc {
 
 	@Transactional
 	public ResponseSelectionResult prepare(final long positionId) {
-<span class="nc bnc" id="L101" title="All 2 branches missed.">		if (positionId &lt; 1) {</span>
-<span class="nc" id="L102">			throw new ResponseSelectionException(&quot;Position ID must be positive&quot;);</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">		if (positionId &lt; 1) {</span>
+<span class="fc" id="L102">			throw new ResponseSelectionException(&quot;Position ID must be positive&quot;);</span>
 		}
-<span class="nc" id="L104">		final int updated = repository.updateSelections(List.of(new ResponseSelectionChange(positionId, true)));</span>
-<span class="nc bnc" id="L105" title="All 4 branches missed.">		if (updated != 1 || !repository.findSelectedWithoutResponse().contains(positionId)) {</span>
-<span class="nc" id="L106">			throw new ResponseSelectionException(&quot;This opportunity cannot prepare another response&quot;);</span>
+<span class="fc" id="L104">		final int updated = repository.updateSelections(List.of(new ResponseSelectionChange(positionId, true)));</span>
+<span class="fc bfc" id="L105" title="All 4 branches covered.">		if (updated != 1 || !repository.findSelectedWithoutResponse().contains(positionId)) {</span>
+<span class="fc" id="L106">			throw new ResponseSelectionException(&quot;This opportunity cannot prepare another response&quot;);</span>
 		}
-<span class="nc" id="L108">		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {</span>
+<span class="fc" id="L108">		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {</span>
 			@Override
 			public void afterCommit() {
-<span class="nc" id="L111">				executor.execute(() -&gt; prepareResponse(positionId));</span>
-<span class="nc" id="L112">			}</span>
+<span class="pc" id="L111">				executor.execute(() -&gt; prepareResponse(positionId));</span>
+<span class="fc" id="L112">			}</span>
 		});
-<span class="nc bnc" id="L114" title="All 2 branches missed.">		return new ResponseSelectionResult(1, 1, developmentMode ? &quot;development&quot; : &quot;gmail-drafts&quot;);</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">		return new ResponseSelectionResult(1, 1, developmentMode ? &quot;development&quot; : &quot;gmail-drafts&quot;);</span>
 	}
 
 	public boolean send(final long positionId) throws IOException, MessagingException {
-<span class="nc" id="L118">		final var candidate = repository.claimResponseForSending(positionId, clock.instant());</span>
-<span class="nc bnc" id="L119" title="All 2 branches missed.">		if (candidate.isEmpty()) {</span>
-<span class="nc" id="L120">			return false;</span>
+<span class="fc" id="L118">		final var candidate = repository.claimResponseForSending(positionId, clock.instant());</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">		if (candidate.isEmpty()) {</span>
+<span class="fc" id="L120">			return false;</span>
 		}
 		try {
-<span class="nc" id="L123">			final var response = candidate.orElseThrow();</span>
-<span class="nc" id="L124">			String draftId = response.gmailDraftId();</span>
-<span class="nc bnc" id="L125" title="All 4 branches missed.">			if (draftId == null || draftId.isBlank()) {</span>
-<span class="nc" id="L126">				draftId = gmailDraftSvc.createDraft(response.sourceAccount(), response.recruiterEmail(),</span>
-<span class="nc" id="L127">						replySubject(response.sourceSubject()), response.responseContent());</span>
-<span class="nc" id="L128">				repository.saveSendingDraftId(positionId, draftId, clock.instant());</span>
+<span class="fc" id="L123">			final var response = candidate.orElseThrow();</span>
+<span class="fc" id="L124">			String draftId = response.gmailDraftId();</span>
+<span class="fc bfc" id="L125" title="All 4 branches covered.">			if (draftId == null || draftId.isBlank()) {</span>
+<span class="fc" id="L126">				draftId = gmailDraftSvc.createDraft(response.sourceAccount(), response.recruiterEmail(),</span>
+<span class="fc" id="L127">						replySubject(response.sourceSubject()), response.responseContent());</span>
+<span class="fc" id="L128">				repository.saveSendingDraftId(positionId, draftId, clock.instant());</span>
 			}
-<span class="nc bnc" id="L130" title="All 2 branches missed.">			final String recipient = productionMode ? response.recruiterEmail() : response.sourceAccount();</span>
-<span class="nc bnc" id="L131" title="All 2 branches missed.">			final String label = productionMode ? null : EmailWorkflowLabels.EMAIL_AGENT_TEST;</span>
-<span class="nc" id="L132">			final GmailSentMessage sent = gmailDraftSvc.sendReply(response.sourceAccount(), draftId,</span>
-<span class="nc bnc" id="L133" title="All 2 branches missed.">					recipient, replySubject(response.sourceSubject()), response.responseContent(), label, !productionMode);</span>
-<span class="nc" id="L134">			repository.saveSendingDraftId(positionId, sent.draftId(), clock.instant());</span>
-<span class="nc bnc" id="L135" title="All 2 branches missed.">			final var sentAt = sent.sentAt() == null ? clock.instant() : sent.sentAt();</span>
-<span class="nc bnc" id="L136" title="All 4 branches missed.">			final String status = !productionMode &amp;&amp; !sent.labelApplied() ? &quot;SENT_LABEL_FAILED&quot; : &quot;SENT&quot;;</span>
-<span class="nc" id="L137">			repository.markResponseSent(positionId, sent.draftId(), sent.messageId(), sent.threadId(), status, sentAt);</span>
-<span class="nc" id="L138">			notifyResponseUpdated(positionId);</span>
-<span class="nc" id="L139">			LOGGER.info(&quot;Sent Gmail response for position {} (message {}).&quot;, positionId, sent.messageId());</span>
-<span class="nc" id="L140">			return true;</span>
-<span class="nc" id="L141">		} catch (final IOException | MessagingException exception) {</span>
-<span class="nc" id="L142">			repository.markResponseSendFailed(positionId, clock.instant());</span>
-<span class="nc" id="L143">			notifyResponseUpdated(positionId);</span>
-<span class="nc" id="L144">			throw exception;</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">			final String recipient = productionMode ? response.recruiterEmail() : response.sourceAccount();</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">			final String label = productionMode ? null : EmailWorkflowLabels.EMAIL_AGENT_TEST;</span>
+<span class="fc" id="L132">			final GmailSentMessage sent = gmailDraftSvc.sendReply(response.sourceAccount(), draftId,</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">					recipient, replySubject(response.sourceSubject()), response.responseContent(), label, !productionMode);</span>
+<span class="fc" id="L134">			repository.saveSendingDraftId(positionId, sent.draftId(), clock.instant());</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">			final var sentAt = sent.sentAt() == null ? clock.instant() : sent.sentAt();</span>
+<span class="fc bfc" id="L136" title="All 4 branches covered.">			final String status = !productionMode &amp;&amp; !sent.labelApplied() ? &quot;SENT_LABEL_FAILED&quot; : &quot;SENT&quot;;</span>
+<span class="fc" id="L137">			repository.markResponseSent(positionId, sent.draftId(), sent.messageId(), sent.threadId(), status, sentAt);</span>
+<span class="fc" id="L138">			notifyResponseUpdated(positionId);</span>
+<span class="fc" id="L139">			LOGGER.info(&quot;Sent Gmail response for position {} (message {}).&quot;, positionId, sent.messageId());</span>
+<span class="fc" id="L140">			return true;</span>
+<span class="fc" id="L141">		} catch (final IOException | MessagingException exception) {</span>
+<span class="fc" id="L142">			repository.markResponseSendFailed(positionId, clock.instant());</span>
+<span class="fc" id="L143">			notifyResponseUpdated(positionId);</span>
+<span class="fc" id="L144">			throw exception;</span>
 		}
 	}
 
@@ -168,7 +168,7 @@ public class ResponsePreparationWorkflowSvc {
 <span class="fc" id="L168">				repository.markResponseFailed(positionId, clock.instant());</span>
 <span class="fc" id="L169">				return;</span>
 			}
-<span class="pc bpc" id="L171" title="1 of 2 branches missed.">			final String recipient = productionMode ? job.recruiterEmail() : job.sourceAccount();</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">			final String recipient = productionMode ? job.recruiterEmail() : job.sourceAccount();</span>
 <span class="fc" id="L172">			final String draftId = gmailDraftSvc.createDraft(job.sourceAccount(), recipient,</span>
 <span class="fc" id="L173">					replySubject(job.sourceSubject()), body);</span>
 <span class="fc" id="L174">			repository.saveDraftId(positionId, draftId, clock.instant());</span>
