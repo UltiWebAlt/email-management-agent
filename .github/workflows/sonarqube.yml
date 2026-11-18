@@ -22,7 +22,6 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      id-token: write
     env:
       SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
@@ -31,9 +30,9 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           TS_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          TS_AUDIENCE: ${{ secrets.TS_AUDIENCE }}
+          TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
         run: |
-          for setting in SONAR_HOST_URL SONAR_TOKEN TS_CLIENT_ID TS_AUDIENCE; do
+          for setting in SONAR_HOST_URL SONAR_TOKEN TS_CLIENT_ID TS_OAUTH_SECRET; do
             if [ -z "${!setting}" ]; then
               echo "::error::Missing $setting; see README SonarQube setup."
               exit 1
@@ -65,7 +64,7 @@ jobs:
         uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          audience: ${{ secrets.TS_AUDIENCE }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:sonarqube-ci
 
       - name: Check local SonarQube availability
