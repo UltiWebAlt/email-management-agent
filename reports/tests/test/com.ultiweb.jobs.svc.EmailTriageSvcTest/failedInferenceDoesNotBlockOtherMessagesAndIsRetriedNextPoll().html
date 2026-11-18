@@ -63,7 +63,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">0.964s</div>
+<div class="counter">1.276s</div>
 <p>duration</p>
 </div>
 </td>
@@ -88,11 +88,13 @@
 <div class="clipboard-copy-btn-container">
 <button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-failedInferenceDoesNotBlockOtherMessagesAndIsRetriedNextPoll()">Copy</button>
 </div>
-<pre id="root-0-test-stdout-failedInferenceDoesNotBlockOtherMessagesAndIsRetriedNextPoll()">04:34:59.371 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
-04:34:59.373 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 2 emails pending triage.
-04:34:59.382 [virtual-61] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
-04:34:59.387 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=second@example.com, message=1, bodyCharacters=10
-04:34:59.388 [Test worker] ERROR com.ultiweb.jobs.svc.EmailTriageSvc -- Triage failed for account=first@example.com, message=1; retrying on the next poll.
+<pre id="root-0-test-stdout-failedInferenceDoesNotBlockOtherMessagesAndIsRetriedNextPoll()">05:24:57.580 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
+05:24:57.587 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 2 emails pending triage.
+05:24:57.615 [virtual-61] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
+05:24:57.618 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=second@example.com, message=1, bodyCharacters=10
+05:24:57.631 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=second@example.com, message=1
+05:24:57.632 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=second@example.com, message=1, recommendedLabel=General_News_Publications
+05:24:57.632 [Test worker] ERROR com.ultiweb.jobs.svc.EmailTriageSvc -- Triage failed for account=first@example.com, message=1; retrying on the next poll.
 java.util.concurrent.CompletionException: java.lang.IllegalStateException: Inference unavailable
 	at java.base/java.util.concurrent.CompletableFuture.encodeThrowable(CompletableFuture.java:315)
 	at java.base/java.util.concurrent.CompletableFuture.completeThrowable(CompletableFuture.java:320)
@@ -104,17 +106,15 @@ Caused by: java.lang.IllegalStateException: Inference unavailable
 	at com.ultiweb.jobs.svc.EmailTriageSvc.lambda$processEmails$0(EmailTriageSvc.java:70)
 	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
 	... 2 common frames omitted
-04:34:59.390 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=second@example.com, message=1
-04:34:59.390 [virtual-63] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=second@example.com, message=1, recommendedLabel=General_News_Publications
-04:34:59.392 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=second@example.com, message=1, label=General_News_Publications
-04:34:59.393 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=0, failed=1, labels applied=1.
-04:34:59.393 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
-04:34:59.393 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 2 emails pending triage.
-04:34:59.394 [virtual-67] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
-04:34:59.394 [virtual-67] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=first@example.com, message=1
-04:34:59.404 [virtual-67] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=first@example.com, message=1, recommendedLabel=Dev_Jobs
-04:34:59.404 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=first@example.com, message=1, label=Dev_Jobs
-04:34:59.404 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=1, failed=0, labels applied=1.
+05:24:57.633 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=second@example.com, message=1, label=General_News_Publications
+05:24:57.633 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=0, failed=1, labels applied=1.
+05:24:57.634 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
+05:24:57.634 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 2 emails pending triage.
+05:24:57.638 [virtual-67] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
+05:24:57.639 [virtual-67] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=first@example.com, message=1
+05:24:57.639 [virtual-67] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=first@example.com, message=1, recommendedLabel=Dev_Jobs
+05:24:57.640 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=first@example.com, message=1, label=Dev_Jobs
+05:24:57.640 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=1, failed=0, labels applied=1.
 </pre>
 </span>
 </div>
@@ -128,7 +128,7 @@ Caused by: java.lang.IllegalStateException: Inference unavailable
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 18, 2026, 4:35:10 AM</p>
+<a href="https://www.gradle.org">Gradle 9.9.1</a> at Nov 18, 2026, 5:25:09 AM</p>
 </div>
 </div>
 </body>
