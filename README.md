@@ -36,7 +36,7 @@ The supplied configuration also accepts an environment variable:
 export GMAIL_ACCOUNTS='first@example.com,second@example.com'
 ```
 
-The default remains `randall.burgess@ultiweb.com`. Use each account's primary Google email address, not a sending alias. Whitespace and duplicate addresses are normalized. `GMAIL_CLIENT_ID` and `GMAIL_CLIENT_SECRET` still configure the shared OAuth application.
+The default account list is `randall.burgess@ultiweb.com,rb@ultiweb.com`. An exported `GMAIL_ACCOUNTS` replaces this list. Use each account's primary Google email address, not a sending alias. Whitespace and duplicate addresses are normalized. `GMAIL_CLIENT_ID` and `GMAIL_CLIENT_SECRET` still configure the shared OAuth application.
 
 ### 🔐 Account authorization and token storage
 
@@ -48,9 +48,9 @@ Mail processing visits every configured account. Latest-mail analysis reads up t
 
 ### 🤖 AI providers and models
 
-The `production` Spring profile uses local Ollama for summarization and DeepInfra for classification. DeepInfra reads its API key from `DEEPINFRA_API_KEY`. No key is stored in configuration. DeepInfra uses its [OpenAI-compatible chat endpoint](https://docs.deepinfra.com/chat/overview) through Spring AI; an OpenAI account or key is not needed. Email subject, sender, and normalized visible body text go to Ollama at `OLLAMA_BASE_URL` (default `http://localhost:11434`) for summarization. HTML mail is converted to bounded plain text while preserving links, lists, image alternative text, and table cell relationships; scripts, styles, hidden elements, tracking query strings, attachments, and markup are excluded. Only the resulting summary is sent directly to DeepInfra for classification; the original email and metadata are not included in that request.
+The `dev`, `production`, and `local-production` Spring profile groups use DeepInfra for both summarization and classification. DeepInfra reads its API key from `DEEPINFRA_API_KEY`. No key is stored in configuration. DeepInfra uses its [OpenAI-compatible chat endpoint](https://docs.deepinfra.com/chat/overview) through Spring AI; an OpenAI account or key is not needed. Email subject, sender, and normalized visible body text go to DeepInfra's `google/gemma-3-4b-it` model for summarization. HTML mail is converted to bounded plain text while preserving links, lists, image alternative text, and table cell relationships; scripts, styles, hidden elements, tracking query strings, attachments, and markup are excluded. Only the resulting summary is sent directly to DeepInfra's classifier; the original email and metadata are not included in that request.
 
-The default DeepInfra classification model is `meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo`. Set `DEEPINFRA_MODEL` to change it, or `DEEPINFRA_BASE_URL` to override the endpoint. These settings live in `src/main/resources/application-deepinfra.yml`.
+The default DeepInfra classifier is `meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo`; the summary model is `google/gemma-3-4b-it`. Set `DEEPINFRA_MODEL` or `DEEPINFRA_SUMMARY_MODEL` to change them. `DEEPINFRA_BASE_URL` overrides the shared endpoint. These settings live in `src/main/resources/application-deepinfra.yml`.
 
 Ollama must be running locally with the configured `OLLAMA_MODEL` (default `llama3.2:3b`) available. For the default model:
 
@@ -78,23 +78,25 @@ Do not commit credentials or the local `tokens/` directory.
 
 ### 🛠️ Development
 
-The safe default profile is `dev`: polling is disabled, email summarization and classification use Ollama, and persistence uses `data/job-search-dev.db`. Start it with:
+The safe default profile is `dev`: polling is disabled, summaries and classification use DeepInfra, and persistence uses `data/job-search-dev.db`. Set `DEEPINFRA_API_KEY` before starting:
 
 ```bash
 ./gradlew bootRun
 ```
 
+Development runs include Spring Boot DevTools. Java changes take effect after your IDE compiles them (or after running `./gradlew compileJava`); DevTools restarts the application. An open dashboard tab checks the dev-only static asset version and reloads itself when `index.html`, `app.js`, or `app.css` changes.
+
 ### 🚀 Production
 
-Production must be selected explicitly. It enables Gmail polling, writes `data/job-search.db`, and activates the `deepinfra` provider profile:
+Production must be selected explicitly. It enables Gmail polling, writes `data/job-search.db`, and activates DeepInfra summary and classifier profiles:
 
 ```bash
 SPRING_PROFILES_ACTIVE=production ./gradlew bootRun
 ```
 
-### 🏠 Production with local inference
+### 🏠 Production with local database
 
-To run the production workflow while keeping both inference stages local:
+To run the production workflow with DeepInfra summaries and classification, using the local SQLite database:
 
 ```bash
 SPRING_PROFILES_ACTIVE=local-production ./gradlew bootRun
@@ -102,7 +104,15 @@ SPRING_PROFILES_ACTIVE=local-production ./gradlew bootRun
 
 ### 🤖 Provider profiles
 
-The lower-level `ollama` and `deepinfra` profiles only select the classifier provider and are composed by the runtime profiles; they do not independently enable production behavior. All profiles use the same classification categories and prompts. Credentials remain environment variables rather than profile-file values.
+The lower-level `deepinfra-summary` profile selects DeepInfra for summaries, and `deepinfra` supplies classification. The explicit `ollama` profile remains available for local summary comparisons. These lower-level profiles do not independently enable production behavior. All profiles use the same classification categories and prompts. `DEEPINFRA_API_KEY` is required in development and production.
+
+To compare LM Studio with Ollama for summaries, start LM Studio's OpenAI-compatible server and activate `lmstudio` alongside `dev`:
+
+```bash
+LMSTUDIO_MODEL='<model-id-from-LM-Studio>' SPRING_PROFILES_ACTIVE=dev,lmstudio ./gradlew bootRun
+```
+
+The LM Studio profile defaults to `http://localhost:1234/v1` and API key `lm-studio`; override these with `LMSTUDIO_BASE_URL` and `LMSTUDIO_API_KEY` if needed. It routes summaries to LM Studio while keeping DeepInfra as the classifier. `LMSTUDIO_MAX_CONCURRENT_REQUESTS` controls summary request concurrency and defaults to 2.
 
 ### 📊 Dashboard
 
@@ -110,7 +120,9 @@ The application stays running with an embedded HTTP server on port 8080 and logs
 
 ### ✉️ Selecting opportunities and preparing replies
 
-Select opportunities and choose **Save selections & prepare replies**; unsaved selection changes from every visited page are submitted together. DeepInfra creates a concise response using the original stored email; set `DEEPINFRA_API_KEY` to enable response generation in development or production. Generated response text is saved to the `responses` table in both profiles and appears on the opportunity card when ready. In production, the agent creates a Gmail draft and records its ID and status; it never sends the message. In `dev`, it stores the generated response in `data/job-search-dev.db` without creating a Gmail draft.
+Select opportunities and choose **Save selections & prepare replies**, or prepare one from its detail view. DeepInfra creates a concise response using the original email and the private Markdown resume in `src/main/resources/resumes`; set `DEEPINFRA_API_KEY` to enable generation. Generated responses, Gmail draft IDs, sent message IDs, thread IDs, and send times are stored in the `responses` table. The detail view can send a prepared reply after confirmation. The `production` profile sends to the recruiter. Every other profile redirects sends to the source mailbox and applies the Gmail label `EMail Agent Test`.
+
+The application checks sent-response threads every hour. At 48 hours after an initial response, if no incoming reply is found, it automatically generates and sends one follow-up in the same Gmail thread. It continues tracking the thread and records when a reply arrives. Non-production follow-ups also go to the source mailbox and receive the `EMail Agent Test` label.
 
 ### 📥 Importing opportunities in development
 
@@ -144,7 +156,7 @@ Manually applying `Architect_Jobs` in Gmail also schedules that message for pers
 
 ### 🔁 Inference concurrency and retries
 
-Triage runs email inference concurrently on Java 21 virtual threads, preserving result order and serial Gmail writes. Local Ollama calls share a concurrency limit of 2 (`OLLAMA_MAX_CONCURRENT_REQUESTS`). DeepInfra calls share a separate limit of 8 (`DEEPINFRA_MAX_CONCURRENT_REQUESTS`, allowed range 1–200), including time spent retrying. [DeepInfra's published quota](https://docs.deepinfra.com/account/rate-limits) is 200 concurrent requests per model per account, not a requests-per-minute allowance. These limits apply per application instance; divide the account budget across instances and other clients. HTTP 429 and transient server failures receive at most two retries with exponential delays starting at two seconds; other client errors are not retried. Failed messages remain eligible for the next poll.
+Triage runs email inference concurrently on Java 21 virtual threads, preserving result order and serial Gmail writes. Ollama summary calls share a concurrency limit of 2 (`OLLAMA_MAX_CONCURRENT_REQUESTS`). DeepInfra summary and classifier calls have separate concurrency limits of 8 (`DEEPINFRA_SUMMARY_MAX_CONCURRENT_REQUESTS` and `DEEPINFRA_MAX_CONCURRENT_REQUESTS`, each allowed range 1–200), including time spent retrying. [DeepInfra's published quota](https://docs.deepinfra.com/account/rate-limits) is 200 concurrent requests per model per account, not a requests-per-minute allowance. These limits apply per application instance; divide the account budget across instances and other clients. HTTP 429 and transient server failures receive at most two retries with exponential delays starting at two seconds; other client errors are not retried. Failed messages remain eligible for the next poll.
 
 ## 🧪 Testing and validation
 
@@ -158,12 +170,12 @@ Run isolated checks with:
 ./gradlew check
 ```
 
-### 📬 Live Gmail and Ollama analysis
+### 📬 Live Gmail and DeepInfra analysis
 
-Real Gmail/Ollama analysis remains opt-in, explicitly selects the `ollama` profile, and does not apply labels:
+Real Gmail analysis with DeepInfra summaries and classification remains opt-in and does not apply labels:
 
 ```bash
-RUN_GMAIL_OLLAMA_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.EmailTriageIntegrationTest
+RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.EmailTriageIntegrationTest --rerun-tasks
 ```
 
 ### 📬 Live Gmail and DeepInfra analysis
@@ -174,7 +186,7 @@ To run real Gmail/DeepInfra analysis:
 RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.DeepInfraEmailTriageIntegrationTest --rerun-tasks
 ```
 
-This requires a running local Ollama with `OLLAMA_MODEL` available, plus `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `DEEPINFRA_API_KEY`. `GMAIL_ACCOUNTS` selects the accounts; `DEEPINFRA_MODEL` overrides the configured model. The test disables background polling and uses virtual threads with the configured inference limits to analyze up to 50 latest emails per account, with one local Ollama summary request and one direct DeepInfra classification request per email. For manual classification review, the explicitly opt-in test logs a single-line bounded subject, generated summary, and recommended label, including `NONE`; it never logs the full body and does not modify messages or labels. It fails if no messages are available or a summary is missing or blank. The opt-in flag enables console output; `--rerun-tasks` ensures Gradle runs it again even if previous test results are up to date. Normal checks skip this live test.
+This requires `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `DEEPINFRA_API_KEY`. `GMAIL_ACCOUNTS` selects the accounts; `DEEPINFRA_MODEL` and `DEEPINFRA_SUMMARY_MODEL` override the classifier and summary models. The test disables background polling and analyzes up to 50 latest emails per account. For manual classification review, it logs a bounded subject, generated summary, and recommended label, including `NONE`; it never logs the full body and does not modify messages or labels. It fails if no messages are available or a summary is missing or blank. The opt-in flag enables console output; `--rerun-tasks` ensures Gradle runs it again even if previous test results are up to date. Normal checks skip this live test.
 
 ### 🔐 OAuth approval for live integration tests
 
