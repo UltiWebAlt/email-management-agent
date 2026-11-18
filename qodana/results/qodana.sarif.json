@@ -59502,7 +59502,7 @@
       },
       "invocations": [
         {
-          "startTimeUtc": "2026-11-15T23:32:18.143709375Z",
+          "startTimeUtc": "2026-11-18T02:22:29.260670827Z",
           "exitCode": 0,
           "executionSuccessful": true
         }
@@ -59511,13 +59511,13 @@
       "versionControlProvenance": [
         {
           "repositoryUri": "https://github.com/UltiWebAlt/email-management-agent.git",
-          "revisionId": "ee1e1439da9cf180b86577515c26e453a39525c1",
+          "revisionId": "006513157c704429aec0ca389651bb47d54ba0c5",
           "branch": "develop",
           "properties": {
             "repoUrl": "https://github.com/UltiWebAlt/email-management-agent.git",
             "lastAuthorName": "Randy Burgess",
             "vcsType": "Git",
-            "lastAuthorEmail": "44614023+ultiwebalt@users.noreply.github.com"
+            "lastAuthorEmail": "rb@ultiweb.com"
           }
         }
       ],
@@ -59528,12 +59528,72 @@
           }
         }
       },
-      "results": [],
+      "results": [
+        {
+          "ruleId": "ConstantValue",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Condition 'data == null' is always 'false'",
+            "markdown": "Condition `data == null` is always `false`"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main/java/com/ultiweb/jobs/svc/email/GmailMessageBodyExtractor.java",
+                  "uriBaseId": "SRCROOT"
+                },
+                "region": {
+                  "startLine": 115,
+                  "startColumn": 7,
+                  "charOffset": 4226,
+                  "charLength": 12,
+                  "snippet": {
+                    "text": "data == null"
+                  },
+                  "sourceLanguage": "JAVA"
+                },
+                "contextRegion": {
+                  "startLine": 113,
+                  "startColumn": 1,
+                  "charOffset": 4111,
+                  "charLength": 166,
+                  "snippet": {
+                    "text": "\tprivate String decode(final MessagePart part) throws IOException {\n\t\tfinal String data = encodedData(part);\n\t\tif (data == null || data.isBlank()) {\n\t\t\treturn \"\";\n\t\t}"
+                  },
+                  "sourceLanguage": "JAVA"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "email-management-agent.main",
+                  "kind": "module"
+                }
+              ]
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v2": "a4421d638dd50a20",
+            "equalIndicator/v1": "f3e6416705060dcedfd2eadc4488a18fd23df132d666df80537e2597e1145ac5"
+          },
+          "baselineState": "new",
+          "properties": {
+            "ideaSeverity": "WARNING",
+            "qodanaSeverity": "High",
+            "problemType": "REGULAR",
+            "hasFixes": true,
+            "tags": [
+              "JAVA"
+            ]
+          }
+        }
+      ],
       "automationDetails": {
-        "id": "email-management-agent/qodana/2026-11-15",
-        "guid": "050dd57e-2d45-4fb4-a537-e0960fbd6466",
+        "id": "email-management-agent/qodana/2026-11-18",
+        "guid": "d782dfeb-6e40-4511-b1e9-e69f28d9e7e6",
         "properties": {
-          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/43775162811",
+          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/44222651002",
           "analysisKind": "regular"
         }
       },
@@ -59559,9 +59619,9 @@
                     "uriBaseId": "SRCROOT"
                   },
                   "region": {
-                    "startLine": 146,
+                    "startLine": 189,
                     "startColumn": 31,
-                    "charOffset": 5372,
+                    "charOffset": 7698,
                     "charLength": 4,
                     "snippet": {
                       "text": "node"
@@ -59569,12 +59629,12 @@
                     "sourceLanguage": "JAVA"
                   },
                   "contextRegion": {
-                    "startLine": 144,
+                    "startLine": 187,
                     "startColumn": 1,
-                    "charOffset": 5329,
-                    "charLength": 124,
+                    "charOffset": 7655,
+                    "charLength": 152,
                     "snippet": {
-                      "text": "\n\t\t@Override\n\t\tpublic void tail(final Node node, final int depth) {\n\t\t\tif (!(node instanceof Element element)) {\n\t\t\t\treturn;"
+                      "text": "\n\t\t@Override\n\t\tpublic void head(final Node node, final int depth) {\n\t\t\tif (node instanceof TextNode textNode) {\n\t\t\t\tappendText(textNode.getWholeText());"
                     },
                     "sourceLanguage": "JAVA"
                   }
@@ -59588,8 +59648,8 @@
               }
             ],
             "partialFingerprints": {
-              "equalIndicator/v2": "84a12ad33633348b",
-              "equalIndicator/v1": "07febf46fa345d70430da8db1f621335ce4881abec0d5a9d8b53378d58d9944d"
+              "equalIndicator/v2": "6d337353f55888d5",
+              "equalIndicator/v1": "3a77399d64b50c9e6c854c76cec416f5ad52d99dcd768077a439a60ac2c782e6"
             },
             "properties": {
               "ideaSeverity": "WARNING",
@@ -59618,9 +59678,9 @@
                     "uriBaseId": "SRCROOT"
                   },
                   "region": {
-                    "startLine": 122,
+                    "startLine": 213,
                     "startColumn": 31,
-                    "charOffset": 4621,
+                    "charOffset": 8449,
                     "charLength": 4,
                     "snippet": {
                       "text": "node"
@@ -59628,12 +59688,12 @@
                     "sourceLanguage": "JAVA"
                   },
                   "contextRegion": {
-                    "startLine": 120,
+                    "startLine": 211,
                     "startColumn": 1,
-                    "charOffset": 4578,
-                    "charLength": 152,
+                    "charOffset": 8406,
+                    "charLength": 124,
                     "snippet": {
-                      "text": "\n\t\t@Override\n\t\tpublic void head(final Node node, final int depth) {\n\t\t\tif (node instanceof TextNode textNode) {\n\t\t\t\tappendText(textNode.getWholeText());"
+                      "text": "\n\t\t@Override\n\t\tpublic void tail(final Node node, final int depth) {\n\t\t\tif (!(node instanceof Element element)) {\n\t\t\t\treturn;"
                     },
                     "sourceLanguage": "JAVA"
                   }
@@ -59647,8 +59707,8 @@
               }
             ],
             "partialFingerprints": {
-              "equalIndicator/v2": "a0a84affe27d7fc4",
-              "equalIndicator/v1": "0aa44722cc87b3086da3bad4d17a23d146ce560ddf9478cc9081bdb4b38d1f84"
+              "equalIndicator/v2": "44adf23605ff721c",
+              "equalIndicator/v1": "6dea97131d1f5be74f837bcf16cfcfbd91c0bc5ccf14c376838a3795b2a2fef5"
             },
             "properties": {
               "ideaSeverity": "WARNING",
@@ -59667,7 +59727,8 @@
         "deviceId": "200820300000000-cfa1-6c85-fae0-4c3b3b9f9eb4",
         "baselineSource": "NONE",
         "qodanaNewResultSummary": {
-          "total": 0
+          "high": 1,
+          "total": 1
         }
       }
     }

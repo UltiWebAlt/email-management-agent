@@ -23,7 +23,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21",
+          "name": "21 (2)",
           "type": "SDK"
         },
         {
@@ -55,7 +55,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21",
+          "name": "21 (2)",
           "type": "SDK"
         },
         {
@@ -907,7 +907,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21",
+          "name": "21 (2)",
           "type": "SDK"
         },
         {
@@ -1543,6 +1543,10 @@
           "type": "Library"
         },
         {
+          "name": "Gradle: org.springframework.boot:spring-boot-devtools:4.1.2",
+          "type": "Library"
+        },
+        {
           "name": "Gradle: org.xerial:sqlite-jdbc:3.53.4.0",
           "type": "Library"
         },
@@ -1619,7 +1623,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21",
+          "name": "21 (2)",
           "type": "SDK"
         },
         {

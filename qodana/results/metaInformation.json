@@ -1,17 +1,17 @@
 {
   "version": "1.0",
-  "total": 0,
+  "total": 1,
   "tools inspection": {
-    "Code Inspection": 0
+    "Code Inspection": 1
   },
   "linter": "QDJVM",
   "attributes": {
     "deviceId": "200820300000000-cfa1-6c85-fae0-4c3b3b9f9eb4",
-    "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/43775162811",
+    "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/44222651002",
     "vcs": {
       "sarifIdea": {
         "repositoryUri": "https://github.com/UltiWebAlt/email-management-agent.git",
-        "revisionId": "ee1e1439da9cf180b86577515c26e453a39525c1",
+        "revisionId": "006513157c704429aec0ca389651bb47d54ba0c5",
         "branch": "develop"
       }
     },

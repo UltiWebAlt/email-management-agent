@@ -1100,6 +1100,13 @@
       "properties": {}
     },
     {
+      "name": "Gradle: org.springframework.boot:spring-boot-devtools:4.1.2",
+      "roots": [
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-devtools/4.1.2/121a626b96727194fd5cc2eb6be49026e9727b24/spring-boot-devtools-4.1.2.jar!/"
+      ],
+      "properties": {}
+    },
+    {
       "name": "Gradle: org.xerial:sqlite-jdbc:3.53.4.0",
       "roots": [
         "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.xerial/sqlite-jdbc/3.53.4.0/47e21dd53efe1524fe0df6965cb65003ffe17172/sqlite-jdbc-3.53.4.0.jar!/"

@@ -31,14 +31,14 @@
           "type": "file",
           "path": "src/main/java/com/ultiweb/jobs/svc/email/HtmlEmailTextExtractor.java",
           "language": "JAVA",
-          "line": 146,
+          "line": 189,
           "offset": 31,
           "length": 4,
           "code": {
-            "startLine": 144,
+            "startLine": 187,
             "length": 4,
             "offset": 43,
-            "surroundingCode": "\n\t\t@Override\n\t\tpublic void tail(final Node node, final int depth) {\n\t\t\tif (!(node instanceof Element element)) {\n\t\t\t\treturn;"
+            "surroundingCode": "\n\t\t@Override\n\t\tpublic void head(final Node node, final int depth) {\n\t\t\tif (node instanceof TextNode textNode) {\n\t\t\t\tappendText(textNode.getWholeText());"
           }
         }
       ],
@@ -46,7 +46,7 @@
         "module": "email-management-agent.main",
         "inspectionName": "NullableProblems"
       },
-      "hash": "07febf46fa345d70430da8db1f621335ce4881abec0d5a9d8b53378d58d9944d",
+      "hash": "3a77399d64b50c9e6c854c76cec416f5ad52d99dcd768077a439a60ac2c782e6",
       "problemType": "REGULAR"
     },
     {
@@ -79,14 +79,14 @@
           "type": "file",
           "path": "src/main/java/com/ultiweb/jobs/svc/email/HtmlEmailTextExtractor.java",
           "language": "JAVA",
-          "line": 122,
+          "line": 213,
           "offset": 31,
           "length": 4,
           "code": {
-            "startLine": 120,
+            "startLine": 211,
             "length": 4,
             "offset": 43,
-            "surroundingCode": "\n\t\t@Override\n\t\tpublic void head(final Node node, final int depth) {\n\t\t\tif (node instanceof TextNode textNode) {\n\t\t\t\tappendText(textNode.getWholeText());"
+            "surroundingCode": "\n\t\t@Override\n\t\tpublic void tail(final Node node, final int depth) {\n\t\t\tif (!(node instanceof Element element)) {\n\t\t\t\treturn;"
           }
         }
       ],
@@ -94,7 +94,7 @@
         "module": "email-management-agent.main",
         "inspectionName": "NullableProblems"
       },
-      "hash": "0aa44722cc87b3086da3bad4d17a23d146ce560ddf9478cc9081bdb4b38d1f84",
+      "hash": "6dea97131d1f5be74f837bcf16cfcfbd91c0bc5ccf14c376838a3795b2a2fef5",
       "problemType": "REGULAR"
     }
   ]

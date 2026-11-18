@@ -1,5 +1,5 @@
 {
-  "gradleJvm": "#USE_PROJECT_JDK",
+  "gradleJvm": "21 (2)",
   "libraries": [
     {
       "ideaName": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.2",
@@ -1632,6 +1632,14 @@
       "groupId": "io.netty",
       "artifactId": "netty-codec-native-quic",
       "version": "4.2.19.Final"
+    },
+    {
+      "ideaName": "Gradle: org.springframework.boot:spring-boot-devtools:4.1.2",
+      "gradleName": "org.springframework.boot:spring-boot-devtools:4.1.2",
+      "unresolved": false,
+      "groupId": "org.springframework.boot",
+      "artifactId": "spring-boot-devtools",
+      "version": "4.1.2"
     }
   ]
 }
