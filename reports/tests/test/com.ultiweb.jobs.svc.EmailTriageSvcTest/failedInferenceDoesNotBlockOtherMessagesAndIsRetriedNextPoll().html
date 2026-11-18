@@ -63,7 +63,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">0.840s</div>
+<div class="counter">1.307s</div>
 <p>duration</p>
 </div>
 </td>
@@ -88,13 +88,13 @@
 <div class="clipboard-copy-btn-container">
 <button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-failedInferenceDoesNotBlockOtherMessagesAndIsRetriedNextPoll()">Copy</button>
 </div>
-<pre id="root-0-test-stdout-failedInferenceDoesNotBlockOtherMessagesAndIsRetriedNextPoll()">23:31:20.249 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
-23:31:20.256 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 2 emails pending triage.
-23:31:20.264 [virtual-48] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
-23:31:20.268 [virtual-51] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=second@example.com, message=1, bodyCharacters=10
-23:31:20.271 [virtual-51] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=second@example.com, message=1
-23:31:20.272 [virtual-51] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=second@example.com, message=1, recommendedLabel=General_News_Publications
-23:31:20.272 [Test worker] ERROR com.ultiweb.jobs.svc.EmailTriageSvc -- Triage failed for account=first@example.com, message=1; retrying on the next poll.
+<pre id="root-0-test-stdout-failedInferenceDoesNotBlockOtherMessagesAndIsRetriedNextPoll()">02:24:47.069 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
+02:24:47.071 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 2 emails pending triage.
+02:24:47.101 [virtual-47] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
+02:24:47.102 [virtual-49] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=second@example.com, message=1, bodyCharacters=10
+02:24:47.108 [virtual-49] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=second@example.com, message=1
+02:24:47.109 [virtual-49] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=second@example.com, message=1, recommendedLabel=General_News_Publications
+02:24:47.115 [Test worker] ERROR com.ultiweb.jobs.svc.EmailTriageSvc -- Triage failed for account=first@example.com, message=1; retrying on the next poll.
 java.util.concurrent.CompletionException: java.lang.IllegalStateException: Inference unavailable
 	at java.base/java.util.concurrent.CompletableFuture.encodeThrowable(CompletableFuture.java:315)
 	at java.base/java.util.concurrent.CompletableFuture.completeThrowable(CompletableFuture.java:320)
@@ -102,19 +102,19 @@ java.util.concurrent.CompletionException: java.lang.IllegalStateException: Infer
 	at java.base/java.util.concurrent.ThreadPerTaskExecutor$TaskRunner.run(ThreadPerTaskExecutor.java:314)
 	at java.base/java.lang.VirtualThread.run(VirtualThread.java:329)
 Caused by: java.lang.IllegalStateException: Inference unavailable
-	at com.ultiweb.jobs.svc.EmailTriageSvc.analyzeEmail(EmailTriageSvc.java:126)
+	at com.ultiweb.jobs.svc.EmailTriageSvc.analyzeEmail(EmailTriageSvc.java:129)
 	at com.ultiweb.jobs.svc.EmailTriageSvc.lambda$processEmails$0(EmailTriageSvc.java:70)
 	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
 	... 2 common frames omitted
-23:31:20.273 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=second@example.com, message=1, label=General_News_Publications
-23:31:20.273 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=0, failed=1, labels applied=1.
-23:31:20.273 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
-23:31:20.274 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 2 emails pending triage.
-23:31:20.274 [virtual-54] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
-23:31:20.275 [virtual-54] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=first@example.com, message=1
-23:31:20.275 [virtual-54] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=first@example.com, message=1, recommendedLabel=Dev_Jobs
-23:31:20.279 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=first@example.com, message=1, label=Dev_Jobs
-23:31:20.279 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=1, failed=0, labels applied=1.
+02:24:47.116 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=second@example.com, message=1, label=General_News_Publications
+02:24:47.119 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=0, failed=1, labels applied=1.
+02:24:47.119 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 0 manually tagged architect emails pending persistence.
+02:24:47.119 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Retrieved 2 emails pending triage.
+02:24:47.127 [virtual-53] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI summary for account=first@example.com, message=1, bodyCharacters=11
+02:24:47.127 [virtual-53] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Requesting AI label recommendation for account=first@example.com, message=1
+02:24:47.128 [virtual-53] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Analyzed account=first@example.com, message=1, recommendedLabel=Dev_Jobs
+02:24:47.131 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Applied label: account=first@example.com, message=1, label=Dev_Jobs
+02:24:47.131 [Test worker] INFO com.ultiweb.jobs.svc.EmailTriageSvc -- Triage complete: analyzed=1, already processed=1, failed=0, labels applied=1.
 </pre>
 </span>
 </div>
@@ -128,7 +128,7 @@ Caused by: java.lang.IllegalStateException: Inference unavailable
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 15, 2026, 11:31:25 PM</p>
+<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 18, 2026, 2:24:54 AM</p>
 </div>
 </div>
 </body>

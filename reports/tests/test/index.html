@@ -14,7 +14,7 @@
 <div class="tab-container">
 <ul class="tabLinks">
 <li>
-<a class="successGroup" href="#">Gradle Test Run :test</a>
+<a class="failureGroup" href="#">Gradle Test Run :test</a>
 </li>
 </ul>
 <div class="tab">
@@ -38,13 +38,13 @@
 <tr>
 <td>
 <div class="infoBox">
-<div class="counter">170</div>
+<div class="counter">173</div>
 <p>tests</p>
 </div>
 </td>
 <td>
 <div class="infoBox">
-<div class="counter">0</div>
+<div class="counter">5</div>
 <p>failures</p>
 </div>
 </td>
@@ -56,7 +56,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">32.486s</div>
+<div class="counter">46.742s</div>
 <p>duration</p>
 </div>
 </td>
@@ -65,14 +65,54 @@
 </div>
 </td>
 <td>
-<div class="infoBox success successRate">
-<div class="percent">100%</div>
+<div class="infoBox failures successRate">
+<div class="percent">97%</div>
 <p>successful</p>
 </div>
 </td>
 </tr>
 </table>
 </div>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a class="" href="#">Failed</a>
+</li>
+<li>
+<a class="" href="#">All</a>
+</li>
+</ul>
+<div class="tab">
+<h2>Failed</h2>
+<table class="test-results sortable">
+<thead>
+<tr>
+<th>Child</th>
+<th>Name</th>
+<th data-sort-default="desc">Tests</th>
+<th data-sort-default="desc">Failures</th>
+<th data-sort-default="desc">Skipped</th>
+<th data-sort-default="desc">Duration</th>
+<th>Success rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="failures">
+<a href="com.ultiweb.jobs.config.InferenceConfigurationTest/index.html">InferenceConfigurationTest</a>
+</td>
+<td class="path">com.ultiweb.jobs.config.InferenceConfigurationTest</td>
+<td>6</td>
+<td>5</td>
+<td>0</td>
+<td data-sort-value="20208">20.208s</td>
+<td class="failures" data-sort-value="16">16%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tab">
+<h2>All</h2>
 <table class="test-results sortable">
 <thead>
 <tr>
@@ -94,19 +134,19 @@
 <td>2</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="8829">8.829s</td>
+<td data-sort-value="11294">11.294s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
-<td class="success">
+<td class="failures">
 <a href="com.ultiweb.jobs.config.InferenceConfigurationTest/index.html">InferenceConfigurationTest</a>
 </td>
 <td class="path">com.ultiweb.jobs.config.InferenceConfigurationTest</td>
+<td>6</td>
 <td>5</td>
 <td>0</td>
-<td>0</td>
-<td data-sort-value="13132">13.132s</td>
-<td class="success" data-sort-value="100">100%</td>
+<td data-sort-value="20208">20.208s</td>
+<td class="failures" data-sort-value="16">16%</td>
 </tr>
 <tr>
 <td class="success">
@@ -116,7 +156,7 @@
 <td>4</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="180">0.180s</td>
+<td data-sort-value="351">0.351s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -124,10 +164,10 @@
 <a href="com.ultiweb.jobs.svc.ai.AiEmailAnalysisSvcTest/index.html">AiEmailAnalysisSvcTest</a>
 </td>
 <td class="path">com.ultiweb.jobs.svc.ai.AiEmailAnalysisSvcTest</td>
-<td>57</td>
+<td>58</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="482">0.482s</td>
+<td data-sort-value="834">0.834s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -138,7 +178,7 @@
 <td>3</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="64">0.064s</td>
+<td data-sort-value="75">0.075s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -149,7 +189,7 @@
 <td>2</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="29">0.029s</td>
+<td data-sort-value="35">0.035s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -160,7 +200,7 @@
 <td>2</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="795">0.795s</td>
+<td data-sort-value="1315">1.315s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -171,7 +211,7 @@
 <td>8</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="33">0.033s</td>
+<td data-sort-value="83">0.083s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -182,7 +222,7 @@
 <td>5</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="129">0.129s</td>
+<td data-sort-value="334">0.334s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -193,7 +233,7 @@
 <td>4</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="245">0.245s</td>
+<td data-sort-value="590">0.590s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -204,7 +244,7 @@
 <td>13</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="348">0.348s</td>
+<td data-sort-value="968">0.968s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -215,7 +255,7 @@
 <td>4</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="10">0.010s</td>
+<td data-sort-value="28">0.028s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -226,7 +266,7 @@
 <td>3</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="9">0.009s</td>
+<td data-sort-value="16">0.016s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -237,7 +277,7 @@
 <td>7</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="1284">1.284s</td>
+<td data-sort-value="1621">1.621s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -245,10 +285,10 @@
 <a href="com.ultiweb.jobs.svc.email.GmailMessageBodyExtractorTest/index.html">GmailMessageBodyExtractorTest</a>
 </td>
 <td class="path">com.ultiweb.jobs.svc.email.GmailMessageBodyExtractorTest</td>
-<td>7</td>
+<td>8</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="323">0.323s</td>
+<td data-sort-value="180">0.180s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -259,7 +299,7 @@
 <td>3</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="7">0.007s</td>
+<td data-sort-value="20">0.020s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -270,7 +310,7 @@
 <td>2</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="63">0.063s</td>
+<td data-sort-value="48">0.048s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -281,7 +321,7 @@
 <td>9</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="1053">1.053s</td>
+<td data-sort-value="1526">1.526s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -292,7 +332,7 @@
 <td>8</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="262">0.262s</td>
+<td data-sort-value="212">0.212s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -303,7 +343,7 @@
 <td>5</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="54">0.054s</td>
+<td data-sort-value="307">0.307s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -314,7 +354,7 @@
 <td>1</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="116">0.116s</td>
+<td data-sort-value="85">0.085s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -325,7 +365,7 @@
 <td>1</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="8">0.008s</td>
+<td data-sort-value="10">0.010s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -336,7 +376,7 @@
 <td>2</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="222">0.222s</td>
+<td data-sort-value="283">0.283s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -358,7 +398,7 @@
 <td>6</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="109">0.109s</td>
+<td data-sort-value="144">0.144s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -369,7 +409,7 @@
 <td>1</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="185">0.185s</td>
+<td data-sort-value="202">0.202s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
@@ -380,11 +420,13 @@
 <td>2</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="58">0.058s</td>
+<td data-sort-value="73">0.073s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 </tbody>
 </table>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -397,7 +439,7 @@
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 15, 2026, 11:31:25 PM</p>
+<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 18, 2026, 2:24:55 AM</p>
 </div>
 </div>
 </body>

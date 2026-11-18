@@ -17,7 +17,7 @@
 <div class="tab-container">
 <ul class="tabLinks">
 <li>
-<a class="successGroup" href="#">Gradle Test Run :test</a>
+<a class="failureGroup" href="#">Gradle Test Run :test</a>
 </li>
 </ul>
 <div class="tab">
@@ -41,13 +41,13 @@
 <tr>
 <td>
 <div class="infoBox">
-<div class="counter">5</div>
+<div class="counter">6</div>
 <p>tests</p>
 </div>
 </td>
 <td>
 <div class="infoBox">
-<div class="counter">0</div>
+<div class="counter">5</div>
 <p>failures</p>
 </div>
 </td>
@@ -59,7 +59,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">13.132s</div>
+<div class="counter">20.208s</div>
 <p>duration</p>
 </div>
 </td>
@@ -68,14 +68,25 @@
 </div>
 </td>
 <td>
-<div class="infoBox success successRate">
-<div class="percent">100%</div>
+<div class="infoBox failures successRate">
+<div class="percent">16%</div>
 <p>successful</p>
 </div>
 </td>
 </tr>
 </table>
 </div>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a class="" href="#">Failed</a>
+</li>
+<li>
+<a class="" href="#">All</a>
+</li>
+</ul>
+<div class="tab">
+<h2>Failed</h2>
 <table class="test-results sortable">
 <thead>
 <tr>
@@ -90,15 +101,88 @@
 </thead>
 <tbody>
 <tr>
-<td class="success">
+<td class="failures">
 <a href="allowsOverridingTheDeepInfraModel().html">allowsOverridingTheDeepInfraModel()</a>
 </td>
 <td class="path" hidden="">allowsOverridingTheDeepInfraModel()</td>
 <td>1</td>
+<td>1</td>
 <td>0</td>
+<td data-sort-value="10443">10.443s</td>
+<td class="failures" data-sort-value="0">0%</td>
+</tr>
+<tr>
+<td class="failures">
+<a href="lmStudioCanReplaceOnlyTheSummaryModelWhileDeepInfraRemainsTheClassifier().html">lmStudioCanReplaceOnlyTheSummaryModelWhileDeepInfraRemainsTheClassifier()</a>
+</td>
+<td class="path" hidden="">lmStudioCanReplaceOnlyTheSummaryModelWhileDeepInfraRemainsTheClassifier()</td>
+<td>1</td>
+<td>1</td>
 <td>0</td>
-<td data-sort-value="6620">6.620s</td>
-<td class="success" data-sort-value="100">100%</td>
+<td data-sort-value="836">0.836s</td>
+<td class="failures" data-sort-value="0">0%</td>
+</tr>
+<tr>
+<td class="failures">
+<a href="ollamaSummariesUseDeepInfraForClassification().html">ollamaSummariesUseDeepInfraForClassification()</a>
+</td>
+<td class="path" hidden="">ollamaSummariesUseDeepInfraForClassification()</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td data-sort-value="1045">1.045s</td>
+<td class="failures" data-sort-value="0">0%</td>
+</tr>
+<tr>
+<td class="failures">
+<a href="rejectsConcurrencyAboveThePublishedDeepInfraQuota().html">rejectsConcurrencyAboveThePublishedDeepInfraQuota()</a>
+</td>
+<td class="path" hidden="">rejectsConcurrencyAboveThePublishedDeepInfraQuota()</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td data-sort-value="817">0.817s</td>
+<td class="failures" data-sort-value="0">0%</td>
+</tr>
+<tr>
+<td class="failures">
+<a href="usesLocalOllamaForSummariesAndDeepInfraForClassification().html">usesLocalOllamaForSummariesAndDeepInfraForClassification()</a>
+</td>
+<td class="path" hidden="">usesLocalOllamaForSummariesAndDeepInfraForClassification()</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td data-sort-value="848">0.848s</td>
+<td class="failures" data-sort-value="0">0%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tab">
+<h2>All</h2>
+<table class="test-results sortable">
+<thead>
+<tr>
+<th>Child</th>
+<th hidden="">Name</th>
+<th data-sort-default="desc">Tests</th>
+<th data-sort-default="desc">Failures</th>
+<th data-sort-default="desc">Skipped</th>
+<th data-sort-default="desc">Duration</th>
+<th>Success rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="failures">
+<a href="allowsOverridingTheDeepInfraModel().html">allowsOverridingTheDeepInfraModel()</a>
+</td>
+<td class="path" hidden="">allowsOverridingTheDeepInfraModel()</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td data-sort-value="10443">10.443s</td>
+<td class="failures" data-sort-value="0">0%</td>
 </tr>
 <tr>
 <td class="success">
@@ -108,44 +192,57 @@
 <td>1</td>
 <td>0</td>
 <td>0</td>
-<td data-sort-value="4408">4.408s</td>
+<td data-sort-value="6199">6.199s</td>
 <td class="success" data-sort-value="100">100%</td>
 </tr>
 <tr>
-<td class="success">
-<a href="ollamaWorksWithoutADeepInfraKeyAndRetainsItsSettings().html">ollamaWorksWithoutADeepInfraKeyAndRetainsItsSettings()</a>
+<td class="failures">
+<a href="lmStudioCanReplaceOnlyTheSummaryModelWhileDeepInfraRemainsTheClassifier().html">lmStudioCanReplaceOnlyTheSummaryModelWhileDeepInfraRemainsTheClassifier()</a>
 </td>
-<td class="path" hidden="">ollamaWorksWithoutADeepInfraKeyAndRetainsItsSettings()</td>
+<td class="path" hidden="">lmStudioCanReplaceOnlyTheSummaryModelWhileDeepInfraRemainsTheClassifier()</td>
+<td>1</td>
 <td>1</td>
 <td>0</td>
-<td>0</td>
-<td data-sort-value="834">0.834s</td>
-<td class="success" data-sort-value="100">100%</td>
+<td data-sort-value="836">0.836s</td>
+<td class="failures" data-sort-value="0">0%</td>
 </tr>
 <tr>
-<td class="success">
+<td class="failures">
+<a href="ollamaSummariesUseDeepInfraForClassification().html">ollamaSummariesUseDeepInfraForClassification()</a>
+</td>
+<td class="path" hidden="">ollamaSummariesUseDeepInfraForClassification()</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td data-sort-value="1045">1.045s</td>
+<td class="failures" data-sort-value="0">0%</td>
+</tr>
+<tr>
+<td class="failures">
 <a href="rejectsConcurrencyAboveThePublishedDeepInfraQuota().html">rejectsConcurrencyAboveThePublishedDeepInfraQuota()</a>
 </td>
 <td class="path" hidden="">rejectsConcurrencyAboveThePublishedDeepInfraQuota()</td>
 <td>1</td>
+<td>1</td>
 <td>0</td>
-<td>0</td>
-<td data-sort-value="561">0.561s</td>
-<td class="success" data-sort-value="100">100%</td>
+<td data-sort-value="817">0.817s</td>
+<td class="failures" data-sort-value="0">0%</td>
 </tr>
 <tr>
-<td class="success">
+<td class="failures">
 <a href="usesLocalOllamaForSummariesAndDeepInfraForClassification().html">usesLocalOllamaForSummariesAndDeepInfraForClassification()</a>
 </td>
 <td class="path" hidden="">usesLocalOllamaForSummariesAndDeepInfraForClassification()</td>
 <td>1</td>
+<td>1</td>
 <td>0</td>
-<td>0</td>
-<td data-sort-value="691">0.691s</td>
-<td class="success" data-sort-value="100">100%</td>
+<td data-sort-value="848">0.848s</td>
+<td class="failures" data-sort-value="0">0%</td>
 </tr>
 </tbody>
 </table>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -158,7 +255,7 @@
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 15, 2026, 11:31:25 PM</p>
+<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 18, 2026, 2:24:54 AM</p>
 </div>
 </div>
 </body>
