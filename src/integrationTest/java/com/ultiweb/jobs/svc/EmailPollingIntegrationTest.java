@@ -22,7 +22,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 				"gmail.polling.interval=50ms",
 				"GMAIL_CLIENT_ID=test-client",
 				"GMAIL_CLIENT_SECRET=test-secret",
-				"DEEPINFRA_API_KEY=test-key"
+				"DEEPINFRA_API_KEY=test-key",
+				"spring.ai.openai.api-key=test-key"
 		})
 @DirtiesContext
 class EmailPollingIntegrationTest {

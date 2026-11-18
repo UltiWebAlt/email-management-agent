@@ -66,6 +66,7 @@ class DeepInfraInferenceIntegrationTest {
 							"GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret",
 							"OLLAMA_BASE_URL=" + baseUrl, "OLLAMA_MODEL=local-test-model",
 							"DEEPINFRA_API_KEY=test-deepinfra-key", "DEEPINFRA_MODEL=test/model",
+							"spring.ai.openai.api-key=test-deepinfra-key",
 							"DEEPINFRA_BASE_URL=" + baseUrl + "/v1/openai",
 							"spring.ai.retry.backoff.initial-interval=1ms")
 					.run(context -> {

@@ -43,6 +43,7 @@ class LmStudioSummaryIntegrationTest {
 					.withPropertyValues("spring.profiles.active=test,ollama,deepinfra,lmstudio",
 							"GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret",
 							"DEEPINFRA_API_KEY=test-deepinfra-key", "DEEPINFRA_BASE_URL=" + baseUrl + "/deep/v1/openai",
+							"spring.ai.openai.api-key=test-deepinfra-key",
 							"LMSTUDIO_API_KEY=lm-studio", "LMSTUDIO_BASE_URL=" + baseUrl + "/lm/v1",
 							"LMSTUDIO_MODEL=qwen-local")
 					.run(context -> {
