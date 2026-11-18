@@ -1,7 +1,7 @@
 {
   "sdks": [
     {
-      "name": "21 (6)",
+      "name": "21",
       "roots": [
         "jrt://$USER_HOME$/.jdks/openjdk-21.0.2!/java.base",
         "jrt://$USER_HOME$/.jdks/openjdk-21.0.2!/java.compiler",
@@ -74,7 +74,7 @@
         "jrt://$USER_HOME$/.jdks/openjdk-21.0.2!/jdk.zipfs"
       ],
       "sdkType": "JavaSDK",
-      "sdkVersion": "java version \"21.0.2\""
+      "sdkVersion": "Oracle OpenJDK 21.0.2"
     }
   ]
 }

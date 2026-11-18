@@ -1,5 +1,5 @@
 {
-  "gradleJvm": "21 (6)",
+  "gradleJvm": "21",
   "libraries": [
     {
       "ideaName": "Gradle: org.springframework.boot:spring-boot-starter-webmvc:4.1.2",
@@ -1498,12 +1498,12 @@
       "version": "2.0.0"
     },
     {
-      "ideaName": "Gradle: org.xerial:sqlite-jdbc:3.53.4.0",
-      "gradleName": "org.xerial:sqlite-jdbc:3.53.4.0",
+      "ideaName": "Gradle: org.xerial:sqlite-jdbc:3.54.1.0",
+      "gradleName": "org.xerial:sqlite-jdbc:3.54.1.0",
       "unresolved": false,
       "groupId": "org.xerial",
       "artifactId": "sqlite-jdbc",
-      "version": "3.53.4.0"
+      "version": "3.54.1.0"
     },
     {
       "ideaName": "Gradle: org.junit.platform:junit-platform-launcher:6.0.3",

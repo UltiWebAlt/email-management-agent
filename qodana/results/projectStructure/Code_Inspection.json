@@ -23,7 +23,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21 (6)",
+          "name": "21",
           "type": "SDK"
         },
         {
@@ -55,7 +55,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21 (6)",
+          "name": "21",
           "type": "SDK"
         },
         {
@@ -815,7 +815,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.xerial:sqlite-jdbc:3.53.4.0",
+          "name": "Gradle: org.xerial:sqlite-jdbc:3.54.1.0",
           "type": "Library"
         },
         {
@@ -907,7 +907,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21 (6)",
+          "name": "21",
           "type": "SDK"
         },
         {
@@ -1547,7 +1547,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.xerial:sqlite-jdbc:3.53.4.0",
+          "name": "Gradle: org.xerial:sqlite-jdbc:3.54.1.0",
           "type": "Library"
         },
         {
@@ -1623,7 +1623,7 @@
       ],
       "orderEntries": [
         {
-          "name": "21 (6)",
+          "name": "21",
           "type": "SDK"
         },
         {
@@ -2375,7 +2375,7 @@
           "type": "Library"
         },
         {
-          "name": "Gradle: org.xerial:sqlite-jdbc:3.53.4.0",
+          "name": "Gradle: org.xerial:sqlite-jdbc:3.54.1.0",
           "type": "Library"
         },
         {
