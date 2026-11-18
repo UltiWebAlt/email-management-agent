@@ -11,6 +11,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -22,11 +24,15 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 				"gmail.polling.interval=50ms",
 				"GMAIL_CLIENT_ID=test-client",
 				"GMAIL_CLIENT_SECRET=test-secret",
-				"DEEPINFRA_API_KEY=test-key",
-				"spring.ai.openai.api-key=test-key"
+				"DEEPINFRA_API_KEY=test-key"
 		})
 @DirtiesContext
 class EmailPollingIntegrationTest {
+	@DynamicPropertySource
+	static void testAiCredentials(final DynamicPropertyRegistry registry) {
+		registry.add("DEEPINFRA_API_KEY", () -> "test-key");
+	}
+
 	@MockitoBean private GmailMailboxSvc mailbox;
 	@MockitoBean(name = "summaryAiClient") private EmailAiClient summaryClient;
 	@MockitoBean(name = "tagAiClient") private EmailAiClient tagClient;

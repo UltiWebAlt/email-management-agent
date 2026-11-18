@@ -3,29 +3,37 @@ package com.ultiweb.jobs.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ultiweb.jobs.EmailManagementAgent;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.core.env.MapPropertySource;
 
 class InferenceConfigurationTest {
-	private final ApplicationContextRunner runner = new ApplicationContextRunner()
-			.withInitializer(context -> {
-				context.getEnvironment().getPropertySources().remove("systemEnvironment");
-				context.getEnvironment().getPropertySources().remove("systemProperties");
-				new ConfigDataApplicationContextInitializer().initialize(context);
-			})
-			.withUserConfiguration(EmailManagementAgent.class)
-			.withPropertyValues("spring.profiles.active=test,ollama,deepinfra",
-					"GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret");
+	private ApplicationContextRunner runner(final String apiKey) {
+		return new ApplicationContextRunner()
+				.withInitializer(context -> {
+					context.getEnvironment().getPropertySources().remove("systemEnvironment");
+					context.getEnvironment().getPropertySources().remove("systemProperties");
+					if (apiKey != null) {
+						context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("testDeepInfraApiKey",
+								Map.of("DEEPINFRA_API_KEY", apiKey)));
+					}
+					new ConfigDataApplicationContextInitializer().initialize(context);
+				})
+				.withUserConfiguration(EmailManagementAgent.class)
+				.withPropertyValues("spring.profiles.active=test,ollama,deepinfra",
+						"GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret");
+	}
 
 	@Test
 	void usesLocalOllamaForSummariesAndDeepInfraForClassification() {
 		// given / when
-		runner.withPropertyValues("DEEPINFRA_API_KEY=test-deepinfra-key",
-				"spring.ai.openai.api-key=test-deepinfra-key").run(context -> {
+		runner("test-deepinfra-key").withPropertyValues("DEEPINFRA_API_KEY=test-deepinfra-key").run(context -> {
 			// then
+			assertThat(context.getEnvironment().getProperty("spring.ai.openai.api-key")).isEqualTo("test-deepinfra-key");
 			assertThat(context).hasNotFailed().hasBean("summaryAiClient").hasBean("tagAiClient");
 			assertThat(context).hasSingleBean(OpenAiChatModel.class).hasSingleBean(OllamaChatModel.class);
 			assertThat(context.getBean(OllamaChatModel.class).getOptions().getModel()).isEqualTo("llama3.2:3b");
@@ -41,8 +49,8 @@ class InferenceConfigurationTest {
 	@Test
 	void allowsOverridingTheDeepInfraModel() {
 		// given / when
-		runner.withPropertyValues("DEEPINFRA_API_KEY=test-deepinfra-key",
-				"spring.ai.openai.api-key=test-deepinfra-key", "DEEPINFRA_MODEL=custom/model").run(context -> {
+		runner("test-deepinfra-key")
+				.withPropertyValues("DEEPINFRA_API_KEY=test-deepinfra-key", "DEEPINFRA_MODEL=custom/model").run(context -> {
 			// then
 			assertThat(context).hasNotFailed();
 			assertThat(context.getBean(OpenAiChatModel.class).getOptions().getModel()).isEqualTo("custom/model");
@@ -52,8 +60,8 @@ class InferenceConfigurationTest {
 	@Test
 	void ollamaSummariesUseDeepInfraForClassification() {
 		// given / when
-		runner.withPropertyValues("spring.profiles.active=test,ollama,deepinfra", "DEEPINFRA_API_KEY=test-key",
-				"spring.ai.openai.api-key=test-key",
+		runner("test-key").withPropertyValues("spring.profiles.active=test,ollama,deepinfra",
+				"DEEPINFRA_API_KEY=test-key",
 				"OLLAMA_BASE_URL=http://localhost:11434", "OLLAMA_MODEL=llama3.2:3b").run(context -> {
 			// then
 			assertThat(context).hasNotFailed().hasBean("summaryAiClient").hasBean("tagAiClient");
@@ -65,8 +73,9 @@ class InferenceConfigurationTest {
 	@Test
 	void lmStudioCanReplaceOnlyTheSummaryModelWhileDeepInfraRemainsTheClassifier() {
 		// given / when
-		runner.withPropertyValues("spring.profiles.active=test,ollama,deepinfra,lmstudio",
-				"DEEPINFRA_API_KEY=test-deepinfra-key", "spring.ai.openai.api-key=test-deepinfra-key",
+		runner("test-deepinfra-key")
+				.withPropertyValues("spring.profiles.active=test,ollama,deepinfra,lmstudio",
+				"DEEPINFRA_API_KEY=test-deepinfra-key",
 				"LMSTUDIO_MODEL=qwen-local",
 				"LMSTUDIO_BASE_URL=http://localhost:1234/v1").run(context -> {
 				// then
@@ -86,7 +95,7 @@ class InferenceConfigurationTest {
 	@Test
 	void rejectsConcurrencyAboveThePublishedDeepInfraQuota() {
 		// given / when
-		runner.withPropertyValues("DEEPINFRA_API_KEY=test-key", "spring.ai.openai.api-key=test-key",
+		runner("test-key").withPropertyValues("DEEPINFRA_API_KEY=test-key",
 				"DEEPINFRA_MAX_CONCURRENT_REQUESTS=201").run(context -> {
 			// then
 			assertThat(context).hasFailed();
@@ -97,7 +106,7 @@ class InferenceConfigurationTest {
 	@Test
 	void deepInfraRequiresItsApiKey() {
 		// given / when
-		runner.run(context -> {
+		runner(null).run(context -> {
 			// then
 			assertThat(context).hasFailed();
 			assertThat(context.getStartupFailure()).hasStackTraceContaining("DEEPINFRA_API_KEY");

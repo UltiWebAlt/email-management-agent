@@ -9,6 +9,7 @@ import com.ultiweb.jobs.svc.email.EmailMessage;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Timeout;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.core.env.MapPropertySource;
 import tools.jackson.databind.ObjectMapper;
 
 class DeepInfraInferenceIntegrationTest {
@@ -59,14 +61,15 @@ class DeepInfraInferenceIntegrationTest {
 					.withInitializer(context -> {
 						context.getEnvironment().getPropertySources().remove("systemEnvironment");
 						context.getEnvironment().getPropertySources().remove("systemProperties");
+						context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("testDeepInfraApiKey",
+								Map.of("DEEPINFRA_API_KEY", "test-deepinfra-key")));
 						new ConfigDataApplicationContextInitializer().initialize(context);
 					})
 					.withUserConfiguration(EmailManagementAgent.class)
 					.withPropertyValues("spring.profiles.active=test,ollama,deepinfra",
 							"GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret",
 							"OLLAMA_BASE_URL=" + baseUrl, "OLLAMA_MODEL=local-test-model",
-							"DEEPINFRA_API_KEY=test-deepinfra-key", "DEEPINFRA_MODEL=test/model",
-							"spring.ai.openai.api-key=test-deepinfra-key",
+							"DEEPINFRA_MODEL=test/model",
 							"DEEPINFRA_BASE_URL=" + baseUrl + "/v1/openai",
 							"spring.ai.retry.backoff.initial-interval=1ms")
 					.run(context -> {

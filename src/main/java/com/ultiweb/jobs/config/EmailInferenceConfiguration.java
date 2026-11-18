@@ -17,6 +17,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,12 @@ import java.util.Map;
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(OllamaChatProperties.class)
 public class EmailInferenceConfiguration {
+	private final Environment environment;
+
+	EmailInferenceConfiguration(final Environment environment) {
+		this.environment = environment;
+	}
+
 	@Bean
 	OllamaChatModel ollamaChatModel(final OllamaApi api, final OllamaChatProperties properties) {
 		return OllamaChatModel.builder().ollamaApi(api).options(properties.toOptions()).build();
@@ -64,18 +71,16 @@ public class EmailInferenceConfiguration {
 
 	@Bean("deepInfraClassifierChatModel")
 	OpenAiChatModel deepInfraClassifierChatModel(@Value("${spring.ai.openai.base-url}") final String baseUrl,
-			@Value("${spring.ai.openai.api-key}") final String apiKey,
 			@Value("${spring.ai.openai.chat.model}") final String modelName,
 			@Value("${spring.ai.openai.chat.temperature:0.0}") final double temperature) {
-		return openAiModel(baseUrl, apiKey, modelName, temperature);
+		return openAiModel(baseUrl, environment.getRequiredProperty("DEEPINFRA_API_KEY"), modelName, temperature);
 	}
 
 	@Bean("deepInfraSummaryChatModel")
 	@Profile("deepinfra-summary & !lmstudio")
 	OpenAiChatModel deepInfraSummaryChatModel(@Value("${deepinfra.summary.base-url}") final String baseUrl,
-			@Value("${spring.ai.openai.api-key}") final String apiKey,
 			@Value("${deepinfra.summary.model}") final String modelName) {
-		return openAiModel(baseUrl, apiKey, modelName, 0.0);
+		return openAiModel(baseUrl, environment.getRequiredProperty("DEEPINFRA_API_KEY"), modelName, 0.0);
 	}
 
 	@Bean("tagAiClient")
@@ -90,6 +95,6 @@ public class EmailInferenceConfiguration {
 				false, false, modelName, Duration.ofSeconds(90), 2, null, Map.of(),
 				ObservationRegistry.NOOP, null, List.of());
 		return OpenAiChatModel.builder().openAiClient(openAiClient)
-				.options(OpenAiChatOptions.builder().model(modelName).temperature(temperature).build()).build();
+				.options(OpenAiChatOptions.builder().apiKey(apiKey).model(modelName).temperature(temperature).build()).build();
 	}
 }
