@@ -59502,7 +59502,7 @@
       },
       "invocations": [
         {
-          "startTimeUtc": "2026-11-18T06:02:14.665276893Z",
+          "startTimeUtc": "2026-11-18T06:29:58.672350895Z",
           "exitCode": 0,
           "executionSuccessful": true
         }
@@ -59511,7 +59511,7 @@
       "versionControlProvenance": [
         {
           "repositoryUri": "https://github.com/UltiWebAlt/email-management-agent.git",
-          "revisionId": "22febfe21796c276cd0dd6a49bb1f13d51b577a8",
+          "revisionId": "8ccfd27d694c15ac7b50c86c62839f6adf6d9e13",
           "branch": "develop",
           "properties": {
             "repoUrl": "https://github.com/UltiWebAlt/email-management-agent.git",
@@ -59531,9 +59531,9 @@
       "results": [],
       "automationDetails": {
         "id": "email-management-agent/qodana/2026-11-18",
-        "guid": "bac03297-4249-4f4a-b19c-91fa3f0a3272",
+        "guid": "25300e0d-19a6-4275-b1e9-1793e21fd775",
         "properties": {
-          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/44248256284",
+          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/44251672875",
           "analysisKind": "regular"
         }
       },
@@ -59542,122 +59542,6 @@
         "\n"
       ],
       "properties": {
-        "qodana.promo.results": [
-          {
-            "ruleId": "DuplicateExpressions",
-            "kind": "fail",
-            "level": "note",
-            "message": {
-              "text": "Multiple occurrences of 'candidate.followUpContent() == null || candidate.followUpContent().isBlank()'",
-              "markdown": "Multiple occurrences of `candidate.followUpContent() == null || candidate.followUpContent().isBlank()`"
-            },
-            "locations": [
-              {
-                "physicalLocation": {
-                  "artifactLocation": {
-                    "uri": "src/main/java/com/ultiweb/jobs/svc/dashboard/ResponseFollowUpSvc.java",
-                    "uriBaseId": "SRCROOT"
-                  },
-                  "region": {
-                    "startLine": 98,
-                    "startColumn": 23,
-                    "charOffset": 4485,
-                    "charLength": 76,
-                    "snippet": {
-                      "text": "candidate.followUpContent() == null || candidate.followUpContent().isBlank()"
-                    },
-                    "sourceLanguage": "JAVA"
-                  },
-                  "contextRegion": {
-                    "startLine": 96,
-                    "startColumn": 1,
-                    "charOffset": 4351,
-                    "charLength": 376,
-                    "snippet": {
-                      "text": "\n\tprivate void sendFollowUp(final ResponseFollowUpCandidate candidate) throws IOException, MessagingException {\n\t\tfinal String body = candidate.followUpContent() == null || candidate.followUpContent().isBlank()\n\t\t\t\t? replyGenerator.generateFollowUp(candidate) : candidate.followUpContent();\n\t\tif (candidate.followUpContent() == null || candidate.followUpContent().isBlank()) {"
-                    },
-                    "sourceLanguage": "JAVA"
-                  }
-                },
-                "logicalLocations": [
-                  {
-                    "fullyQualifiedName": "email-management-agent.main",
-                    "kind": "module"
-                  }
-                ]
-              }
-            ],
-            "partialFingerprints": {
-              "equalIndicator/v2": "eaf401677eb6212f",
-              "equalIndicator/v1": "2d30ba3584f83ed5c66f921c6faec506a4af4c9c9089c917b0d6cc4b5731f750"
-            },
-            "properties": {
-              "ideaSeverity": "WEAK WARNING",
-              "qodanaSeverity": "Moderate",
-              "problemType": "REGULAR",
-              "tags": [
-                "JAVA"
-              ]
-            }
-          },
-          {
-            "ruleId": "DuplicateExpressions",
-            "kind": "fail",
-            "level": "note",
-            "message": {
-              "text": "Multiple occurrences of 'candidate.followUpContent() == null || candidate.followUpContent().isBlank()'",
-              "markdown": "Multiple occurrences of `candidate.followUpContent() == null || candidate.followUpContent().isBlank()`"
-            },
-            "locations": [
-              {
-                "physicalLocation": {
-                  "artifactLocation": {
-                    "uri": "src/main/java/com/ultiweb/jobs/svc/dashboard/ResponseFollowUpSvc.java",
-                    "uriBaseId": "SRCROOT"
-                  },
-                  "region": {
-                    "startLine": 100,
-                    "startColumn": 7,
-                    "charOffset": 4648,
-                    "charLength": 76,
-                    "snippet": {
-                      "text": "candidate.followUpContent() == null || candidate.followUpContent().isBlank()"
-                    },
-                    "sourceLanguage": "JAVA"
-                  },
-                  "contextRegion": {
-                    "startLine": 98,
-                    "startColumn": 1,
-                    "charOffset": 4463,
-                    "charLength": 351,
-                    "snippet": {
-                      "text": "\t\tfinal String body = candidate.followUpContent() == null || candidate.followUpContent().isBlank()\n\t\t\t\t? replyGenerator.generateFollowUp(candidate) : candidate.followUpContent();\n\t\tif (candidate.followUpContent() == null || candidate.followUpContent().isBlank()) {\n\t\t\trepository.storeFollowUpContent(candidate.positionId(), body, clock.instant());\n\t\t}"
-                    },
-                    "sourceLanguage": "JAVA"
-                  }
-                },
-                "logicalLocations": [
-                  {
-                    "fullyQualifiedName": "email-management-agent.main",
-                    "kind": "module"
-                  }
-                ]
-              }
-            ],
-            "partialFingerprints": {
-              "equalIndicator/v2": "18deba7642b9608d",
-              "equalIndicator/v1": "dacfdc3b138d56defc7e2d0dcc820ebe3689d429e8b8625c638ab8e3bfae6c9f"
-            },
-            "properties": {
-              "ideaSeverity": "WEAK WARNING",
-              "qodanaSeverity": "Moderate",
-              "problemType": "REGULAR",
-              "tags": [
-                "JAVA"
-              ]
-            }
-          }
-        ],
         "qodana.coverage.files.provided": false,
         "configProfile": "starter",
         "deviceId": "200820300000000-cfa1-6c85-fae0-4c3b3b9f9eb4",
