@@ -17,7 +17,7 @@ import org.springframework.test.context.TestConstructor;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = {"gmail.polling.enabled=false", "spring.ai.model.chat=openai",
 				"GMAIL_CLIENT_ID=unused-test-client", "GMAIL_CLIENT_SECRET=unused-test-secret"})
-@ActiveProfiles({"test", "deepinfra"})
+@ActiveProfiles({"test", "ollama", "deepinfra"})
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @EnabledIfEnvironmentVariable(named = "RUN_DEEPINFRA_CLASSIFICATION_INTEGRATION_TEST", matches = "true")
 class DeepInfraClassificationIntegrationTest {

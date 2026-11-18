@@ -17,7 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @SpringBootTest(useMainMethod = SpringBootTest.UseMainMethod.ALWAYS,
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
 		properties = {
-				"spring.profiles.active=test,deepinfra",
+				"spring.profiles.active=test,ollama,deepinfra",
 				"gmail.polling.enabled=true",
 				"gmail.polling.interval=50ms",
 				"GMAIL_CLIENT_ID=test-client",

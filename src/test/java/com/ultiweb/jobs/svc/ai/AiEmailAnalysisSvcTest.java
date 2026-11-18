@@ -154,6 +154,18 @@ class AiEmailAnalysisSvcTest {
 		assertEquals("NONE".equals(label) ? java.util.Optional.empty() : EmailTag.fromLabel(label), result);
 	}
 
+	@Test
+	void acceptsFinalLabelWhenExplanationMentionsOtherCategories() {
+		// given
+		final var service = new AiEmailTagSvc(classificationClient);
+		when(classificationClient.complete(anyString(), anyString())).thenReturn(
+				"Although Tech_News_Publications appears in the message, the actual opening is for an architect.\n"
+						+ "Architect_Jobs");
+
+		// when / then
+		assertEquals(EmailTag.ARCHITECT_JOBS, service.suggestTag("A synthetic email summary.").orElseThrow());
+	}
+
 	@ParameterizedTest
 	@ValueSource(strings = {"The label is Dev_Jobs", "Recommended tag: Dev_Jobs", "**Dev_Jobs**",
 			"\"Dev_Jobs\"", "```text\nDev_Jobs\n```", "Label: `Dev_Jobs`.", "Dev_Jobs\n\n"})

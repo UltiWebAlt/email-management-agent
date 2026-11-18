@@ -62,7 +62,7 @@ class DeepInfraInferenceIntegrationTest {
 						new ConfigDataApplicationContextInitializer().initialize(context);
 					})
 					.withUserConfiguration(EmailManagementAgent.class)
-					.withPropertyValues("spring.profiles.active=test,deepinfra",
+					.withPropertyValues("spring.profiles.active=test,ollama,deepinfra",
 							"GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret",
 							"OLLAMA_BASE_URL=" + baseUrl, "OLLAMA_MODEL=local-test-model",
 							"DEEPINFRA_API_KEY=test-deepinfra-key", "DEEPINFRA_MODEL=test/model",

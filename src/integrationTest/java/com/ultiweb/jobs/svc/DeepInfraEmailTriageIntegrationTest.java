@@ -23,7 +23,7 @@ import org.springframework.test.context.TestConstructor;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = {"gmail.polling.enabled=false", "spring.ai.model.chat=openai"})
-@ActiveProfiles({"test", "deepinfra"})
+@ActiveProfiles({"test", "deepinfra", "deepinfra-summary"})
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @EnabledIfEnvironmentVariable(named = "RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST", matches = "true")
 class DeepInfraEmailTriageIntegrationTest {
@@ -42,7 +42,7 @@ class DeepInfraEmailTriageIntegrationTest {
 	}
 
 	@Test
-	void summarizesLocallyAndRecommendsLabelsUsingDeepInfra() throws Exception {
+	void summarizesAndRecommendsLabelsUsingDeepInfra() throws Exception {
 		// given
 		final List<EmailMessage> emails = gmailMailboxSvc.readLatestEmails(EMAIL_LIMIT);
 		assertFalse(emails.isEmpty(), "No emails were returned; the live DeepInfra test needs at least one email");
@@ -61,14 +61,14 @@ class DeepInfraEmailTriageIntegrationTest {
 
 	private void analyze(final EmailMessage email) {
 		// when
-		LOGGER.info("Requesting local Ollama summary for account={}, email id={}, bodyCharacters={}",
+		LOGGER.info("Requesting DeepInfra summary for account={}, email id={}, bodyCharacters={}",
 				email.account(), email.id(), email.body().length());
 		final String summary = emailSummarySvc.summarize(email);
 
 		// then
-		assertNotNull(summary, "Ollama returned no summary for " + email.account() + "/" + email.id());
-		assertFalse(summary.isBlank(), "Ollama returned a blank summary for " + email.account() + "/" + email.id());
-		LOGGER.info("Sending local summary to DeepInfra for account={}, email id={}", email.account(), email.id());
+		assertNotNull(summary, "DeepInfra returned no summary for " + email.account() + "/" + email.id());
+		assertFalse(summary.isBlank(), "DeepInfra returned a blank summary for " + email.account() + "/" + email.id());
+		LOGGER.info("Sending summary to DeepInfra classifier for account={}, email id={}", email.account(), email.id());
 		final String recommendedLabel = emailTagSvc.suggestTag(summary).map(EmailTag::labelName).orElse("NONE");
 		LOGGER.info("Account={}, email id={}, subject={}, summary={}, recommendedLabel={}",
 				email.account(), email.id(), boundedLogText(email.subject(), 300), boundedLogText(summary, 1_000), recommendedLabel);

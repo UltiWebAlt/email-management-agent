@@ -55,18 +55,10 @@ public class AiEmailTagSvc implements EmailTagSvc {
 			throw new IllegalStateException("Email classifier returned an empty response");
 		}
 		final String trimmed = response.trim();
-		final String lastLine = trimmed.lines().filter(line -> !line.isBlank())
-				.filter(line -> !line.trim().matches("```(?:text)?"))
-				.reduce((previous, current) -> current).orElse("").trim();
-		final String withoutPrefix = LABEL_PREFIX.matcher(lastLine).replaceFirst("");
-		final String withoutLeadingWrappers = LEADING_WRAPPERS.matcher(withoutPrefix).replaceFirst("");
-		final String label = TRAILING_WRAPPERS.matcher(withoutLeadingWrappers).replaceFirst("").trim();
-		final boolean conflictingLabels = Stream.concat(
-				Arrays.stream(EmailTag.values()).map(EmailTag::labelName), Stream.of("NONE"))
-				.filter(candidate -> !candidate.equals(label))
-				.anyMatch(candidate -> Pattern.compile("(?<!\\w)" + Pattern.quote(candidate) + "(?!\\w)")
-						.matcher(trimmed).find());
-		if (conflictingLabels) {
+		final var lines = trimmed.lines().map(String::trim).filter(line -> !line.isBlank())
+				.filter(line -> !line.matches("```(?:text)?")).toList();
+		final String label = normalizeLabel(lines.isEmpty() ? "" : lines.getLast());
+		if (hasConflictingRecommendation(lines, label)) {
 			throw new IllegalStateException("Email classifier returned conflicting labels");
 		}
 		if ("NONE".equals(label)) {
@@ -75,6 +67,32 @@ public class AiEmailTagSvc implements EmailTagSvc {
 		final EmailTag tag = EmailTag.fromLabel(label)
 				.orElseThrow(() -> new IllegalStateException("Email classifier did not end with a supported label"));
 		return Optional.of(tag);
+	}
+
+	private static String normalizeLabel(final String line) {
+		final String withoutPrefix = LABEL_PREFIX.matcher(line).replaceFirst("");
+		final String withoutLeadingWrappers = LEADING_WRAPPERS.matcher(withoutPrefix).replaceFirst("");
+		return TRAILING_WRAPPERS.matcher(withoutLeadingWrappers).replaceFirst("").trim();
+	}
+
+	private static boolean hasConflictingRecommendation(final java.util.List<String> lines, final String finalLabel) {
+		final var knownLabels = Stream.concat(Arrays.stream(EmailTag.values()).map(EmailTag::labelName), Stream.of("NONE"))
+				.toList();
+		for (int index = 0; index < lines.size() - 1; index++) {
+			final String line = lines.get(index);
+			final String normalizedLine = normalizeLabel(line);
+			if (knownLabels.contains(normalizedLine) && !normalizedLine.equals(finalLabel)) {
+				return true;
+			}
+			final long labelsOnLine = knownLabels.stream().filter(candidate -> Pattern
+					.compile("(?<!\\w)" + Pattern.quote(candidate) + "(?!\\w)")
+					.matcher(line).find()).count();
+			if (labelsOnLine > 1 && Pattern.compile("\\b(?:or|versus|vs\\.?)\\b", Pattern.CASE_INSENSITIVE)
+					.matcher(line).find()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private String systemPrompt() {
