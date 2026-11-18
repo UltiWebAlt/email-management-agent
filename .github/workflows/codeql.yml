@@ -1,25 +1,29 @@
 name: CodeQL
 
 on:
-  push:
+  pull_request:
     branches:
       - main
       - develop
-  pull_request:
-    branches:
-      - develop
+  # GitHub schedules run from the default branch; scan both maintained branches.
+  schedule:
+    - cron: '23 7 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  group: codeql-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   analyze:
-    name: CodeQL / Java
+    name: CodeQL / Java${{ github.event_name == 'schedule' && format(' / {0}', matrix.branch) || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ github.event_name == 'schedule' && fromJSON('["main", "develop"]') || fromJSON('["event"]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -30,6 +34,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'schedule' && matrix.branch || '' }}
 
       - name: Set up Java 21
         uses: actions/setup-java@v6

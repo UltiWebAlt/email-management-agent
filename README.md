@@ -192,4 +192,23 @@ This opt-in test uses `DEEPINFRA_API_KEY` and requires neither Gmail access nor 
 
 ### 🔍 SonarQube analysis
 
-SonarQube analysis uses a local SonarQube server at `http://localhost:9000`. With that server running and `SONAR_TOKEN` set in your environment, run `./gradlew sonar`. The task runs unit and integration tests and generates JaCoCo coverage before analysis. For a different self-hosted server address, use `./gradlew sonar -Dsonar.host.url=http://your-server:9000`. SonarQube analysis is opt-in and is not run by the GitHub workflows or the normal `check` task.
+SonarQube analysis uses a local SonarQube server at `http://localhost:9000`. With that server running and `SONAR_TOKEN` set in your environment, run `./gradlew sonar`. The task runs unit and integration tests and generates JaCoCo coverage before analysis. For a different self-hosted server address, use `./gradlew sonar -Dsonar.host.url=http://your-server:9000`. The normal `check` task does not run SonarQube analysis.
+
+The `Local SonarQube` GitHub workflow runs on pushes to `develop` and can be started manually on `develop`. It runs `clean check`, connects to the local server over Tailscale, submits analysis, and waits for the quality gate. Community Build supports one analyzed branch per project. We use `develop` as that branch in the existing `email-management-agent` project; this workflow does not analyze `main` or pull requests. Make changes on `develop`, run tests and analysis, review the results, and merge into `main` when satisfied. The existing Build workflow continues to test pushes and pull requests for both `main` and `develop`.
+
+Configure the integration before enabling the workflow in GitHub:
+
+1. Create or confirm the local SonarQube project key `email-management-agent`. Keep the same project key; no second project is needed. Analysis of the `develop` checkout updates this project's single main analysis slot, even if the SonarQube UI labels it `main`. Do not pass `sonar.branch.name` or pull-request parameters to Community Build. Generate a project analysis token and store it in the GitHub Actions repository secret `SONAR_TOKEN`. Use a token from the local server, not SonarQube Cloud.
+2. Set the GitHub Actions repository variable `SONAR_HOST_URL` to the server's tailnet URL, for example `http://rbman.tail703aac.ts.net:9000`. Ensure SonarQube is reachable on that interface and port; `localhost` on a GitHub-hosted runner refers to the runner itself.
+3. Configure a [Tailscale federated identity](https://tailscale.com/docs/integrations/github/github-action) for this repository's `refs/heads/develop` workflow identity, with the `auth_keys` scope and `tag:sonarqube-ci`. Store its client ID in the repository secret `TS_OAUTH_CLIENT_ID` and audience in `TS_AUDIENCE`. Restrict tailnet access for that tag to the SonarQube server's port.
+4. In the [SonarQube Cloud project](https://sonarcloud.io/dashboard?id=UltiWebAlt_email-management-agent), disable automatic analysis under **Administration → Analysis Method**. The Cloud GitHub app is independent of this repository's local scanner configuration.
+
+The local server and Tailscale must be online during analysis. No DDNS or public webhook endpoint is needed. Missing integration settings fail the workflow explicitly. After setup, run the workflow manually on `develop` and confirm the analysis appears on the local server before relying on its quality-gate check in branch rules.
+
+### 🛡️ Commit and nightly security checks
+
+OpenGrep runs on branch pushes and pull requests targeting `main` or `develop`. It scans production Java source with a pinned scanner and pinned OpenGrep Java rules, fails on findings or scan errors, and uploads a SARIF report as a workflow artifact.
+
+CodeQL runs nightly at 07:23 UTC for both `main` and `develop`, and on pull requests targeting either branch to satisfy the existing CodeQL protection rules. It can also be started manually. Scheduled workflows must be present on the repository's default branch to run. The schedule is fixed in UTC: 03:23 in New York during daylight saving time and 02:23 during standard time.
+
+The Build workflow continues to run `./gradlew clean check --stacktrace` on pushes and pull requests for both branches. The active `Required Gradle tests` ruleset requires the `Java 21 / Gradle` check from GitHub Actions and an up-to-date branch before accepting updates to `main` or `develop`. These checks gate updates on GitHub; they do not prevent creating local Git commits.

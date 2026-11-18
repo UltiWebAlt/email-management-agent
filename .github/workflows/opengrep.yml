@@ -1,0 +1,60 @@
+name: OpenGrep
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: opengrep-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: OpenGrep / Java security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Checkout pinned OpenGrep rules
+        uses: actions/checkout@v7
+        with:
+          repository: opengrep/opengrep-rules
+          ref: f1d2b562b414783763fd02a6ed2736eaed622efa
+          path: .opengrep-rules
+          persist-credentials: false
+
+      - name: Install pinned OpenGrep scanner
+        run: |
+          curl --fail --silent --show-error --location --retry 3 \
+            https://github.com/opengrep/opengrep/releases/download/v1.31.0/opengrep_manylinux_x86 \
+            --output "$RUNNER_TEMP/opengrep"
+          echo "dbbe3c2058dbe600c449a8ba22ea79a1643a6660658400090d0323a8d0d31147  $RUNNER_TEMP/opengrep" | sha256sum --check
+          chmod +x "$RUNNER_TEMP/opengrep"
+
+      - name: Scan Java production code
+        run: |
+          "$RUNNER_TEMP/opengrep" scan \
+            --config .opengrep-rules/java \
+            --error --strict \
+            --sarif-output "$RUNNER_TEMP/opengrep.sarif" \
+            src/main/java
+
+      - name: Upload scan report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: opengrep-sarif
+          path: ${{ runner.temp }}/opengrep.sarif
+          if-no-files-found: warn
+          retention-days: 14
