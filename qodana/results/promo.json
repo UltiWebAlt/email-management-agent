@@ -3,98 +3,88 @@
   "listProblem": [
     {
       "tool": "Code Inspection",
-      "category": "Nullability problems",
+      "category": "Imports",
       "categoryPath": [
         {
           "id": "Java",
           "name": "Java"
         },
         {
-          "id": "Java/Probable bugs",
-          "name": "Probable bugs"
-        },
-        {
-          "id": "Java/Probable bugs/Nullability problems",
-          "name": "Nullability problems"
+          "id": "Java/Imports",
+          "name": "Imports"
         }
       ],
-      "type": "Nullability problems",
+      "type": "Unused import",
       "tags": [
-        "JAVA",
-        "CWE Top 25"
+        "JAVA"
       ],
       "severity": "High",
-      "comment": "Not annotated parameter overrides @NullMarked parameter",
-      "detailsInfo": "Reports problems related to nullability annotations.\n\n**Examples:**\n\n* Overriding methods are not annotated:\n\n\n      abstract class A {\n        @NotNull abstract String m();\n      }\n      class B extends A {\n          String m() { return \"empty string\"; }\n      }\n          \n* Annotated primitive types: `@NotNull int myFoo;`\n* Both `@Nullable` and `@NotNull` are present on the same member: `@Nullable @NotNull String myFooString;`\n* Collection of nullable elements is assigned into a collection of non-null elements:\n\n\n      void testList(List<@Nullable String> nullableList) {\n         List<@NotNull String> list2 = nullableList;\n      }\n          \nUse the **Configure Annotations** button to specify nullability annotations and the checkboxes to fine-tune where the inspection should provide warnings.\n\nThis inspection only reports if the language level of the project or module is 5 or higher,\nand nullability annotations are available on the classpath.\n\nInspection ID: NullableProblems",
+      "comment": "Unused import `import static org.mockito.ArgumentMatchers.startsWith;`",
+      "detailsInfo": "Reports redundant `import` statements.\n\nRegular `import` statements are unnecessary when not using imported classes and packages in the source file.\nThe same applies to imported `static` fields and methods that aren't used in the source file.\n\n**Example:**\n\n\n      import java.util.ArrayList;\n      public class Example {\n        public static void main(String[] args) {\n          System.out.println(\"Hello World!\");\n        }\n      }\n\nAfter the quick fix is applied:\n\n\n      public class Example {\n        public static void main(String[] args) {\n          System.out.println(\"Hello World!\");\n        }\n      }\n\nInspection ID: UNUSED_IMPORT",
       "sources": [
         {
           "type": "file",
-          "path": "src/main/java/com/ultiweb/jobs/svc/email/HtmlEmailTextExtractor.java",
+          "path": "src/integrationTest/java/com/ultiweb/jobs/svc/EmailPollingIntegrationTest.java",
           "language": "JAVA",
-          "line": 189,
-          "offset": 31,
-          "length": 4,
+          "line": 4,
+          "offset": 1,
+          "length": 54,
           "code": {
-            "startLine": 187,
-            "length": 4,
-            "offset": 43,
-            "surroundingCode": "\n\t\t@Override\n\t\tpublic void head(final Node node, final int depth) {\n\t\t\tif (node instanceof TextNode textNode) {\n\t\t\t\tappendText(textNode.getWholeText());"
+            "startLine": 2,
+            "length": 54,
+            "offset": 55,
+            "surroundingCode": "\nimport static org.mockito.ArgumentMatchers.anyString;\nimport static org.mockito.ArgumentMatchers.startsWith;\nimport static org.mockito.Mockito.*;\n"
           }
         }
       ],
       "attributes": {
-        "module": "email-management-agent.main",
-        "inspectionName": "NullableProblems"
+        "module": "email-management-agent.integrationTest",
+        "inspectionName": "UNUSED_IMPORT"
       },
-      "hash": "3a77399d64b50c9e6c854c76cec416f5ad52d99dcd768077a439a60ac2c782e6",
+      "hash": "52d6a795a84135dbe585ee9b1efe639fbfcc90f52ba2ad21c70b88688a4a0b64",
       "problemType": "REGULAR"
     },
     {
       "tool": "Code Inspection",
-      "category": "Nullability problems",
+      "category": "Imports",
       "categoryPath": [
         {
           "id": "Java",
           "name": "Java"
         },
         {
-          "id": "Java/Probable bugs",
-          "name": "Probable bugs"
-        },
-        {
-          "id": "Java/Probable bugs/Nullability problems",
-          "name": "Nullability problems"
+          "id": "Java/Imports",
+          "name": "Imports"
         }
       ],
-      "type": "Nullability problems",
+      "type": "Unused import",
       "tags": [
-        "JAVA",
-        "CWE Top 25"
+        "JAVA"
       ],
       "severity": "High",
-      "comment": "Not annotated parameter overrides @NullMarked parameter",
-      "detailsInfo": "Reports problems related to nullability annotations.\n\n**Examples:**\n\n* Overriding methods are not annotated:\n\n\n      abstract class A {\n        @NotNull abstract String m();\n      }\n      class B extends A {\n          String m() { return \"empty string\"; }\n      }\n          \n* Annotated primitive types: `@NotNull int myFoo;`\n* Both `@Nullable` and `@NotNull` are present on the same member: `@Nullable @NotNull String myFooString;`\n* Collection of nullable elements is assigned into a collection of non-null elements:\n\n\n      void testList(List<@Nullable String> nullableList) {\n         List<@NotNull String> list2 = nullableList;\n      }\n          \nUse the **Configure Annotations** button to specify nullability annotations and the checkboxes to fine-tune where the inspection should provide warnings.\n\nThis inspection only reports if the language level of the project or module is 5 or higher,\nand nullability annotations are available on the classpath.\n\nInspection ID: NullableProblems",
+      "comment": "Unused import `import static org.mockito.ArgumentMatchers.anyString;`",
+      "detailsInfo": "Reports redundant `import` statements.\n\nRegular `import` statements are unnecessary when not using imported classes and packages in the source file.\nThe same applies to imported `static` fields and methods that aren't used in the source file.\n\n**Example:**\n\n\n      import java.util.ArrayList;\n      public class Example {\n        public static void main(String[] args) {\n          System.out.println(\"Hello World!\");\n        }\n      }\n\nAfter the quick fix is applied:\n\n\n      public class Example {\n        public static void main(String[] args) {\n          System.out.println(\"Hello World!\");\n        }\n      }\n\nInspection ID: UNUSED_IMPORT",
       "sources": [
         {
           "type": "file",
-          "path": "src/main/java/com/ultiweb/jobs/svc/email/HtmlEmailTextExtractor.java",
+          "path": "src/integrationTest/java/com/ultiweb/jobs/svc/EmailPollingIntegrationTest.java",
           "language": "JAVA",
-          "line": 213,
-          "offset": 31,
-          "length": 4,
+          "line": 3,
+          "offset": 1,
+          "length": 53,
           "code": {
-            "startLine": 211,
-            "length": 4,
-            "offset": 43,
-            "surroundingCode": "\n\t\t@Override\n\t\tpublic void tail(final Node node, final int depth) {\n\t\t\tif (!(node instanceof Element element)) {\n\t\t\t\treturn;"
+            "startLine": 1,
+            "length": 53,
+            "offset": 31,
+            "surroundingCode": "package com.ultiweb.jobs.svc;\n\nimport static org.mockito.ArgumentMatchers.anyString;\nimport static org.mockito.ArgumentMatchers.startsWith;\nimport static org.mockito.Mockito.*;"
           }
         }
       ],
       "attributes": {
-        "module": "email-management-agent.main",
-        "inspectionName": "NullableProblems"
+        "module": "email-management-agent.integrationTest",
+        "inspectionName": "UNUSED_IMPORT"
       },
-      "hash": "6dea97131d1f5be74f837bcf16cfcfbd91c0bc5ccf14c376838a3795b2a2fef5",
+      "hash": "8e44561af5f9695bc460df4f9dcc6747fbd7a94873babecde0bc6673eeff6d7e",
       "problemType": "REGULAR"
     }
   ]
