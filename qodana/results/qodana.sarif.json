@@ -59502,7 +59502,7 @@
       },
       "invocations": [
         {
-          "startTimeUtc": "2026-11-18T03:07:08.253940949Z",
+          "startTimeUtc": "2026-11-18T03:25:32.944435526Z",
           "exitCode": 0,
           "executionSuccessful": true
         }
@@ -59511,7 +59511,7 @@
       "versionControlProvenance": [
         {
           "repositoryUri": "https://github.com/UltiWebAlt/email-management-agent.git",
-          "revisionId": "b8c97f92570e88dcfb414039a957851913962fd7",
+          "revisionId": "60b3ac7b87c92e66ff0c3607257282277d31523a",
           "branch": "develop",
           "properties": {
             "repoUrl": "https://github.com/UltiWebAlt/email-management-agent.git",
@@ -59591,9 +59591,9 @@
       ],
       "automationDetails": {
         "id": "email-management-agent/qodana/2026-11-18",
-        "guid": "684553dc-e03b-43b3-916e-e995f8331266",
+        "guid": "7049bd4d-bc2e-4f08-a7e5-4a86fbcc5ee4",
         "properties": {
-          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/44227855466",
+          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/44230217871",
           "analysisKind": "regular"
         }
       },
@@ -59602,122 +59602,6 @@
         "\n"
       ],
       "properties": {
-        "qodana.promo.results": [
-          {
-            "ruleId": "UNUSED_IMPORT",
-            "kind": "fail",
-            "level": "warning",
-            "message": {
-              "text": "Unused import 'import static org.mockito.ArgumentMatchers.startsWith;'",
-              "markdown": "Unused import `import static org.mockito.ArgumentMatchers.startsWith;`"
-            },
-            "locations": [
-              {
-                "physicalLocation": {
-                  "artifactLocation": {
-                    "uri": "src/integrationTest/java/com/ultiweb/jobs/svc/EmailPollingIntegrationTest.java",
-                    "uriBaseId": "SRCROOT"
-                  },
-                  "region": {
-                    "startLine": 4,
-                    "startColumn": 1,
-                    "charOffset": 85,
-                    "charLength": 54,
-                    "snippet": {
-                      "text": "import static org.mockito.ArgumentMatchers.startsWith;"
-                    },
-                    "sourceLanguage": "JAVA"
-                  },
-                  "contextRegion": {
-                    "startLine": 2,
-                    "startColumn": 1,
-                    "charOffset": 30,
-                    "charLength": 147,
-                    "snippet": {
-                      "text": "\nimport static org.mockito.ArgumentMatchers.anyString;\nimport static org.mockito.ArgumentMatchers.startsWith;\nimport static org.mockito.Mockito.*;\n"
-                    },
-                    "sourceLanguage": "JAVA"
-                  }
-                },
-                "logicalLocations": [
-                  {
-                    "fullyQualifiedName": "email-management-agent.integrationTest",
-                    "kind": "module"
-                  }
-                ]
-              }
-            ],
-            "partialFingerprints": {
-              "equalIndicator/v2": "b0ad630a49c742aa",
-              "equalIndicator/v1": "52d6a795a84135dbe585ee9b1efe639fbfcc90f52ba2ad21c70b88688a4a0b64"
-            },
-            "properties": {
-              "ideaSeverity": "WARNING",
-              "qodanaSeverity": "High",
-              "problemType": "REGULAR",
-              "tags": [
-                "JAVA"
-              ]
-            }
-          },
-          {
-            "ruleId": "UNUSED_IMPORT",
-            "kind": "fail",
-            "level": "warning",
-            "message": {
-              "text": "Unused import 'import static org.mockito.ArgumentMatchers.anyString;'",
-              "markdown": "Unused import `import static org.mockito.ArgumentMatchers.anyString;`"
-            },
-            "locations": [
-              {
-                "physicalLocation": {
-                  "artifactLocation": {
-                    "uri": "src/integrationTest/java/com/ultiweb/jobs/svc/EmailPollingIntegrationTest.java",
-                    "uriBaseId": "SRCROOT"
-                  },
-                  "region": {
-                    "startLine": 3,
-                    "startColumn": 1,
-                    "charOffset": 31,
-                    "charLength": 53,
-                    "snippet": {
-                      "text": "import static org.mockito.ArgumentMatchers.anyString;"
-                    },
-                    "sourceLanguage": "JAVA"
-                  },
-                  "contextRegion": {
-                    "startLine": 1,
-                    "startColumn": 1,
-                    "charOffset": 0,
-                    "charLength": 176,
-                    "snippet": {
-                      "text": "package com.ultiweb.jobs.svc;\n\nimport static org.mockito.ArgumentMatchers.anyString;\nimport static org.mockito.ArgumentMatchers.startsWith;\nimport static org.mockito.Mockito.*;"
-                    },
-                    "sourceLanguage": "JAVA"
-                  }
-                },
-                "logicalLocations": [
-                  {
-                    "fullyQualifiedName": "email-management-agent.integrationTest",
-                    "kind": "module"
-                  }
-                ]
-              }
-            ],
-            "partialFingerprints": {
-              "equalIndicator/v2": "43e38255427b756f",
-              "equalIndicator/v1": "8e44561af5f9695bc460df4f9dcc6747fbd7a94873babecde0bc6673eeff6d7e"
-            },
-            "properties": {
-              "ideaSeverity": "WARNING",
-              "qodanaSeverity": "High",
-              "problemType": "REGULAR",
-              "tags": [
-                "JAVA"
-              ]
-            }
-          }
-        ],
         "qodana.coverage.files.provided": false,
         "configProfile": "starter",
         "deviceId": "200820300000000-cfa1-6c85-fae0-4c3b3b9f9eb4",
