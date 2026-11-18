@@ -1,4 +1,177 @@
 {
   "version": "3",
-  "listProblem": []
+  "listProblem": [
+    {
+      "tool": "Code Inspection",
+      "category": "Verbose or redundant code constructs",
+      "categoryPath": [
+        {
+          "id": "Java",
+          "name": "Java"
+        },
+        {
+          "id": "Java/Verbose or redundant code constructs",
+          "name": "Verbose or redundant code constructs"
+        }
+      ],
+      "type": "Multiple occurrences of the same expression",
+      "tags": [
+        "JAVA"
+      ],
+      "severity": "Moderate",
+      "comment": "Multiple occurrences of `candidate.followUpContent() == null || candidate.followUpContent().isBlank()`",
+      "detailsInfo": "Reports multiple equivalent occurrences of the same expression within a method (or constructor, or class initializer) if the result of the expression can be reused.\n\n\nThe expression is reported if it's free of side effects and its result is always the same (in terms of `Object.equals()`).\nThe examples of such expressions are `a + b`, `Math.max(a, b)`, `a.equals(b)`,\n`s.substring(a,b)`. To make sure the result is always the same, it's verified that the variables used in the expression don't\nchange their values between the occurrences of the expression.\n\n\nSuch expressions may contain methods of immutable classes like `String`, `BigDecimal`, and so on,\nand of utility classes like `Objects`, `Math` (except `random()`).\nThe well-known methods, such as `Object.equals()`, `Object.hashCode()`, `Object.toString()`,\n`Comparable.compareTo()`, and `Comparator.compare()` are OK as well because they normally don't have\nany observable side effects.\n\n\nUse the **Expression complexity threshold** option to specify the minimal expression complexity threshold. Specifying bigger\nnumbers will remove reports on short expressions.\n\n\n`Path.of` and `Paths.get` calls are treated as equivalent calls if they have the same arguments. These calls\nare always reported no matter how complex their arguments are. This behaviour can be tweaked using different complexity threshold.\n\nInspection ID: DuplicateExpressions\n\nNew in 2018.3",
+      "sources": [
+        {
+          "type": "file",
+          "path": "src/main/java/com/ultiweb/jobs/svc/dashboard/ResponseFollowUpSvc.java",
+          "language": "JAVA",
+          "line": 98,
+          "offset": 23,
+          "length": 76,
+          "code": {
+            "startLine": 96,
+            "length": 76,
+            "offset": 134,
+            "surroundingCode": "\n\tprivate void sendFollowUp(final ResponseFollowUpCandidate candidate) throws IOException, MessagingException {\n\t\tfinal String body = candidate.followUpContent() == null || candidate.followUpContent().isBlank()\n\t\t\t\t? replyGenerator.generateFollowUp(candidate) : candidate.followUpContent();\n\t\tif (candidate.followUpContent() == null || candidate.followUpContent().isBlank()) {"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "email-management-agent.main",
+        "inspectionName": "DuplicateExpressions"
+      },
+      "hash": "2d30ba3584f83ed5c66f921c6faec506a4af4c9c9089c917b0d6cc4b5731f750",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Verbose or redundant code constructs",
+      "categoryPath": [
+        {
+          "id": "Java",
+          "name": "Java"
+        },
+        {
+          "id": "Java/Verbose or redundant code constructs",
+          "name": "Verbose or redundant code constructs"
+        }
+      ],
+      "type": "Multiple occurrences of the same expression",
+      "tags": [
+        "JAVA"
+      ],
+      "severity": "Moderate",
+      "comment": "Multiple occurrences of `candidate.followUpContent() == null || candidate.followUpContent().isBlank()`",
+      "detailsInfo": "Reports multiple equivalent occurrences of the same expression within a method (or constructor, or class initializer) if the result of the expression can be reused.\n\n\nThe expression is reported if it's free of side effects and its result is always the same (in terms of `Object.equals()`).\nThe examples of such expressions are `a + b`, `Math.max(a, b)`, `a.equals(b)`,\n`s.substring(a,b)`. To make sure the result is always the same, it's verified that the variables used in the expression don't\nchange their values between the occurrences of the expression.\n\n\nSuch expressions may contain methods of immutable classes like `String`, `BigDecimal`, and so on,\nand of utility classes like `Objects`, `Math` (except `random()`).\nThe well-known methods, such as `Object.equals()`, `Object.hashCode()`, `Object.toString()`,\n`Comparable.compareTo()`, and `Comparator.compare()` are OK as well because they normally don't have\nany observable side effects.\n\n\nUse the **Expression complexity threshold** option to specify the minimal expression complexity threshold. Specifying bigger\nnumbers will remove reports on short expressions.\n\n\n`Path.of` and `Paths.get` calls are treated as equivalent calls if they have the same arguments. These calls\nare always reported no matter how complex their arguments are. This behaviour can be tweaked using different complexity threshold.\n\nInspection ID: DuplicateExpressions\n\nNew in 2018.3",
+      "sources": [
+        {
+          "type": "file",
+          "path": "src/main/java/com/ultiweb/jobs/svc/dashboard/ResponseFollowUpSvc.java",
+          "language": "JAVA",
+          "line": 100,
+          "offset": 7,
+          "length": 76,
+          "code": {
+            "startLine": 98,
+            "length": 76,
+            "offset": 185,
+            "surroundingCode": "\t\tfinal String body = candidate.followUpContent() == null || candidate.followUpContent().isBlank()\n\t\t\t\t? replyGenerator.generateFollowUp(candidate) : candidate.followUpContent();\n\t\tif (candidate.followUpContent() == null || candidate.followUpContent().isBlank()) {\n\t\t\trepository.storeFollowUpContent(candidate.positionId(), body, clock.instant());\n\t\t}"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "email-management-agent.main",
+        "inspectionName": "DuplicateExpressions"
+      },
+      "hash": "dacfdc3b138d56defc7e2d0dcc820ebe3689d429e8b8625c638ab8e3bfae6c9f",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Imports",
+      "categoryPath": [
+        {
+          "id": "Java",
+          "name": "Java"
+        },
+        {
+          "id": "Java/Imports",
+          "name": "Imports"
+        }
+      ],
+      "type": "Unused import",
+      "tags": [
+        "JAVA"
+      ],
+      "severity": "High",
+      "comment": "Unused import `import static org.mockito.ArgumentMatchers.startsWith;`",
+      "detailsInfo": "Reports redundant `import` statements.\n\nRegular `import` statements are unnecessary when not using imported classes and packages in the source file.\nThe same applies to imported `static` fields and methods that aren't used in the source file.\n\n**Example:**\n\n\n      import java.util.ArrayList;\n      public class Example {\n        public static void main(String[] args) {\n          System.out.println(\"Hello World!\");\n        }\n      }\n\nAfter the quick fix is applied:\n\n\n      public class Example {\n        public static void main(String[] args) {\n          System.out.println(\"Hello World!\");\n        }\n      }\n\nInspection ID: UNUSED_IMPORT",
+      "sources": [
+        {
+          "type": "file",
+          "path": "src/integrationTest/java/com/ultiweb/jobs/svc/EmailPollingIntegrationTest.java",
+          "language": "JAVA",
+          "line": 4,
+          "offset": 1,
+          "length": 54,
+          "code": {
+            "startLine": 2,
+            "length": 54,
+            "offset": 55,
+            "surroundingCode": "\nimport static org.mockito.ArgumentMatchers.anyString;\nimport static org.mockito.ArgumentMatchers.startsWith;\nimport static org.mockito.Mockito.*;\n"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "email-management-agent.integrationTest",
+        "inspectionName": "UNUSED_IMPORT"
+      },
+      "hash": "52d6a795a84135dbe585ee9b1efe639fbfcc90f52ba2ad21c70b88688a4a0b64",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Imports",
+      "categoryPath": [
+        {
+          "id": "Java",
+          "name": "Java"
+        },
+        {
+          "id": "Java/Imports",
+          "name": "Imports"
+        }
+      ],
+      "type": "Unused import",
+      "tags": [
+        "JAVA"
+      ],
+      "severity": "High",
+      "comment": "Unused import `import static org.mockito.ArgumentMatchers.anyString;`",
+      "detailsInfo": "Reports redundant `import` statements.\n\nRegular `import` statements are unnecessary when not using imported classes and packages in the source file.\nThe same applies to imported `static` fields and methods that aren't used in the source file.\n\n**Example:**\n\n\n      import java.util.ArrayList;\n      public class Example {\n        public static void main(String[] args) {\n          System.out.println(\"Hello World!\");\n        }\n      }\n\nAfter the quick fix is applied:\n\n\n      public class Example {\n        public static void main(String[] args) {\n          System.out.println(\"Hello World!\");\n        }\n      }\n\nInspection ID: UNUSED_IMPORT",
+      "sources": [
+        {
+          "type": "file",
+          "path": "src/integrationTest/java/com/ultiweb/jobs/svc/EmailPollingIntegrationTest.java",
+          "language": "JAVA",
+          "line": 3,
+          "offset": 1,
+          "length": 53,
+          "code": {
+            "startLine": 1,
+            "length": 53,
+            "offset": 31,
+            "surroundingCode": "package com.ultiweb.jobs.svc;\n\nimport static org.mockito.ArgumentMatchers.anyString;\nimport static org.mockito.ArgumentMatchers.startsWith;\nimport static org.mockito.Mockito.*;"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "email-management-agent.integrationTest",
+        "inspectionName": "UNUSED_IMPORT"
+      },
+      "hash": "8e44561af5f9695bc460df4f9dcc6747fbd7a94873babecde0bc6673eeff6d7e",
+      "problemType": "REGULAR"
+    }
+  ]
 }

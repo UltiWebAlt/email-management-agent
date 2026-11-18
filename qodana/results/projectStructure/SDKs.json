@@ -1,7 +1,7 @@
 {
   "sdks": [
     {
-      "name": "21 (2)",
+      "name": "21 (6)",
       "roots": [
         "jrt://$USER_HOME$/.jdks/openjdk-21.0.2!/java.base",
         "jrt://$USER_HOME$/.jdks/openjdk-21.0.2!/java.compiler",
