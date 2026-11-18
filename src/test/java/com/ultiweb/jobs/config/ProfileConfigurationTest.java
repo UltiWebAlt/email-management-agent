@@ -22,7 +22,8 @@ class ProfileConfigurationTest {
 			// then
 			assertThat(context).hasNotFailed();
 			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("dev"))).isTrue();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("ollama"))).isTrue();
+			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("ollama"))).isFalse();
+			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra-summary"))).isTrue();
 			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra"))).isTrue();
 			assertThat(context.getEnvironment().getProperty("gmail.polling.enabled", Boolean.class)).isFalse();
 			assertThat(context.getEnvironment().getProperty("spring.datasource.url"))
@@ -38,7 +39,8 @@ class ProfileConfigurationTest {
 			assertThat(context).hasNotFailed();
 			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("production"))).isTrue();
 			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra"))).isTrue();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("ollama"))).isTrue();
+			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("ollama"))).isFalse();
+			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra-summary"))).isTrue();
 			assertThat(context.getEnvironment().getProperty("gmail.polling.enabled", Boolean.class)).isTrue();
 			assertThat(context.getEnvironment().getProperty("spring.datasource.url"))
 					.isEqualTo("jdbc:sqlite:data/job-search.db");
@@ -46,13 +48,14 @@ class ProfileConfigurationTest {
 	}
 
 	@Test
-	void localProductionUsesOllamaSummariesAndDeepInfraClassification() {
+	void localProductionUsesDeepInfraSummariesAndClassification() {
 		// given / when
 		runner.withPropertyValues("spring.profiles.active=local-production").run(context -> {
 			// then
 			assertThat(context).hasNotFailed();
 			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("local-production"))).isTrue();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("ollama"))).isTrue();
+			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("ollama"))).isFalse();
+			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra-summary"))).isTrue();
 			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra"))).isTrue();
 			assertThat(context.getEnvironment().getProperty("gmail.polling.enabled", Boolean.class)).isTrue();
 			assertThat(context.getEnvironment().getProperty("spring.datasource.url"))

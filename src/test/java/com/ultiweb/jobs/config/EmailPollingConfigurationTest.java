@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @ExtendWith(MockitoExtension.class)
 class EmailPollingConfigurationTest {
@@ -31,7 +33,7 @@ class EmailPollingConfigurationTest {
 			return List.of();
 		});
 		final ApplicationContextRunner runner = new ApplicationContextRunner()
-				.withUserConfiguration(EmailPollingConfiguration.class)
+				.withUserConfiguration(EmailPollingConfiguration.class, SchedulingTestConfiguration.class)
 				.withBean(EmailTriageSvc.class, () -> triageService)
 				.withPropertyValues("gmail.polling.interval=50ms");
 
@@ -58,5 +60,10 @@ class EmailPollingConfigurationTest {
 			assertThat(context).hasNotFailed().doesNotHaveBean(EmailPollingJob.class);
 			verifyNoInteractions(triageService);
 		});
+	}
+
+	@Configuration(proxyBeanMethods = false)
+	@EnableScheduling
+	static class SchedulingTestConfiguration {
 	}
 }
