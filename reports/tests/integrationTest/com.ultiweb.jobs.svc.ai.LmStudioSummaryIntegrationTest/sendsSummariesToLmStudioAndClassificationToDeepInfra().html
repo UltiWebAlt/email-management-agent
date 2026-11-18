@@ -63,7 +63,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">0.754s</div>
+<div class="counter">0.351s</div>
 <p>duration</p>
 </div>
 </td>
@@ -122,7 +122,7 @@ but context failed to start:
  	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.lambda$run$0(AbstractApplicationContextRunner.java:336)
  	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.withContextClassLoader(AbstractApplicationContextRunner.java:364)
  	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.run(AbstractApplicationContextRunner.java:335)
- 	at com.ultiweb.jobs.svc.ai.LmStudioSummaryIntegrationTest.sendsSummariesToLmStudioAndClassificationToDeepInfra(LmStudioSummaryIntegrationTest.java:48)
+ 	at com.ultiweb.jobs.svc.ai.LmStudioSummaryIntegrationTest.sendsSummariesToLmStudioAndClassificationToDeepInfra(LmStudioSummaryIntegrationTest.java:49)
  	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
  	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
  	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:701)
@@ -286,7 +286,7 @@ but context failed to start:
  	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.lambda$instantiate$0(SimpleInstantiationStrategy.java:155)
  	... 166 more
 
-	at com.ultiweb.jobs.svc.ai.LmStudioSummaryIntegrationTest.lambda$sendsSummariesToLmStudioAndClassificationToDeepInfra$3(LmStudioSummaryIntegrationTest.java:49)
+	at com.ultiweb.jobs.svc.ai.LmStudioSummaryIntegrationTest.lambda$sendsSummariesToLmStudioAndClassificationToDeepInfra$3(LmStudioSummaryIntegrationTest.java:50)
 	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.accept(AbstractApplicationContextRunner.java:444)
 	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.consumeAssertableContext(AbstractApplicationContextRunner.java:358)
 	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.lambda$run$1(AbstractApplicationContextRunner.java:336)
@@ -296,7 +296,7 @@ but context failed to start:
 	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.lambda$run$0(AbstractApplicationContextRunner.java:336)
 	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.withContextClassLoader(AbstractApplicationContextRunner.java:364)
 	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.run(AbstractApplicationContextRunner.java:335)
-	at com.ultiweb.jobs.svc.ai.LmStudioSummaryIntegrationTest.sendsSummariesToLmStudioAndClassificationToDeepInfra(LmStudioSummaryIntegrationTest.java:48)
+	at com.ultiweb.jobs.svc.ai.LmStudioSummaryIntegrationTest.sendsSummariesToLmStudioAndClassificationToDeepInfra(LmStudioSummaryIntegrationTest.java:49)
 </pre>
 </span>
 </div>
@@ -308,7 +308,7 @@ but context failed to start:
 <div class="clipboard-copy-btn-container">
 <button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-sendsSummariesToLmStudioAndClassificationToDeepInfra()">Copy</button>
 </div>
-<pre id="root-0-test-stdout-sendsSummariesToLmStudioAndClassificationToDeepInfra()">2026-11-18T03:09:21.646Z  WARN 3249 --- [    Test worker] s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'emailTriageSvc' defined in file [/home/runner/work/email-management-agent/email-management-agent/build/classes/java/main/com/ultiweb/jobs/svc/EmailTriageSvc.class]: Unsatisfied dependency expressed through constructor parameter 1: Error creating bean with name 'aiEmailSummarySvc' defined in file [/home/runner/work/email-management-agent/email-management-agent/build/classes/java/main/com/ultiweb/jobs/svc/ai/AiEmailSummarySvc.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'summaryAiClient' defined in class path resource [com/ultiweb/jobs/config/EmailInferenceConfiguration.class]: Unsatisfied dependency expressed through method 'lmStudioSummaryAiClient' parameter 0: Error creating bean with name 'lmStudioSummaryChatModel' defined in class path resource [com/ultiweb/jobs/config/EmailInferenceConfiguration.class]: Failed to instantiate [org.springframework.ai.openai.OpenAiChatModel]: Factory method 'lmStudioSummaryChatModel' threw exception with message: At least one credential source must be specified: credential (apiKey), workloadIdentity, or adminApiKey
+<pre id="root-0-test-stdout-sendsSummariesToLmStudioAndClassificationToDeepInfra()">2026-11-18T03:27:18.913Z  WARN 2509 --- [    Test worker] s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'emailTriageSvc' defined in file [/home/runner/work/email-management-agent/email-management-agent/build/classes/java/main/com/ultiweb/jobs/svc/EmailTriageSvc.class]: Unsatisfied dependency expressed through constructor parameter 1: Error creating bean with name 'aiEmailSummarySvc' defined in file [/home/runner/work/email-management-agent/email-management-agent/build/classes/java/main/com/ultiweb/jobs/svc/ai/AiEmailSummarySvc.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'summaryAiClient' defined in class path resource [com/ultiweb/jobs/config/EmailInferenceConfiguration.class]: Unsatisfied dependency expressed through method 'lmStudioSummaryAiClient' parameter 0: Error creating bean with name 'lmStudioSummaryChatModel' defined in class path resource [com/ultiweb/jobs/config/EmailInferenceConfiguration.class]: Failed to instantiate [org.springframework.ai.openai.OpenAiChatModel]: Factory method 'lmStudioSummaryChatModel' threw exception with message: At least one credential source must be specified: credential (apiKey), workloadIdentity, or adminApiKey
 </pre>
 </span>
 </div>
@@ -322,7 +322,7 @@ but context failed to start:
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 18, 2026, 3:09:23 AM</p>
+<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 18, 2026, 3:27:20 AM</p>
 </div>
 </div>
 </body>
