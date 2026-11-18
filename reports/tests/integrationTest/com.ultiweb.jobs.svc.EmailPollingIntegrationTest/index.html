@@ -65,7 +65,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">30.853s</div>
+<div class="counter">22.036s</div>
 <p>duration</p>
 </div>
 </td>
@@ -114,7 +114,7 @@
 <td>1</td>
 <td>1</td>
 <td>0</td>
-<td data-sort-value="46">0.046s</td>
+<td data-sort-value="26">0.026s</td>
 <td class="failures" data-sort-value="0">0%</td>
 </tr>
 </tbody>
@@ -143,7 +143,7 @@
 <td>1</td>
 <td>1</td>
 <td>0</td>
-<td data-sort-value="46">0.046s</td>
+<td data-sort-value="26">0.026s</td>
 <td class="failures" data-sort-value="0">0%</td>
 </tr>
 </tbody>
@@ -158,10 +158,10 @@
 <div class="clipboard-copy-btn-container">
 <button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-com.ultiweb.jobs.svc.EmailPollingIntegrationTest">Copy</button>
 </div>
-<pre id="root-0-test-stdout-com.ultiweb.jobs.svc.EmailPollingIntegrationTest">02:24:15.106 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ultiweb.jobs.svc.EmailPollingIntegrationTest]: EmailPollingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-02:24:16.091 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ultiweb.jobs.EmailManagementAgent for test class com.ultiweb.jobs.svc.EmailPollingIntegrationTest
-02:24:16.928 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ultiweb.jobs.svc.EmailPollingIntegrationTest]: EmailPollingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-02:24:16.940 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ultiweb.jobs.EmailManagementAgent for test class com.ultiweb.jobs.svc.EmailPollingIntegrationTest
+<pre id="root-0-test-stdout-com.ultiweb.jobs.svc.EmailPollingIntegrationTest">03:05:36.350 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ultiweb.jobs.svc.EmailPollingIntegrationTest]: EmailPollingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+03:05:36.741 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ultiweb.jobs.EmailManagementAgent for test class com.ultiweb.jobs.svc.EmailPollingIntegrationTest
+03:05:36.936 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ultiweb.jobs.svc.EmailPollingIntegrationTest]: EmailPollingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+03:05:36.941 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ultiweb.jobs.EmailManagementAgent for test class com.ultiweb.jobs.svc.EmailPollingIntegrationTest
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -172,23 +172,23 @@
 
  :: Spring Boot ::                (v4.1.2)
 
-2026-11-18T02:24:19.744Z  INFO 3279 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : Starting EmailPollingIntegrationTest using Java 21.0.13 with PID 3279 (started by runner in /home/runner/work/email-management-agent/email-management-agent)
-2026-11-18T02:24:19.749Z  INFO 3279 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : The following 3 profiles are active: &quot;test&quot;, &quot;ollama&quot;, &quot;deepinfra&quot;
-2026-11-18T02:24:33.085Z  INFO 3279 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
-2026-11-18T02:24:33.313Z  INFO 3279 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2026-11-18T02:24:33.314Z  INFO 3279 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.27]
-2026-11-18T02:24:33.788Z  INFO 3279 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 13886 ms
-2026-11-18T02:24:38.241Z  INFO 3279 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-11-18T02:24:39.296Z  INFO 3279 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.sqlite.jdbc4.JDBC4Connection@7df231c7
-2026-11-18T02:24:39.305Z  INFO 3279 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-11-18T02:24:43.983Z  WARN 3279 --- [    Test worker] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'deepInfraClassifierChatModel' defined in class path resource [com/ultiweb/jobs/config/EmailInferenceConfiguration.class]: Failed to instantiate [org.springframework.ai.openai.OpenAiChatModel]: Factory method 'deepInfraClassifierChatModel' threw exception with message: At least one credential source must be specified: credential (apiKey), workloadIdentity, or adminApiKey
-2026-11-18T02:24:43.989Z  INFO 3279 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
-2026-11-18T02:24:44.001Z  INFO 3279 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
-2026-11-18T02:24:44.013Z  INFO 3279 --- [    Test worker] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
-2026-11-18T02:24:44.242Z  INFO 3279 --- [    Test worker] .s.b.a.l.ConditionEvaluationReportLogger : 
+2026-11-18T03:05:38.966Z  INFO 2691 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : Starting EmailPollingIntegrationTest using Java 21.0.13 with PID 2691 (started by runner in /home/runner/work/email-management-agent/email-management-agent)
+2026-11-18T03:05:38.971Z  INFO 2691 --- [    Test worker] c.u.j.svc.EmailPollingIntegrationTest    : The following 3 profiles are active: &quot;test&quot;, &quot;ollama&quot;, &quot;deepinfra&quot;
+2026-11-18T03:05:50.426Z  INFO 2691 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-11-18T03:05:50.561Z  INFO 2691 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-18T03:05:50.567Z  INFO 2691 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.27]
+2026-11-18T03:05:50.963Z  INFO 2691 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 11926 ms
+2026-11-18T03:05:53.770Z  INFO 2691 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-18T03:05:54.413Z  INFO 2691 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.sqlite.jdbc4.JDBC4Connection@2310e8a4
+2026-11-18T03:05:54.421Z  INFO 2691 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-18T03:05:57.376Z  WARN 2691 --- [    Test worker] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'deepInfraClassifierChatModel' defined in class path resource [com/ultiweb/jobs/config/EmailInferenceConfiguration.class]: Failed to instantiate [org.springframework.ai.openai.OpenAiChatModel]: Factory method 'deepInfraClassifierChatModel' threw exception with message: At least one credential source must be specified: credential (apiKey), workloadIdentity, or adminApiKey
+2026-11-18T03:05:57.378Z  INFO 2691 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-11-18T03:05:57.394Z  INFO 2691 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-11-18T03:05:57.407Z  INFO 2691 --- [    Test worker] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-11-18T03:05:57.546Z  INFO 2691 --- [    Test worker] .s.b.a.l.ConditionEvaluationReportLogger : 
 
 Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
-2026-11-18T02:24:44.335Z ERROR 3279 --- [    Test worker] o.s.boot.SpringApplication               : Application run failed
+2026-11-18T03:05:57.611Z ERROR 2691 --- [    Test worker] o.s.boot.SpringApplication               : Application run failed
 
 org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'deepInfraClassifierChatModel' defined in class path resource [com/ultiweb/jobs/config/EmailInferenceConfiguration.class]: Failed to instantiate [org.springframework.ai.openai.OpenAiChatModel]: Factory method 'deepInfraClassifierChatModel' threw exception with message: At least one credential source must be specified: credential (apiKey), workloadIdentity, or adminApiKey
 	at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:657) ~[spring-beans-7.0.10.jar:7.0.10]
@@ -344,9 +344,9 @@ Caused by: java.lang.IllegalStateException: At least one credential source must 
 	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.lambda$instantiate$0(SimpleInstantiationStrategy.java:155) ~[spring-beans-7.0.10.jar:7.0.10]
 	... 134 common frames omitted
 
-2026-11-18T02:24:44.393Z  WARN 3279 --- [    Test worker] o.s.test.context.TestContextManager      : Caught exception while allowing TestExecutionListener [org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener] to prepare test instance [com.ultiweb.jobs.svc.EmailPollingIntegrationTest@3a585406]
+2026-11-18T03:05:57.656Z  WARN 2691 --- [    Test worker] o.s.test.context.TestContextManager      : Caught exception while allowing TestExecutionListener [org.springframework.test.context.bean.override.BeanOverrideTestExecutionListener] to prepare test instance [com.ultiweb.jobs.svc.EmailPollingIntegrationTest@2c9b8f1c]
 
-java.lang.IllegalStateException: Failed to load ApplicationContext for [WebMergedContextConfiguration@1829aa45 testClass = com.ultiweb.jobs.svc.EmailPollingIntegrationTest, locations = [], classes = [com.ultiweb.jobs.EmailManagementAgent], contextInitializerClasses = [], activeProfiles = [], propertySourceDescriptors = [], propertySourceProperties = [&quot;spring.profiles.active=test,ollama,deepinfra&quot;, &quot;gmail.polling.enabled=true&quot;, &quot;gmail.polling.interval=50ms&quot;, &quot;GMAIL_CLIENT_ID=test-client&quot;, &quot;GMAIL_CLIENT_SECRET=test-secret&quot;, &quot;DEEPINFRA_API_KEY=test-key&quot;, &quot;org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true&quot;, &quot;server.port=0&quot;], contextCustomizers = [org.springframework.boot.web.server.context.SpringBootTestRandomPortContextCustomizer@10a18e3e, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@43245559, org.springframework.boot.test.context.PropertyMappingContextCustomizer@0, org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@2ba42204, org.springframework.boot.test.http.client.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@52831a73, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@6f1c3f18, org.springframework.test.context.bean.override.BeanOverrideContextCustomizer@3012f0fe, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@af472b6b], resourceBasePath = &quot;src/main/webapp&quot;, contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+java.lang.IllegalStateException: Failed to load ApplicationContext for [WebMergedContextConfiguration@1c05de90 testClass = com.ultiweb.jobs.svc.EmailPollingIntegrationTest, locations = [], classes = [com.ultiweb.jobs.EmailManagementAgent], contextInitializerClasses = [], activeProfiles = [], propertySourceDescriptors = [], propertySourceProperties = [&quot;spring.profiles.active=test,ollama,deepinfra&quot;, &quot;gmail.polling.enabled=true&quot;, &quot;gmail.polling.interval=50ms&quot;, &quot;GMAIL_CLIENT_ID=test-client&quot;, &quot;GMAIL_CLIENT_SECRET=test-secret&quot;, &quot;DEEPINFRA_API_KEY=test-key&quot;, &quot;org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true&quot;, &quot;server.port=0&quot;], contextCustomizers = [org.springframework.boot.web.server.context.SpringBootTestRandomPortContextCustomizer@64ae105d, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@5d5c41e5, org.springframework.boot.test.context.PropertyMappingContextCustomizer@0, org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@d3e3085, org.springframework.boot.test.http.client.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@2eada095, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@2506e949, org.springframework.test.context.bean.override.BeanOverrideContextCustomizer@38e2751b, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@92776dd7], resourceBasePath = &quot;src/main/webapp&quot;, contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.lambda$loadContext$0(DefaultCacheAwareContextLoaderDelegate.java:195) ~[spring-test-7.0.10.jar:7.0.10]
 	at org.springframework.test.context.cache.DefaultContextCache.put(DefaultContextCache.java:214) ~[spring-test-7.0.10.jar:7.0.10]
 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:160) ~[spring-test-7.0.10.jar:7.0.10]
@@ -1353,7 +1353,7 @@ Unconditional classes:
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 18, 2026, 2:24:51 AM</p>
+<a href="https://www.gradle.org">Gradle 9.8.2</a> at Nov 18, 2026, 3:06:02 AM</p>
 </div>
 </div>
 </body>
