@@ -1,6 +1,7 @@
 package com.ultiweb.jobs.svc.dashboard;
 
 import com.ultiweb.jobs.svc.email.EmailWorkflowLabels;
+import com.ultiweb.jobs.svc.email.FollowUpEmail;
 import com.ultiweb.jobs.svc.email.GmailDraftSvc;
 import com.ultiweb.jobs.svc.persistence.JobResponseRepository;
 import com.ultiweb.jobs.svc.persistence.ResponseFollowUpCandidate;
@@ -101,9 +102,9 @@ public final class ResponseFollowUpSvc {
 		}
 		final String recipient = productionMode ? candidate.recruiterEmail() : candidate.sourceAccount();
 		final String label = productionMode ? null : EmailWorkflowLabels.EMAIL_AGENT_TEST;
-		final var sent = gmailDraftSvc.sendFollowUp(candidate.sourceAccount(), recipient,
-				candidate.gmailThreadId(), candidate.positionId(), candidate.gmailMessageId(),
-				replySubject(candidate.sourceSubject()), body, label);
+		final var followUp = new FollowUpEmail(recipient, candidate.gmailThreadId(), candidate.positionId(),
+				candidate.gmailMessageId(), replySubject(candidate.sourceSubject()), body);
+		final var sent = gmailDraftSvc.sendFollowUp(candidate.sourceAccount(), followUp, label);
 		repository.markFollowUpSent(candidate.positionId(), body, sent.messageId(),
 				sent.sentAt() == null ? clock.instant() : sent.sentAt());
 		notifyResponseUpdated(candidate.positionId());

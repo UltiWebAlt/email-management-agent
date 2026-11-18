@@ -26,6 +26,7 @@ sonar {
     properties {
         property 'sonar.host.url', 'http://localhost:9000'
         property 'sonar.projectKey', 'email-management-agent'
+        property 'sonar.coverage.exclusions', '.github/scripts/**'
         property 'sonar.coverage.jacoco.xmlReportPaths', file('build/reports/jacoco/test/jacocoTestReport.xml').absolutePath
     }
 }

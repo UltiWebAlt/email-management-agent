@@ -16,6 +16,11 @@ import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
 
 final class HtmlEmailTextExtractor {
+	private static final String STYLE = "style";
+	private static final String CLASS = "class";
+	private static final String TABLE = "table";
+	private static final String BACKGROUND = "background";
+	private static final String HTTPS = "https";
 	private static final Pattern PLAIN_TEXT_LINK = Pattern.compile("\\(https?://[^\\s)]++\\)");
 	private static final Set<String> BLOCK_TAGS = Set.of(
 			"address", "article", "aside", "blockquote", "div", "footer", "h1", "h2", "h3", "h4", "h5", "h6",
@@ -32,7 +37,7 @@ final class HtmlEmailTextExtractor {
 		final var document = Jsoup.parse(html);
 		document.select("head, script, style, noscript, template, svg, canvas, [hidden], [aria-hidden=true]").remove();
 		document.select("[style]").stream()
-				.filter(element -> isHidden(element.attr("style")))
+				.filter(element -> isHidden(element.attr(STYLE)))
 				.toList()
 				.forEach(Element::remove);
 		final var output = new StringBuilder();
@@ -45,7 +50,7 @@ final class HtmlEmailTextExtractor {
 			return "";
 		}
 		final Document document = Jsoup.parse(html);
-		final String emailStyles = document.select("style").stream().map(Element::outerHtml)
+		final String emailStyles = document.select(STYLE).stream().map(Element::outerHtml)
 				.collect(java.util.stream.Collectors.joining("\n"));
 		final String externalStylesheets = document.select("link").stream()
 				.filter(link -> hasRel(link, "stylesheet"))
@@ -54,38 +59,38 @@ final class HtmlEmailTextExtractor {
 				.map(href -> new Element("link").attr("rel", "stylesheet").attr("href", href).outerHtml())
 				.collect(java.util.stream.Collectors.joining("\n"));
 		final String bodyStyle = bodyStyle(document);
-		final String bodyClass = document.body().attr("class");
+		final String bodyClass = document.body().attr(CLASS);
 		final String bodyId = document.body().attr("id");
-		document.select("style").remove();
+		document.select(STYLE).remove();
 		document.select("script, noscript, template, iframe, object, embed, form, button, input, textarea, select, svg, canvas, video, audio, source, meta, link, base, [hidden]")
 				.remove();
 		final Safelist safelist = Safelist.relaxed()
-				.addTags("table", "thead", "tbody", "tfoot", "tr", "td", "th", "colgroup", "col")
-				.addAttributes(":all", "style", "class", "id", "width", "height", "align", "valign", "bgcolor",
+				.addTags(TABLE, "thead", "tbody", "tfoot", "tr", "td", "th", "colgroup", "col")
+				.addAttributes(":all", STYLE, CLASS, "id", "width", "height", "align", "valign", "bgcolor",
 						"border", "cellpadding", "cellspacing", "dir", "role", "nowrap", "vspace", "hspace",
 						"aria-hidden", "aria-label")
-				.addAttributes("table", "background")
-				.addAttributes("tr", "background")
-				.addAttributes("td", "background")
-				.addAttributes("th", "background")
-				.addProtocols("img", "src", "http", "https", "data")
-				.addProtocols("table", "background", "http", "https", "data")
-				.addProtocols("tr", "background", "http", "https", "data")
-				.addProtocols("td", "background", "http", "https", "data")
-				.addProtocols("th", "background", "http", "https", "data")
+				.addAttributes(TABLE, BACKGROUND)
+				.addAttributes("tr", BACKGROUND)
+				.addAttributes("td", BACKGROUND)
+				.addAttributes("th", BACKGROUND)
+				.addProtocols("img", "src", "http", HTTPS, "data")
+				.addProtocols(TABLE, BACKGROUND, "http", HTTPS, "data")
+				.addProtocols("tr", BACKGROUND, "http", HTTPS, "data")
+				.addProtocols("td", BACKGROUND, "http", HTTPS, "data")
+				.addProtocols("th", BACKGROUND, "http", HTTPS, "data")
 				.addAttributes("td", "colspan", "rowspan")
 				.addAttributes("th", "colspan", "rowspan")
 				.addAttributes("a", "target", "rel", "tabindex");
 		final String body = Jsoup.clean(document.body().html(), "", safelist);
 		final Element renderedBody = new Element("div").html(body);
 		if (!bodyClass.isBlank()) {
-			renderedBody.attr("class", bodyClass);
+			renderedBody.attr(CLASS, bodyClass);
 		}
 		if (!bodyId.isBlank()) {
 			renderedBody.attr("id", bodyId);
 		}
 		if (!bodyStyle.isBlank()) {
-			renderedBody.attr("style", bodyStyle);
+			renderedBody.attr(STYLE, bodyStyle);
 		}
 		final String styles = String.join("\n", externalStylesheets, emailStyles).strip();
 		return styles.isBlank() ? renderedBody.outerHtml() : styles + "\n" + renderedBody.outerHtml();
@@ -93,8 +98,8 @@ final class HtmlEmailTextExtractor {
 
 	private static String bodyStyle(final Document document) {
 		final Element body = document.body();
-		final var styles = new StringBuilder(body.attr("style").strip());
-		final String background = body.attr("background").strip();
+		final var styles = new StringBuilder(body.attr(STYLE).strip());
+		final String background = body.attr(BACKGROUND).strip();
 		if (isWebOrDataUrl(background)) {
 			appendStyle(styles, "background-image:url('" + background.replace("'", "%27") + "')");
 		}
@@ -110,14 +115,13 @@ final class HtmlEmailTextExtractor {
 	}
 
 	private static boolean hasRel(final Element element, final String expected) {
-		return java.util.Arrays.stream(element.attr("rel").split("\\s+"))
-				.anyMatch(value -> expected.equalsIgnoreCase(value));
+		return java.util.Arrays.stream(element.attr("rel").split("\\s+")).anyMatch(expected::equalsIgnoreCase);
 	}
 
 	private static boolean isWebOrDataUrl(final String value) {
 		try {
 			final String scheme = new URI(value).getScheme();
-			return scheme != null && Set.of("http", "https", "data").contains(scheme.toLowerCase(Locale.ROOT));
+			return scheme != null && Set.of("http", HTTPS, "data").contains(scheme.toLowerCase(Locale.ROOT));
 		} catch (final URISyntaxException exception) {
 			return false;
 		}
@@ -274,7 +278,7 @@ final class HtmlEmailTextExtractor {
 				if ("mailto".equalsIgnoreCase(uri.getScheme()) || "tel".equalsIgnoreCase(uri.getScheme())) {
 					return shorten(uri.getScheme().toLowerCase(Locale.ROOT) + ":" + uri.getSchemeSpecificPart().split("\\?", 2)[0]);
 				}
-				if (!"http".equalsIgnoreCase(uri.getScheme()) && !"https".equalsIgnoreCase(uri.getScheme())) {
+				if (!"http".equalsIgnoreCase(uri.getScheme()) && !HTTPS.equalsIgnoreCase(uri.getScheme())) {
 					return "";
 				}
 				return shorten(new URI(uri.getScheme().toLowerCase(Locale.ROOT), null, uri.getHost(), uri.getPort(),

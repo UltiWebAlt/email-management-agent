@@ -48,7 +48,7 @@ final class GmailMessageBodyExtractor {
 		if (part == null) {
 			return;
 		}
-		final String contentId = header(part, "Content-ID").strip().replaceAll("^<|>$", "");
+		final String contentId = header(part, "Content-ID").strip().replaceAll("(^<)|(>$)", "");
 		if (!contentId.isBlank() && mimeType(part).startsWith("image/") && hasBodyData(part.getBody())) {
 			final String encodedData = encodedData(part);
 			if (!encodedData.isBlank()) {
@@ -70,7 +70,7 @@ final class GmailMessageBodyExtractor {
 		final var output = new StringBuilder();
 		final var matcher = Pattern.compile("(?i)cid:([^\\s\\\"'<>\\)]+)").matcher(html);
 		while (matcher.find()) {
-			final String dataUri = inlineImages.get(matcher.group(1).replaceAll("^<|>$", "").toLowerCase(Locale.ROOT));
+			final String dataUri = inlineImages.get(matcher.group(1).replaceAll("(^<)|(>$)", "").toLowerCase(Locale.ROOT));
 			if (dataUri != null) {
 				matcher.appendReplacement(output, java.util.regex.Matcher.quoteReplacement(dataUri));
 			}
@@ -112,7 +112,7 @@ final class GmailMessageBodyExtractor {
 
 	private String decode(final MessagePart part) throws IOException {
 		final String data = encodedData(part);
-		if (data == null || data.isBlank()) {
+		if (data.isBlank()) {
 			return "";
 		}
 		return new String(Base64.getUrlDecoder().decode(data), charset(part));

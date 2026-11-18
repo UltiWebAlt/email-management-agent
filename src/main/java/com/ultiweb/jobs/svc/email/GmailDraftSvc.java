@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,15 +27,24 @@ import org.springframework.stereotype.Service;
 @Service
 public class GmailDraftSvc {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GmailDraftSvc.class);
-	private final GMailOAuth gmailOAuth;
+	private static final String METADATA_FORMAT = "metadata";
+	private static final String MESSAGE_ID_HEADER = "Message-ID";
+	private static final String REFERENCES_HEADER = "References";
+	private static final String FOLLOW_UP_HEADER = "X-Email-Agent-Follow-Up";
+	private final GmailFactory gmailFactory;
 
+	@Autowired
 	public GmailDraftSvc(final GMailOAuth gmailOAuth) {
-		this.gmailOAuth = gmailOAuth;
+		this((scopes, account) -> GmailServiceFactory.create(gmailOAuth, scopes, account));
+	}
+
+	GmailDraftSvc(final GmailFactory gmailFactory) {
+		this.gmailFactory = gmailFactory;
 	}
 
 	public String createDraft(final String account, final String recipient, final String subject, final String body)
 			throws IOException, MessagingException {
-		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_COMPOSE), account);
+		final Gmail gmail = gmailFactory.create(List.of(GmailScopes.GMAIL_COMPOSE), account);
 		final var mimeMessage = CreateEmail.createEmail(recipient, account, subject, body);
 		final Message message = CreateMessage.createMessageWithEmail(mimeMessage);
 		final Draft draft = gmail.users().drafts().create("me", new Draft().setMessage(message)).execute();
@@ -47,7 +57,7 @@ public class GmailDraftSvc {
 	public GmailSentMessage sendReply(final String account, final String draftId, final String recipient,
 			final String subject, final String body, final String labelName, final boolean redirectDraft)
 			throws IOException, MessagingException {
-		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_MODIFY), account);
+		final Gmail gmail = gmailFactory.create(List.of(GmailScopes.GMAIL_MODIFY), account);
 		String effectiveDraftId = draftId;
 		if (effectiveDraftId == null || effectiveDraftId.isBlank()) {
 			final Draft created = gmail.users().drafts().create("me", draft(account, recipient, subject, body)).execute();
@@ -79,9 +89,9 @@ public class GmailDraftSvc {
 
 	public Optional<GmailIncomingReply> findExternalReply(final String account, final String threadId,
 			final Instant after) throws IOException {
-		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_MODIFY), account);
+		final Gmail gmail = gmailFactory.create(List.of(GmailScopes.GMAIL_MODIFY), account);
 		final Thread thread = gmail.users().threads().get("me", threadId)
-				.setFormat("metadata").setMetadataHeaders(List.of("From")).execute();
+				.setFormat(METADATA_FORMAT).setMetadataHeaders(List.of("From")).execute();
 		if (thread.getMessages() == null) {
 			return Optional.empty();
 		}
@@ -96,24 +106,23 @@ public class GmailDraftSvc {
 				.findFirst();
 	}
 
-	public GmailSentMessage sendFollowUp(final String account, final String recipient, final String threadId,
-			final long positionId, final String parentMessageId, final String subject, final String body, final String labelName)
+	public GmailSentMessage sendFollowUp(final String account, final FollowUpEmail followUp, final String labelName)
 			throws IOException, MessagingException {
-		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_MODIFY), account);
-		final Message parent = gmail.users().messages().get("me", parentMessageId)
-				.setFormat("metadata").setMetadataHeaders(List.of("Message-ID", "References")).execute();
-		final String rfcMessageId = header(parent, "Message-ID");
+		final Gmail gmail = gmailFactory.create(List.of(GmailScopes.GMAIL_MODIFY), account);
+		final Message parent = gmail.users().messages().get("me", followUp.parentMessageId())
+				.setFormat(METADATA_FORMAT).setMetadataHeaders(List.of(MESSAGE_ID_HEADER, REFERENCES_HEADER)).execute();
+		final String rfcMessageId = header(parent, MESSAGE_ID_HEADER);
 		if (rfcMessageId.isBlank()) {
 			throw new IOException("Gmail did not return the parent RFC Message-ID");
 		}
-		final MimeMessage mimeMessage = CreateEmail.createEmail(recipient, account, subject, body);
+		final MimeMessage mimeMessage = CreateEmail.createEmail(followUp.recipient(), account, followUp.subject(), followUp.body());
 		mimeMessage.setHeader("In-Reply-To", rfcMessageId);
-		mimeMessage.setHeader("X-Email-Agent-Follow-Up", Long.toString(positionId));
-		final String parentReferences = header(parent, "References");
-		mimeMessage.setHeader("References", parentReferences.isBlank()
+		mimeMessage.setHeader(FOLLOW_UP_HEADER, Long.toString(followUp.positionId()));
+		final String parentReferences = header(parent, REFERENCES_HEADER);
+		mimeMessage.setHeader(REFERENCES_HEADER, parentReferences.isBlank()
 				? rfcMessageId
 				: parentReferences + " " + rfcMessageId);
-		final Message message = CreateMessage.createMessageWithEmail(mimeMessage).setThreadId(threadId);
+		final Message message = CreateMessage.createMessageWithEmail(mimeMessage).setThreadId(followUp.threadId());
 		final Message sent = gmail.users().messages().send("me", message).execute();
 		if (sent == null || sent.getId() == null || sent.getId().isBlank()) {
 			throw new IOException("Gmail returned no follow-up message ID");
@@ -134,14 +143,14 @@ public class GmailDraftSvc {
 
 	public java.util.Optional<GmailSentMessage> findExistingFollowUp(final String account, final String threadId,
 			final long positionId) throws IOException {
-		final Gmail gmail = GmailServiceFactory.create(gmailOAuth, List.of(GmailScopes.GMAIL_MODIFY), account);
+		final Gmail gmail = gmailFactory.create(List.of(GmailScopes.GMAIL_MODIFY), account);
 		final Thread thread = gmail.users().threads().get("me", threadId)
-				.setFormat("metadata").setMetadataHeaders(List.of("X-Email-Agent-Follow-Up")).execute();
+				.setFormat(METADATA_FORMAT).setMetadataHeaders(List.of(FOLLOW_UP_HEADER)).execute();
 		if (thread.getMessages() == null) {
 			return java.util.Optional.empty();
 		}
 		return thread.getMessages().stream()
-				.filter(message -> Long.toString(positionId).equals(header(message, "X-Email-Agent-Follow-Up")))
+				.filter(message -> Long.toString(positionId).equals(header(message, FOLLOW_UP_HEADER)))
 				.findFirst()
 				.map(message -> new GmailSentMessage(null, message.getId(), threadId,
 						internalDate(message), true));
@@ -173,5 +182,10 @@ public class GmailDraftSvc {
 
 	private static Instant internalDate(final Message message) {
 		return message.getInternalDate() == null ? null : Instant.ofEpochMilli(message.getInternalDate());
+	}
+
+	@FunctionalInterface
+	interface GmailFactory {
+		Gmail create(List<String> scopes, String account) throws IOException;
 	}
 }

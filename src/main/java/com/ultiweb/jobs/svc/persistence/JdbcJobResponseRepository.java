@@ -10,6 +10,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class JdbcJobResponseRepository implements JobResponseRepository {
+	private static final String SOURCE_ACCOUNT = "source_account";
+	private static final String RECRUITER_EMAIL = "recruiter_email";
+	private static final String SOURCE_SUBJECT = "source_subject";
 	private final JdbcOperations jdbcTemplate;
 
 	public JdbcJobResponseRepository(final JdbcOperations jdbcTemplate) {
@@ -131,8 +134,8 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 				JOIN responses response ON response.position_id = p.id
 				WHERE p.id = ? AND response.response_type = 'INITIAL_RESPONSE' AND response.response_status = 'SENDING'
 				""", (resultSet, rowNumber) -> new ResponseSendCandidate(
-				resultSet.getLong("id"), resultSet.getString("source_account"),
-				resultSet.getString("recruiter_email"), resultSet.getString("source_subject"),
+				resultSet.getLong("id"), resultSet.getString(SOURCE_ACCOUNT),
+				resultSet.getString(RECRUITER_EMAIL), resultSet.getString(SOURCE_SUBJECT),
 				resultSet.getString("response_content"), resultSet.getString("gmail_draft_id")), positionId)
 				.stream().findFirst();
 	}
@@ -261,14 +264,14 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 		jdbcTemplate.update("""
 				UPDATE responses SET follow_up_status = 'FAILED', follow_up_needed = 1, updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
-			""", updatedAt.toString(), positionId);
+				""", updatedAt.toString(), positionId);
 	}
 
 	private static ResponseFollowUpCandidate followUpCandidateRow(final ResultSet resultSet, final int rowNumber)
 			throws SQLException {
-		return new ResponseFollowUpCandidate(resultSet.getLong("id"), resultSet.getString("source_account"),
-				resultSet.getString("recruiter_email"), resultSet.getString("recruiter_name"),
-				resultSet.getString("title"), resultSet.getString("source_subject"),
+		return new ResponseFollowUpCandidate(resultSet.getLong("id"), resultSet.getString(SOURCE_ACCOUNT),
+				resultSet.getString(RECRUITER_EMAIL), resultSet.getString("recruiter_name"),
+				resultSet.getString("title"), resultSet.getString(SOURCE_SUBJECT),
 				resultSet.getString("response_content"), resultSet.getString("follow_up_content"),
 				resultSet.getString("gmail_message_id"),
 				resultSet.getString("gmail_thread_id"), instant(resultSet.getString("sent_at")),
@@ -285,13 +288,13 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 		return new ResponseCandidate(
 				resultSet.getLong("id"),
 				resultSet.getLong("recruiter_id"),
-				resultSet.getString("source_account"),
-				resultSet.getString("source_subject"),
+				resultSet.getString(SOURCE_ACCOUNT),
+				resultSet.getString(SOURCE_SUBJECT),
 				resultSet.getString("source_sender"),
 				resultSet.getString("description"),
 				resultSet.getString("summary"),
 				resultSet.getString("title"),
-				resultSet.getString("recruiter_email"),
+				resultSet.getString(RECRUITER_EMAIL),
 				resultSet.getString("recruiter_name"));
 	}
 }

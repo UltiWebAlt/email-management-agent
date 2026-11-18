@@ -65,8 +65,12 @@ public final class DeepInfraEmailReplyGenerator {
 	}
 
 	DeepInfraEmailReplyGenerator(final String apiKey, final EmailAiClient client) {
+		this(apiKey, client, new org.springframework.core.io.ClassPathResource("resumes/Randall_Burgess_Resume.md"));
+	}
+
+	DeepInfraEmailReplyGenerator(final String apiKey, final EmailAiClient client, final Resource profile) {
 		this("https://api.deepinfra.com/v1/openai", apiKey, "test-model",
-				new org.springframework.core.io.ClassPathResource("resumes/Randall_Burgess_Resume.md"));
+				profile);
 		this.client = client;
 	}
 
@@ -116,15 +120,30 @@ public final class DeepInfraEmailReplyGenerator {
 				return "No candidate background provided.";
 			}
 			try (InputStream stream = candidateProfile.getInputStream()) {
-				final String profile = new String(stream.readAllBytes(), StandardCharsets.UTF_8)
-						.replaceAll("(?s)<!--.*?-->", "").strip();
+				final String profile = withoutHtmlComments(new String(stream.readAllBytes(), StandardCharsets.UTF_8)).strip();
 				final List<String> contentLines = profile.lines().map(String::strip).filter(line -> !line.isEmpty()).toList();
-				final boolean headingsOnly = contentLines.stream().allMatch(line -> line.matches("#{1,6}\\s+.*"));
+				final boolean headingsOnly = contentLines.stream().allMatch(line -> line.matches("#{1,6}\\s++.*"));
 				return profile.isBlank() || headingsOnly ? "No candidate background provided." : profile;
 			}
 		} catch (final IOException exception) {
 			throw new IllegalStateException("Unable to read candidate profile resource " + candidateProfile, exception);
 		}
+	}
+
+	private static String withoutHtmlComments(final String text) {
+		final var output = new StringBuilder();
+		int position = 0;
+		int commentStart = text.indexOf("<!--", position);
+		while (commentStart >= 0) {
+			final int commentEnd = text.indexOf("-->", commentStart + 4);
+			if (commentEnd < 0) {
+				break;
+			}
+			output.append(text, position, commentStart);
+			position = commentEnd + 3;
+			commentStart = text.indexOf("<!--", position);
+		}
+		return output.append(text, position, text.length()).toString();
 	}
 
 	private synchronized EmailAiClient client() {
@@ -134,7 +153,7 @@ public final class DeepInfraEmailReplyGenerator {
 					io.micrometer.observation.ObservationRegistry.NOOP, null, List.of());
 			final var model = OpenAiChatModel.builder()
 					.openAiClient(openAiClient)
-					.options(OpenAiChatOptions.builder().model(modelName).temperature(0.2).build())
+					.options(OpenAiChatOptions.builder().apiKey(apiKey).model(modelName).temperature(0.2).build())
 					.build();
 			client = new SpringAiEmailClient(ChatClient.create(model));
 		}
