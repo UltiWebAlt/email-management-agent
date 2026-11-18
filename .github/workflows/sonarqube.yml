@@ -39,8 +39,8 @@ jobs:
             fi
           done
           case "$SONAR_HOST_URL" in
-            http://*.ts.net|http://*.ts.net:*|https://*.ts.net|https://*.ts.net:*) ;;
-            *) echo "::error::SONAR_HOST_URL must use the local server's tailnet DNS name."; exit 1 ;;
+            https://*) ;;
+            *) echo "::error::SONAR_HOST_URL must use the HTTPS Caddy proxy URL (for example, https://sonar.ultiweb.com)."; exit 1 ;;
           esac
 
       - name: Checkout repository
