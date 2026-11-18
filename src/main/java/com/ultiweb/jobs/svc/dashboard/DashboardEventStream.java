@@ -49,6 +49,10 @@ public final class DashboardEventStream {
 		emit("import-state", Map.of("running", running));
 	}
 
+	public void opportunityRemoved() {
+		emit("opportunity-removed");
+	}
+
 	@EventListener
 	public void responseUpdated(final DashboardResponseUpdatedEvent event) {
 		emit("response-updated");

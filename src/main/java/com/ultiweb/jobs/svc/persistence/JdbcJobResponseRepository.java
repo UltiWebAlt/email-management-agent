@@ -20,7 +20,9 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 	public int updateSelections(final List<ResponseSelectionChange> changes) {
 		int updated = 0;
 		for (final ResponseSelectionChange change : changes) {
-			updated += jdbcTemplate.update("UPDATE positions SET respond_to = ? WHERE id = ?",
+			updated += jdbcTemplate.update("""
+					UPDATE positions SET respond_to = ? WHERE id = ? AND dismissed = 0 AND trash_pending = 0
+					""",
 					change.selected() ? 1 : 0, change.positionId());
 		}
 		return updated;
@@ -103,6 +105,180 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 				UPDATE responses SET response_status = 'FAILED', updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status IN ('GENERATING', 'GENERATED')
 				""", updatedAt.toString(), positionId);
+	}
+
+	@Override
+	public Optional<ResponseSendCandidate> claimResponseForSending(final long positionId, final Instant updatedAt) {
+		final int claimed = jdbcTemplate.update("""
+				UPDATE responses SET response_status = 'SENDING', updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE'
+				AND response_status IN ('SAVED_FOR_REVIEW', 'DRAFT_CREATED', 'SEND_FAILED')
+				AND NULLIF(TRIM(response_content), '') IS NOT NULL
+				AND EXISTS (
+				SELECT 1 FROM positions p JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
+				WHERE p.id = responses.position_id AND p.dismissed = 0
+				AND NULLIF(TRIM(p.source_account), '') IS NOT NULL
+				AND NULLIF(TRIM(recruiter.email), '') IS NOT NULL)
+				""", updatedAt.toString(), positionId);
+		if (claimed != 1) {
+			return Optional.empty();
+		}
+		return jdbcTemplate.query("""
+				SELECT p.id, p.source_account, recruiter.email AS recruiter_email, p.source_subject,
+				response.response_content, response.gmail_draft_id
+				FROM positions p
+				JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
+				JOIN responses response ON response.position_id = p.id
+				WHERE p.id = ? AND response.response_type = 'INITIAL_RESPONSE' AND response.response_status = 'SENDING'
+				""", (resultSet, rowNumber) -> new ResponseSendCandidate(
+				resultSet.getLong("id"), resultSet.getString("source_account"),
+				resultSet.getString("recruiter_email"), resultSet.getString("source_subject"),
+				resultSet.getString("response_content"), resultSet.getString("gmail_draft_id")), positionId)
+				.stream().findFirst();
+	}
+
+	@Override
+	public void saveSendingDraftId(final long positionId, final String draftId, final Instant updatedAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET gmail_draft_id = ?, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
+				""", draftId, updatedAt.toString(), positionId);
+	}
+
+	@Override
+	public void markResponseSent(final long positionId, final String draftId, final String gmailMessageId,
+			final String gmailThreadId, final String status, final Instant sentAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET response_status = ?, gmail_draft_id = ?, gmail_message_id = ?,
+				gmail_thread_id = ?, sent_at = ?, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
+				""", status, draftId, gmailMessageId, gmailThreadId, sentAt.toString(), sentAt.toString(), positionId);
+	}
+
+	@Override
+	public void markResponseSendFailed(final long positionId, final Instant updatedAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET response_status = 'SEND_FAILED', updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
+				""", updatedAt.toString(), positionId);
+	}
+
+	@Override
+	public List<ResponseFollowUpCandidate> findResponsesForFollowUp(final Instant dueBefore) {
+		return jdbcTemplate.query("""
+				SELECT p.id, p.source_account, recruiter.email AS recruiter_email, recruiter.name AS recruiter_name,
+				p.title, p.source_subject, response.response_content, response.follow_up_content,
+				response.gmail_message_id, response.gmail_thread_id, response.sent_at, response.follow_up_status,
+				response.follow_up_sent_at, response.follow_up_message_id, response.recruiter_reply_at,
+				response.recruiter_reply_message_id
+				FROM responses response
+				JOIN positions p ON p.id = response.position_id
+				JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
+				WHERE response.response_type = 'INITIAL_RESPONSE'
+				AND response.response_status IN ('SENT', 'SENT_LABEL_FAILED')
+				AND response.gmail_message_id IS NOT NULL AND response.gmail_thread_id IS NOT NULL
+				AND datetime(response.sent_at) <= datetime(?)
+				AND (response.follow_up_status IS NULL OR response.follow_up_status IN ('FAILED', 'SENT'))
+				AND p.dismissed = 0
+				ORDER BY response.sent_at, p.id
+				""", JdbcJobResponseRepository::followUpCandidateRow, dueBefore.toString());
+	}
+
+	@Override
+	public int releaseStaleFollowUpChecks(final Instant staleBefore, final Instant updatedAt) {
+		return jdbcTemplate.update("""
+				UPDATE responses SET follow_up_status = 'FAILED', follow_up_needed = 1, updated_at = ?
+				WHERE response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
+				AND datetime(updated_at) <= datetime(?)
+				""", updatedAt.toString(), staleBefore.toString());
+	}
+
+	@Override
+	public Optional<ResponseFollowUpCandidate> claimFollowUp(final long positionId, final Instant updatedAt,
+			final Instant dueBefore) {
+		final int claimed = jdbcTemplate.update("""
+				UPDATE responses SET follow_up_status = 'CHECKING', updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE'
+				AND response_status IN ('SENT', 'SENT_LABEL_FAILED')
+				AND datetime(sent_at) <= datetime(?)
+				AND (follow_up_status IS NULL OR follow_up_status IN ('FAILED', 'SENT'))
+				AND EXISTS (SELECT 1 FROM positions p WHERE p.id = responses.position_id AND p.dismissed = 0)
+				""", updatedAt.toString(), positionId, dueBefore.toString());
+		if (claimed != 1) {
+			return Optional.empty();
+		}
+		return jdbcTemplate.query("""
+				SELECT p.id, p.source_account, recruiter.email AS recruiter_email, recruiter.name AS recruiter_name,
+				p.title, p.source_subject, response.response_content, response.follow_up_content,
+				response.gmail_message_id, response.gmail_thread_id, response.sent_at, response.follow_up_status,
+				response.follow_up_sent_at, response.follow_up_message_id, response.recruiter_reply_at,
+				response.recruiter_reply_message_id
+				FROM responses response JOIN positions p ON p.id = response.position_id
+				JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
+				WHERE response.position_id = ? AND response.response_type = 'INITIAL_RESPONSE'
+				AND response.follow_up_status = 'CHECKING'
+				""", JdbcJobResponseRepository::followUpCandidateRow, positionId).stream().findFirst();
+	}
+
+	@Override
+	public void storeFollowUpContent(final long positionId, final String content, final Instant updatedAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET follow_up_content = ?, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
+				""", content, updatedAt.toString(), positionId);
+	}
+
+	@Override
+	public void markReplied(final long positionId, final String messageId, final Instant receivedAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET follow_up_status = 'REPLIED', recruiter_reply_message_id = ?,
+				recruiter_reply_at = ?, follow_up_needed = 0, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
+				""", messageId, receivedAt.toString(), receivedAt.toString(), positionId);
+	}
+
+	@Override
+	public void markFollowUpSent(final long positionId, final String content, final String messageId,
+			final Instant sentAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET follow_up_status = 'SENT', follow_up_content = ?,
+				follow_up_sent_at = ?, follow_up_message_id = ?,
+				follow_up_needed = 0, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
+				""", content, sentAt.toString(), messageId, sentAt.toString(), positionId);
+	}
+
+	@Override
+	public void markFollowUpUnanswered(final long positionId, final Instant updatedAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET follow_up_status = 'SENT', updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
+				""", updatedAt.toString(), positionId);
+	}
+
+	@Override
+	public void markFollowUpFailed(final long positionId, final Instant updatedAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET follow_up_status = 'FAILED', follow_up_needed = 1, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
+			""", updatedAt.toString(), positionId);
+	}
+
+	private static ResponseFollowUpCandidate followUpCandidateRow(final ResultSet resultSet, final int rowNumber)
+			throws SQLException {
+		return new ResponseFollowUpCandidate(resultSet.getLong("id"), resultSet.getString("source_account"),
+				resultSet.getString("recruiter_email"), resultSet.getString("recruiter_name"),
+				resultSet.getString("title"), resultSet.getString("source_subject"),
+				resultSet.getString("response_content"), resultSet.getString("follow_up_content"),
+				resultSet.getString("gmail_message_id"),
+				resultSet.getString("gmail_thread_id"), instant(resultSet.getString("sent_at")),
+				resultSet.getString("follow_up_status"), instant(resultSet.getString("follow_up_sent_at")),
+				resultSet.getString("follow_up_message_id"), instant(resultSet.getString("recruiter_reply_at")),
+				resultSet.getString("recruiter_reply_message_id"));
+	}
+
+	private static Instant instant(final String value) {
+		return value == null || value.isBlank() ? null : Instant.parse(value);
 	}
 
 	private static ResponseCandidate candidateRow(final ResultSet resultSet, final int rowNumber) throws SQLException {

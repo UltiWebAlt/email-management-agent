@@ -529,9 +529,15 @@ h1 {
 }
 
 .response-status.status-draft_created,
-.response-status.status-saved_for_review {
+.response-status.status-saved_for_review,
+.response-status.status-sent {
 	background: #eaf7f2;
 	color: #28745e;
+}
+
+.response-status.status-send_failed {
+	background: #fff1f0;
+	color: #9f342f;
 }
 
 .response-preview {
@@ -549,6 +555,26 @@ h1 {
 	margin: 0.35rem 0 0;
 	overflow: auto;
 	white-space: pre-wrap;
+}
+
+.response-preview p[hidden] {
+	display: none;
+}
+
+.response-preview-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.response-preview-toggle {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--blue);
+	font-size: 0.74rem;
+	font-weight: 700;
 }
 
 .pagination {
@@ -729,6 +755,25 @@ dialog::backdrop {
 	font-size: 1.35rem;
 }
 
+.dialog-subtitle {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+	margin-top: 0.25rem;
+	color: var(--muted);
+	font-size: 0.84rem;
+}
+
+.dialog-subtitle a {
+	color: var(--blue);
+	font-weight: 700;
+}
+
+#response-email {
+	scroll-margin-top: 1rem;
+}
+
 .icon-button {
 	display: grid;
 	place-items: center;
@@ -785,9 +830,46 @@ dialog::backdrop {
 	margin-top: 1.2rem;
 }
 
+.detail-email-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.65rem;
+}
+
+.detail-email-actions p {
+	flex: 1 0 100%;
+	margin: 0;
+}
+
 .detail-section h3 {
 	margin-bottom: 0.45rem;
 	font-size: 0.9rem;
+}
+
+.response-section-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.response-section-heading h3 {
+	margin-bottom: 0.45rem;
+}
+
+.response-visibility-toggle {
+	margin-bottom: 0.45rem;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--blue);
+	font-size: 0.8rem;
+	font-weight: 700;
+}
+
+.response-email-content[hidden] {
+	display: none;
 }
 
 .detail-section p {

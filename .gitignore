@@ -9,6 +9,7 @@ tokens/
 data/job-search*.db*
 data/*.db-shm
 data/*.db-wal
+/src/main/resources/resumes/Randall_Burgess_Resume.md
 
 !gradle.properties
 !gradle/wrapper/gradle-wrapper.properties

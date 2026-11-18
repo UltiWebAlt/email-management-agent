@@ -7,6 +7,10 @@ import com.ultiweb.jobs.svc.dashboard.JobDashboardSvc;
 import com.ultiweb.jobs.svc.dashboard.ResponsePreparationWorkflowSvc;
 import com.ultiweb.jobs.svc.dashboard.ResponseSelectionResult;
 import com.ultiweb.jobs.svc.dashboard.SaveResponseSelectionRequest;
+import java.io.IOException;
+import javax.mail.MessagingException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,5 +56,23 @@ public final class JobDashboardController {
 	@PostMapping("/selections")
 	public ResponseSelectionResult saveSelections(@RequestBody final SaveResponseSelectionRequest request) {
 		return responseWorkflowSvc.save(request.changes());
+	}
+
+	@PostMapping("/jobs/{id}/response")
+	public ResponseSelectionResult prepareResponse(@PathVariable final long id) {
+		return responseWorkflowSvc.prepare(id);
+	}
+
+	@PostMapping("/jobs/{id}/response/send")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void sendResponse(@PathVariable final long id) {
+		try {
+			if (!responseWorkflowSvc.send(id)) {
+				throw new ResponseStatusException(HttpStatus.CONFLICT,
+						"This response is already being sent or is not ready to send");
+			}
+		} catch (final IOException | MessagingException exception) {
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gmail could not send this response", exception);
+		}
 	}
 }

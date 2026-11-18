@@ -12,4 +12,15 @@ public interface JobDashboardRepository {
 	List<JobDashboardRow> findJobs(String query, JobSortOrder sortOrder, int offset, int limit);
 
 	Optional<JobDashboardDetailsRow> findById(long id);
+
+	Optional<GmailSource> findGmailSource(long id);
+
+	boolean reserveEmailTrash(long id);
+
+	void releaseEmailTrash(long id);
+
+	void dismiss(long id);
+
+	record GmailSource(String account, String messageId) {
+	}
 }

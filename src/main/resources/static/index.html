@@ -90,7 +90,7 @@
 				</div>
 				<div class="selection-toolbar">
 					<div class="selection-actions">
-						<button class="secondary-button hidden" id="import-emails" type="button">Import recent Gmail emails</button>
+						<button class="secondary-button hidden" id="import-emails" type="button" disabled>Import recent Gmail emails</button>
 						<button class="primary-button" id="save-selections" type="button">Save selections &amp; prepare replies</button>
 					</div>
 					<span class="selection-status" id="selection-status" aria-live="polite">Select opportunities to prepare responses.</span>
@@ -152,7 +152,10 @@
 				</button>
 				<span class="response-status hidden"></span>
 				<div class="response-preview hidden">
-					<strong>Prepared response</strong>
+					<div class="response-preview-heading">
+						<strong>Prepared response</strong>
+						<button class="response-preview-toggle" type="button">Hide response</button>
+					</div>
 					<p class="response-preview-text"></p>
 				</div>
 			</div>
@@ -165,6 +168,10 @@
 				<div>
 					<p class="eyebrow">Opportunity details</p>
 					<h2 id="dialog-title">Loading…</h2>
+					<div class="dialog-subtitle">
+						<span id="dialog-company"></span>
+						<a class="hidden" id="response-email-link" href="#response-email">Response Email</a>
+					</div>
 				</div>
 				<button class="icon-button" id="close-dialog" type="button" aria-label="Close details">×</button>
 			</header>

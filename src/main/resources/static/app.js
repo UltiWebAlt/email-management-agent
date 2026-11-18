@@ -17,6 +17,8 @@ const elements = {
 	template: document.querySelector("#job-template"),
 	dialog: document.querySelector("#job-dialog"),
 	dialogTitle: document.querySelector("#dialog-title"),
+	dialogCompany: document.querySelector("#dialog-company"),
+	responseEmailLink: document.querySelector("#response-email-link"),
 	dialogBody: document.querySelector("#dialog-body"),
 	closeDialog: document.querySelector("#close-dialog"),
 	saveSelections: document.querySelector("#save-selections"),
@@ -30,12 +32,28 @@ const elements = {
 };
 
 const pendingSelections = new Map();
+const trashInProgress = new Set();
+const responsePreparationInProgress = new Set();
+const responseSendInProgress = new Set();
+const responseVisibilityStorageKey = "email-management-agent:hidden-responses";
+const hiddenResponses = new Set();
+try {
+	const savedHiddenResponses = JSON.parse(localStorage.getItem(responseVisibilityStorageKey) || "[]");
+	if (Array.isArray(savedHiddenResponses)) {
+		savedHiddenResponses.map(Number).filter(Number.isSafeInteger).forEach(id => hiddenResponses.add(id));
+	}
+} catch {
+	// Response visibility still works for this page if browser storage is unavailable.
+}
 const pageSize = 20;
 let currentPage = 0;
 let saving = false;
 let workflowMessage = "";
 let localImportRequest = false;
 let remoteImportRunning = false;
+let importStatusRequest = 0;
+let currentDetailId = null;
+let openDetailActions = null;
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
 	month: "short",
@@ -99,7 +117,16 @@ function responseStatusLabel(status) {
 		GENERATED: "Draft body ready",
 		DRAFT_CREATED: "Gmail draft created",
 		SAVED_FOR_REVIEW: "Saved in development database",
-		FAILED: "Preparation failed · save to retry"
+		FAILED: "Preparation failed · save to retry",
+		SENDING: "Sending from Gmail",
+		SENT: "Sent from Gmail",
+		SENT_LABEL_FAILED: "Sent · test label could not be applied",
+		SEND_FAILED: "Sending failed · retry",
+		AWAITING_REPLY: "Sent · waiting for a reply",
+		CHECKING_RESPONSE: "Checking for a reply",
+		FOLLOW_UP_SENT: "Follow-up sent · waiting for a reply",
+		FOLLOW_UP_FAILED: "Follow-up failed · retrying automatically",
+		REPLIED: "Recruiter replied"
 	};
 	return labels[status] || "";
 }
@@ -112,9 +139,41 @@ function updateSelectionStatus() {
 		: workflowMessage || `${selectedOnPage} selected on this page. Saved selections are kept across pages.`;
 }
 
+function setResponseHidden(jobId, hidden) {
+	if (hidden) {
+		hiddenResponses.add(jobId);
+	} else {
+		hiddenResponses.delete(jobId);
+	}
+	try {
+		localStorage.setItem(responseVisibilityStorageKey, JSON.stringify([...hiddenResponses]));
+	} catch {
+		// Keep the visibility change for this page if browser storage is unavailable.
+	}
+	const card = elements.jobList.querySelector(`[data-job-id="${jobId}"]`);
+	if (card) {
+		const previewText = card.querySelector(".response-preview-text");
+		const previewToggle = card.querySelector(".response-preview-toggle");
+		previewText.hidden = hidden;
+		previewToggle.textContent = hidden ? "Show response" : "Hide response";
+	}
+	if (currentDetailId === jobId) {
+		const detailText = elements.dialogBody.querySelector(".response-email-content");
+		const detailToggle = elements.dialogBody.querySelector(".response-visibility-toggle");
+		if (detailText) {
+			detailText.hidden = hidden;
+		}
+		if (detailToggle) {
+			detailToggle.textContent = hidden ? "Show response" : "Hide response";
+		}
+		elements.responseEmailLink.textContent = hidden ? "Show Response Email" : "Response Email";
+	}
+}
+
 function renderJob(job) {
 	const fragment = elements.template.content.cloneNode(true);
 	const card = fragment.querySelector(".job-card");
+	card.dataset.jobId = job.id;
 	const checkbox = fragment.querySelector(".job-select");
 	const date = job.receivedAt || job.savedAt;
 	fragment.querySelector(".company-avatar").textContent = initials(contactName(job));
@@ -124,17 +183,30 @@ function renderJob(job) {
 	fragment.querySelector(".job-date").dateTime = date || "";
 	fragment.querySelector(".job-summary").textContent = valueOrFallback(job.summary, "No summary was stored.");
 	fragment.querySelector(".job-meta").textContent = jobMeta(job);
-	checkbox.checked = pendingSelections.has(job.id) ? pendingSelections.get(job.id) : job.selectedForResponse;
+	const responseCreated = Boolean(job.responseContent)
+		|| job.responseStatus === "DRAFT_CREATED"
+		|| job.responseStatus === "SAVED_FOR_REVIEW";
+	checkbox.checked = responseCreated || (pendingSelections.has(job.id) ? pendingSelections.get(job.id) : job.selectedForResponse);
+	checkbox.disabled = responseCreated;
 	checkbox.setAttribute("aria-label", `Select ${valueOrFallback(job.title, "opportunity")} to respond to`);
 	checkbox.addEventListener("change", () => {
+		if (trashInProgress.has(job.id)) {
+			checkbox.checked = false;
+			return;
+		}
 		workflowMessage = "";
 		pendingSelections.set(job.id, checkbox.checked);
+		updateOpenDetailActions();
 		updateSelectionStatus();
 	});
 	fragment.querySelector(".job-open").addEventListener("click", () => openDetails(job.id));
 	const responsePreview = fragment.querySelector(".response-preview");
 	if (job.responseContent) {
 		fragment.querySelector(".response-preview-text").textContent = job.responseContent;
+		fragment.querySelector(".response-preview-text").hidden = hiddenResponses.has(job.id);
+		const toggle = fragment.querySelector(".response-preview-toggle");
+		toggle.textContent = hiddenResponses.has(job.id) ? "Show response" : "Hide response";
+		toggle.addEventListener("click", () => setResponseHidden(job.id, !hiddenResponses.has(job.id)));
 		responsePreview.classList.remove("hidden");
 	}
 	const status = fragment.querySelector(".response-status");
@@ -183,7 +255,11 @@ function renderDashboard(data) {
 	elements.pageDescription.textContent = `Page ${data.page + 1} of ${data.totalPages}`;
 	elements.previousPage.disabled = data.page <= 0;
 	elements.nextPage.disabled = data.page + 1 >= data.totalPages;
+	const importJustEnabled = data.emailImportEnabled && elements.importEmails.classList.contains("hidden");
 	elements.importEmails.classList.toggle("hidden", !data.emailImportEnabled);
+	if (importJustEnabled) {
+		syncImportStatus();
+	}
 	elements.emptyState.classList.toggle("hidden", data.jobs.length > 0);
 	elements.emptyCopy.textContent = data.query
 		? `Nothing matched “${data.query}”. Try a broader search.`
@@ -246,6 +322,9 @@ async function saveSelections() {
 }
 
 async function importArchitectEmails() {
+	if (localImportRequest || elements.importEmails.disabled) {
+		return;
+	}
 	localImportRequest = true;
 	setImportRunning(true);
 	elements.importNotice.textContent = "Classifying recent inbox emails and manually tagged architect emails. The import stops after saving 10 new architect opportunities.";
@@ -254,6 +333,11 @@ async function importArchitectEmails() {
 	elements.error.classList.add("hidden");
 	try {
 		const response = await fetch("/api/dashboard/dev/import-architect-emails", { method: "POST" });
+		if (response.status === 409) {
+			localImportRequest = false;
+			setImportRunning(true);
+			return;
+		}
 		const result = await response.json();
 		if (!response.ok) {
 			throw new Error(result.message || "Gmail import failed");
@@ -276,16 +360,16 @@ async function importArchitectEmails() {
 }
 
 function setImportRunning(running) {
-	elements.importEmails.disabled = running;
-	elements.importEmails.textContent = running ? "Import in progress…" : "Import recent Gmail emails";
+	elements.importEmails.disabled = running || localImportRequest;
+	elements.importEmails.textContent = elements.importEmails.disabled ? "Import in progress…" : "Import recent Gmail emails";
 	if (running && !localImportRequest) {
 		remoteImportRunning = true;
-		elements.importNotice.textContent = "An email import is running from another dashboard session.";
+		elements.importNotice.textContent = "An email import is already running.";
 		elements.importNotice.classList.remove("hidden", "is-error");
 		elements.importNotice.classList.add("is-loading");
 	} else if (!running && remoteImportRunning) {
 		remoteImportRunning = false;
-		elements.importNotice.textContent = "The email import from the other dashboard session has finished.";
+		elements.importNotice.textContent = "The email import has finished.";
 		elements.importNotice.classList.remove("hidden", "is-loading", "is-error");
 	}
 }
@@ -294,13 +378,17 @@ async function syncImportStatus() {
 	if (elements.importEmails.classList.contains("hidden")) {
 		return;
 	}
+	const request = ++importStatusRequest;
 	try {
 		const response = await fetch("/api/dashboard/dev/import-architect-emails/status", {
+			cache: "no-store",
 			headers: { Accept: "application/json" }
 		});
 		if (response.ok) {
 			const status = await response.json();
-			setImportRunning(status.running === true);
+			if (request === importStatusRequest) {
+				setImportRunning(status.running === true);
+			}
 		}
 	} catch {
 		// The SSE stream will provide the next status change if this one-time sync fails.
@@ -329,6 +417,33 @@ function detailSection(title, value) {
 	return section;
 }
 
+function responseDetailSection(job) {
+	const section = document.createElement("section");
+	section.className = "detail-section response-detail-section";
+	section.id = "response-email";
+	const headingRow = document.createElement("div");
+	headingRow.className = "response-section-heading";
+	const heading = document.createElement("h3");
+	heading.textContent = "Prepared response";
+	const toggle = document.createElement("button");
+	toggle.className = "response-visibility-toggle";
+	toggle.type = "button";
+	const content = document.createElement("p");
+	content.className = "response-email-content";
+	content.textContent = job.responseContent;
+	const updateVisibility = () => {
+		const hidden = hiddenResponses.has(job.id);
+		content.hidden = hidden;
+		toggle.textContent = hidden ? "Show response" : "Hide response";
+		elements.responseEmailLink.textContent = hidden ? "Show Response Email" : "Response Email";
+	};
+	toggle.addEventListener("click", () => setResponseHidden(job.id, !hiddenResponses.has(job.id)));
+	headingRow.append(heading, toggle);
+	section.append(headingRow, content);
+	updateVisibility();
+	return section;
+}
+
 function originalEmailSection(job) {
 	const section = document.createElement("section");
 	section.className = "detail-section email-content-section";
@@ -341,16 +456,10 @@ function originalEmailSection(job) {
 		frame.setAttribute("sandbox", "allow-popups allow-popups-to-escape-sandbox");
 		frame.setAttribute("referrerpolicy", "no-referrer");
 		const frameStyles = `
-			* { box-sizing: border-box; max-width: 100% !important; }
-			html, body { width: 100%; max-width: 100%; margin: 0; overflow-x: hidden; }
-			body { padding: 16px; font: 14px/1.55 system-ui, sans-serif; color: #253047; overflow-wrap: anywhere; }
-			img, video, svg { max-width: 100% !important; height: auto !important; }
-			table { width: 100% !important; max-width: 100% !important; table-layout: fixed !important; border-collapse: collapse; }
-			td, th { max-width: 100% !important; padding: 5px; border: 1px solid #d8deea; white-space: normal !important; overflow-wrap: anywhere !important; }
-			pre, code { white-space: pre-wrap !important; overflow-wrap: anywhere !important; }
-			a { color: #3158a8; overflow-wrap: anywhere !important; }
+			html, body { margin: 0; }
+			body { padding: 8px; }
 		`;
-		frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${frameStyles}</style></head><body>${job.htmlBody}</body></html>`;
+		frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; script-src 'none'; connect-src 'none'; img-src data: http: https:; style-src 'unsafe-inline' http: https:; font-src data: http: https:"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${frameStyles}</style></head><body>${job.htmlBody}</body></html>`;
 		section.append(heading, frame);
 	} else {
 		const content = document.createElement("pre");
@@ -361,8 +470,147 @@ function originalEmailSection(job) {
 	return section;
 }
 
+function updateOpenDetailActions() {
+	if (!openDetailActions) {
+		return;
+	}
+	const { job, prepareButton, sendButton, trashButton, status } = openDetailActions;
+	const responseCreated = Boolean(job.responseContent)
+		|| job.responseStatus === "DRAFT_CREATED"
+		|| job.responseStatus === "SAVED_FOR_REVIEW";
+	const responseFinished = ["SAVED_FOR_REVIEW", "DRAFT_CREATED", "SENT", "SENT_LABEL_FAILED",
+		"AWAITING_REPLY", "CHECKING_RESPONSE", "FOLLOW_UP_SENT", "FOLLOW_UP_FAILED", "REPLIED"].includes(job.responseStatus);
+	const selectedForResponse = !responseFinished && (job.selectedForResponse || pendingSelections.get(job.id) === true);
+	const preparingReply = responsePreparationInProgress.has(job.id)
+		|| job.responseStatus === "GENERATING" || job.responseStatus === "GENERATED";
+	const sendingReply = responseSendInProgress.has(job.id) || job.responseStatus === "SENDING";
+	const trashing = trashInProgress.has(job.id);
+	const retrying = job.responseStatus === "FAILED";
+	const sendable = Boolean(job.responseContent)
+		&& Boolean(job.sourceAccount)
+		&& Boolean(job.recruiterEmail)
+		&& ["DRAFT_CREATED", "SAVED_FOR_REVIEW", "SEND_FAILED"].includes(job.responseStatus);
+	prepareButton.hidden = responseCreated && !retrying;
+	prepareButton.disabled = preparingReply || trashing || (responseCreated && !retrying);
+	prepareButton.textContent = preparingReply ? "Preparing response…" : retrying ? "Retry response" : "Prepare response";
+	sendButton.hidden = !sendable;
+	sendButton.disabled = sendingReply || trashing;
+	sendButton.textContent = sendingReply ? "Sending…" : job.responseStatus === "SEND_FAILED" ? "Retry send" : "Send reply";
+	trashButton.disabled = selectedForResponse || preparingReply || trashing;
+	status.textContent = trashing
+		? "Moving email to Trash…"
+		: sendingReply
+			? "Sending the reply through Gmail…"
+		: preparingReply
+			? "Your response is being prepared."
+			: selectedForResponse
+				? "This email is selected for a reply. Clear the reply checkbox and save the change before moving it to Trash."
+				: "";
+}
+
+function detailEmailActions(job) {
+	const action = document.createElement("div");
+	action.className = "detail-section detail-email-actions";
+	const prepareButton = document.createElement("button");
+	prepareButton.className = "primary-button";
+	prepareButton.type = "button";
+	const sendButton = document.createElement("button");
+	sendButton.className = "primary-button";
+	sendButton.type = "button";
+	const trashButton = document.createElement("button");
+	trashButton.className = "secondary-button";
+	trashButton.type = "button";
+	trashButton.textContent = "Move to Gmail Trash";
+	trashButton.hidden = !job.sourceAccount;
+	const status = document.createElement("p");
+	status.setAttribute("role", "status");
+	openDetailActions = { job, prepareButton, sendButton, trashButton, status };
+	updateOpenDetailActions();
+	prepareButton.addEventListener("click", async () => {
+		responsePreparationInProgress.add(job.id);
+		updateOpenDetailActions();
+		try {
+			const response = await fetch(`/api/dashboard/jobs/${job.id}/response`, { method: "POST" });
+		const result = await response.json();
+			if (!response.ok) {
+				throw new Error(result.message || "Unable to prepare this response");
+			}
+			pendingSelections.delete(job.id);
+			workflowMessage = "Response preparation started for this opportunity.";
+			await Promise.all([
+				loadDashboard(elements.searchInput.value, currentPage),
+				refreshDetails(job.id)
+			]);
+		} catch (error) {
+			responsePreparationInProgress.delete(job.id);
+			updateOpenDetailActions();
+			status.textContent = error.message || "Unable to prepare this response. Please try again.";
+		}
+	});
+	sendButton.addEventListener("click", async () => {
+		if (!window.confirm(`Send this reply now? Production sends it to the recruiter. All other profiles send it to the source mailbox and apply the Gmail label “EMail Agent Test”.`)) {
+			return;
+		}
+		responseSendInProgress.add(job.id);
+		updateOpenDetailActions();
+		try {
+			const response = await fetch(`/api/dashboard/jobs/${job.id}/response/send`, { method: "POST" });
+			if (!response.ok) {
+				const result = await response.json().catch(() => ({}));
+				throw new Error(result.message || "Gmail could not send this reply");
+			}
+			await Promise.all([
+				loadDashboard(elements.searchInput.value, currentPage),
+				refreshDetails(job.id)
+			]);
+		} catch (error) {
+			responseSendInProgress.delete(job.id);
+			updateOpenDetailActions();
+			status.textContent = error.message || "Gmail could not send this reply. Please try again.";
+		}
+	});
+	trashButton.addEventListener("click", async () => {
+		if (!window.confirm(`Move this email to Trash in ${job.sourceAccount} and remove the job from the dashboard?`)) {
+			return;
+		}
+		trashInProgress.add(job.id);
+		updateOpenDetailActions();
+		try {
+			const response = await fetch(`/api/dashboard/jobs/${job.id}/email`, { method: "DELETE" });
+			if (!response.ok) {
+				if (response.status === 409) {
+					status.textContent = "Clear any saved reply selection or wait for the current action to finish.";
+					return;
+				}
+				status.textContent = response.status === 404
+					? "This job no longer has an available source email. Refresh the dashboard."
+					: "Could not move the email to Trash. Please try again.";
+				return;
+			}
+			pendingSelections.delete(job.id);
+			if (action.isConnected && elements.dialog.open) {
+				elements.dialog.close();
+			}
+			await loadDashboard();
+		} catch {
+			status.textContent = "Could not reach the dashboard. Refresh before trying again.";
+		} finally {
+			trashInProgress.delete(job.id);
+			updateOpenDetailActions();
+		}
+	});
+	action.append(prepareButton, sendButton, trashButton, status);
+	return action;
+}
+
 function renderDetails(job) {
+	openDetailActions = null;
 	elements.dialogTitle.textContent = valueOrFallback(job.title, "Architect opportunity");
+	elements.dialogCompany.textContent = valueOrFallback(job.company);
+	elements.responseEmailLink.classList.toggle("hidden", !job.responseContent);
+	if (job.responseContent) {
+		elements.responseEmailLink.textContent = hiddenResponses.has(job.id) ? "Show Response Email" : "Response Email";
+	}
 	const grid = document.createElement("div");
 	grid.className = "detail-grid";
 	grid.append(
@@ -375,19 +623,46 @@ function renderDetails(job) {
 		detailField("Source account", job.sourceAccount),
 		detailField("Sender", job.sourceSender)
 	);
+	const responseSection = job.responseContent ? responseDetailSection(job) : null;
 	elements.dialogBody.replaceChildren(
 		grid,
+		detailEmailActions(job),
 		detailSection("Email Summary", job.summary),
 		detailSection("Response status", responseStatusLabel(job.responseStatus) || "Not selected"),
-		...(job.responseContent ? [detailSection("Prepared response", job.responseContent)] : []),
+		...(responseSection ? [responseSection] : []),
 		...(job.gmailDraftId ? [detailSection("Gmail draft ID", job.gmailDraftId)] : []),
 		detailSection("Requirements", job.requirements),
 		originalEmailSection(job)
 	);
 }
 
+async function refreshDetails(id) {
+	try {
+		const response = await fetch(`/api/dashboard/jobs/${id}`, { headers: { Accept: "application/json" } });
+		if (!response.ok) {
+			return;
+		}
+		const job = await response.json();
+		if (currentDetailId !== id || !elements.dialog.open) {
+			return;
+		}
+		if (job.responseStatus !== "GENERATING" && job.responseStatus !== "GENERATED") {
+			responsePreparationInProgress.delete(id);
+		}
+		if (job.responseStatus !== "SENDING") {
+			responseSendInProgress.delete(id);
+		}
+		renderDetails(job);
+	} catch {
+		// The existing detail view remains visible if a status refresh fails.
+	}
+}
+
 async function openDetails(id) {
+	currentDetailId = id;
 	elements.dialogTitle.textContent = "Loading…";
+	elements.dialogCompany.textContent = "";
+	elements.responseEmailLink.classList.add("hidden");
 	elements.dialogBody.replaceChildren();
 	elements.dialog.showModal();
 	try {
@@ -395,7 +670,16 @@ async function openDetails(id) {
 		if (!response.ok) {
 			throw new Error(`Job request failed with status ${response.status}`);
 		}
-		renderDetails(await response.json());
+		const job = await response.json();
+		if (currentDetailId === id) {
+			if (job.responseStatus !== "GENERATING" && job.responseStatus !== "GENERATED") {
+				responsePreparationInProgress.delete(id);
+			}
+			if (job.responseStatus !== "SENDING") {
+				responseSendInProgress.delete(id);
+			}
+			renderDetails(job);
+		}
 	} catch (error) {
 		elements.dialogTitle.textContent = "Unable to load opportunity";
 		elements.dialogBody.append(detailSection("Try again", "Close this panel, refresh the dashboard, and try again."));
@@ -414,6 +698,19 @@ elements.importEmails.addEventListener("click", importArchitectEmails);
 elements.previousPage.addEventListener("click", () => loadDashboard(elements.searchInput.value, Math.max(0, currentPage - 1)));
 elements.nextPage.addEventListener("click", () => loadDashboard(elements.searchInput.value, currentPage + 1));
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
+elements.responseEmailLink.addEventListener("click", event => {
+	if (currentDetailId === null || !hiddenResponses.has(currentDetailId)) {
+		return;
+	}
+	event.preventDefault();
+	setResponseHidden(currentDetailId, false);
+	elements.dialogBody.querySelector(".response-email-content")
+		?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+elements.dialog.addEventListener("close", () => {
+	currentDetailId = null;
+	openDetailActions = null;
+});
 elements.dialog.addEventListener("click", event => {
 	if (event.target === elements.dialog) {
 		elements.dialog.close();
@@ -429,11 +726,46 @@ dashboardEvents.addEventListener("connected", () => {
 	dashboardStreamConnected = true;
 	syncImportStatus();
 });
-dashboardEvents.addEventListener("import-state", event => {
-	setImportRunning(JSON.parse(event.data).running === true);
-});
+dashboardEvents.addEventListener("import-state", syncImportStatus);
 dashboardEvents.addEventListener("opportunity-added", () => loadDashboard(elements.searchInput.value, currentPage));
 dashboardEvents.addEventListener("opportunity-updated", () => loadDashboard(elements.searchInput.value, currentPage));
-dashboardEvents.addEventListener("response-updated", () => loadDashboard(elements.searchInput.value, currentPage));
+dashboardEvents.addEventListener("opportunity-removed", () => loadDashboard(elements.searchInput.value, currentPage));
+dashboardEvents.addEventListener("response-updated", () => {
+	loadDashboard(elements.searchInput.value, currentPage);
+	if (currentDetailId !== null) {
+		refreshDetails(currentDetailId);
+	}
+});
+
+async function watchDevelopmentAssets() {
+	let lastVersion;
+	let polling = true;
+	const checkVersion = async () => {
+		if (!polling) {
+			return;
+		}
+		try {
+			const response = await fetch("/api/dev/static-version", { cache: "no-store" });
+			if (!response.ok) {
+				polling = false;
+				return;
+			}
+			const version = await response.text();
+			if (lastVersion && version !== lastVersion) {
+				window.location.reload();
+				return;
+			}
+			lastVersion = version;
+		} catch {
+			polling = false;
+		}
+	};
+	await checkVersion();
+	if (polling) {
+		window.setInterval(checkVersion, 1_000);
+	}
+}
+
+watchDevelopmentAssets();
 
 loadDashboard();
