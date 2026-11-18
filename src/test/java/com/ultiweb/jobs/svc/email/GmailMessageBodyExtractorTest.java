@@ -60,7 +60,7 @@ class GmailMessageBodyExtractorTest {
 		assertTrue(body.text().contains("Architect opening"));
 		assertTrue(body.html().contains("<h2>Architect opening</h2>"));
 		assertTrue(body.html().contains("<li>Design leadership</li>"));
-		assertTrue(body.html().contains("href=\"https://example.com/job\""));
+		assertTrue(body.html().contains("href='https://example.com/job'"));
 		assertTrue(body.html().contains("<script>doNotRun()</script>"));
 	}
 
@@ -99,7 +99,8 @@ class GmailMessageBodyExtractorTest {
 		final ExtractedEmailBody body = new GmailMessageBodyExtractor(gmail, "message-id").extractContent(payload);
 
 		// then
-		assertTrue(body.html().contains("src=\"data:image/png;base64,AQID\""));
+		assertTrue(body.html().contains("data:image/png;base64,AQID"));
+		assertFalse(body.html().contains("cid:logo@example.com"));
 	}
 
 	@Test

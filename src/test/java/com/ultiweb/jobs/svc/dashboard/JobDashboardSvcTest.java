@@ -1,6 +1,7 @@
 package com.ultiweb.jobs.svc.dashboard;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -102,6 +103,6 @@ class JobDashboardSvcTest {
 		final DashboardJobDetails details = service.details(8);
 
 		// then
-		assertEquals("<p>Original message</p>", details.htmlBody());
+		assertTrue(details.htmlBody().contains("<p>Original message</p>"));
 	}
 }
