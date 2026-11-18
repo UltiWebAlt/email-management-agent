@@ -14,7 +14,7 @@ version = providers.gradleProperty('projectVersion').get()
 
 tasks.register('release') {
     group = 'build'
-    description = 'Bumps the version, creates a signed Git tag, pushes it, and publishes a GitHub Release.'
+    description = 'Bumps the SemVer version, creates a signed Git tag, pushes it, and publishes a GitHub Release.'
 
     doLast {
         def runCommand = { List<String> command ->
@@ -30,9 +30,13 @@ tasks.register('release') {
             output
         }
 
-        def releaseType = providers.gradleProperty('releaseType').getOrElse('patch')
-        if (!(releaseType in ['major', 'minor', 'patch'])) {
-            throw new GradleException("Invalid releaseType '${releaseType}'. Use major, minor, or patch.")
+        def requestedReleaseType = providers.gradleProperty('releaseType').getOrElse('patch')
+        def explicitChannelMatcher = requestedReleaseType =~ /^(beta|rc)\.([1-9]\d*)$/
+        def hasExplicitChannelNumber = explicitChannelMatcher.matches()
+        def releaseType = hasExplicitChannelNumber ? explicitChannelMatcher[0][1] : requestedReleaseType
+        def explicitChannelNumber = hasExplicitChannelNumber ? explicitChannelMatcher[0][2].toInteger() : null
+        if (!(releaseType in ['major', 'minor', 'patch', 'snapshot', 'beta', 'rc', 'prerelease', 'stable', 'final'])) {
+            throw new GradleException("Invalid releaseType '${requestedReleaseType}'. Use major, minor, patch, snapshot, beta, rc, beta.N, rc.N, prerelease, or stable.")
         }
 
         def changes = runCommand(['git', 'status', '--porcelain'])
@@ -50,14 +54,28 @@ tasks.register('release') {
         runCommand(['gh', 'auth', 'status'])
 
         def currentVersion = providers.gradleProperty('projectVersion').get()
-        def matcher = currentVersion =~ /^(\d+)\.(\d+)\.(\d+)$/
+        def matcher = currentVersion =~ /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/
         if (!matcher.matches()) {
-            throw new GradleException("projectVersion '${currentVersion}' must use MAJOR.MINOR.PATCH format.")
+            throw new GradleException("projectVersion '${currentVersion}' must be a valid SemVer version.")
         }
 
         def major = matcher[0][1].toInteger()
         def minor = matcher[0][2].toInteger()
         def patch = matcher[0][3].toInteger()
+        def currentPreRelease = matcher[0][4]
+        def preReleaseIdentifier = providers.gradleProperty('preReleaseIdentifier').orNull
+        def preReleasePattern = /^[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*$/
+        def hasInvalidNumericIdentifier = { String identifier ->
+            identifier.split('\\.').any { it ==~ /\d+/ && it.length() > 1 && it.startsWith('0') }
+        }
+        if (currentPreRelease != null && hasInvalidNumericIdentifier(currentPreRelease)) {
+            throw new GradleException("projectVersion '${currentVersion}' is not valid SemVer: numeric pre-release identifiers cannot have leading zeroes.")
+        }
+        if (preReleaseIdentifier != null && (!(preReleaseIdentifier ==~ preReleasePattern) || hasInvalidNumericIdentifier(preReleaseIdentifier))) {
+            throw new GradleException("Invalid preReleaseIdentifier '${preReleaseIdentifier}'. Use dot-separated SemVer identifiers without leading zeroes in numeric identifiers.")
+        }
+
+        def nextPreRelease = null
         switch (releaseType) {
             case 'major':
                 major++
@@ -71,9 +89,50 @@ tasks.register('release') {
             case 'patch':
                 patch++
                 break
+            case 'prerelease':
+                def identifier = preReleaseIdentifier
+                if (identifier == null && currentPreRelease != null) {
+                    identifier = currentPreRelease.replaceFirst(/\.\d+$/, '')
+                }
+                if (identifier == null || identifier.isEmpty()) {
+                    throw new GradleException('Starting a pre-release from a stable version requires -PpreReleaseIdentifier, for example -PpreReleaseIdentifier=beta.')
+                }
+                if (currentPreRelease != null
+                        && currentPreRelease ==~ /.*\.\d+$/
+                        && identifier == currentPreRelease) {
+                    throw new GradleException("preReleaseIdentifier '${identifier}' already includes the current pre-release version; provide the identifier without its numeric counter.")
+                }
+
+                def counter = 1
+                if (currentPreRelease != null
+                        && (preReleaseIdentifier == null || identifier == currentPreRelease.replaceFirst(/\.\d+$/, ''))
+                        && currentPreRelease ==~ /.*\.\d+$/) {
+                    counter = currentPreRelease.substring(currentPreRelease.lastIndexOf('.') + 1).toInteger() + 1
+                }
+                nextPreRelease = "${identifier}.${counter}"
+                break
+            case 'snapshot':
+                nextPreRelease = 'SNAPSHOT'
+                break
+            case 'beta':
+            case 'rc':
+                def currentChannelPattern = /^${releaseType}\.\d+$/
+                def counter = explicitChannelNumber != null
+                        ? explicitChannelNumber
+                        : currentPreRelease != null && currentPreRelease ==~ currentChannelPattern
+                        ? currentPreRelease.substring(currentPreRelease.lastIndexOf('.') + 1).toInteger() + 1
+                        : 1
+                nextPreRelease = "${releaseType}.${counter}"
+                break
+            case 'stable':
+            case 'final':
+                if (currentPreRelease == null) {
+                    throw new GradleException("Version '${currentVersion}' is already stable.")
+                }
+                break
         }
 
-        def nextVersion = "${major}.${minor}.${patch}"
+        def nextVersion = "${major}.${minor}.${patch}${nextPreRelease == null ? '' : "-${nextPreRelease}"}"
         def tag = "v${nextVersion}"
         def existingTag = new ProcessBuilder(['git', 'rev-parse', '--verify', '--quiet', "refs/tags/${tag}"])
                 .directory(rootDir)
@@ -96,7 +155,11 @@ tasks.register('release') {
         runCommand(['git', 'commit', '-S', '-m', "chore: release ${tag}"])
         runCommand(['git', 'tag', '-s', tag, '-m', "Release ${tag}"])
         runCommand(['git', 'push', 'origin', branch, tag])
-        runCommand(['gh', 'release', 'create', tag, '--title', "Release ${tag}", '--generate-notes'])
+        def githubReleaseCommand = ['gh', 'release', 'create', tag, '--title', "Release ${tag}", '--generate-notes']
+        if (nextPreRelease != null) {
+            githubReleaseCommand.add('--prerelease')
+        }
+        runCommand(githubReleaseCommand)
 
         logger.lifecycle("Published GitHub Release ${tag} from ${currentVersion}")
     }
