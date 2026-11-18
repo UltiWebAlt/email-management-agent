@@ -68,9 +68,9 @@ class LmStudioSummaryIntegrationTest {
 
 	private static void respond(final HttpExchange exchange, final String content) throws IOException {
 		final String json = """
-				{"id":"test-completion","object":"chat.completion","created":1,"model":"test/model",
-				"choices":[{"index":0,"message":{"role":"assistant","content":"%s"},"finish_reason":"stop"}],
-				"usage":{"prompt_tokens":10,"completion_tokens":4,"total_tokens":14}}
+				{"id":"test-completion","object":"chat.completion","created":1,"model":"test/model",\
+				"choices":[{"index":0,"message":{"role":"assistant","content":"%s"},"finish_reason":"stop"}],\
+				"usage":{"prompt_tokens":10,"completion_tokens":4,"total_tokens":14}}\
 				""".formatted(content);
 		final byte[] response = json.getBytes(StandardCharsets.UTF_8);
 		exchange.getResponseHeaders().set("Content-Type", "application/json");
