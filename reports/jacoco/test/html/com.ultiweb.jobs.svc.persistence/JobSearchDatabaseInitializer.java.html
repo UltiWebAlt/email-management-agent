@@ -34,37 +34,46 @@ public final class JobSearchDatabaseInitializer {
 <span class="fc" id="L34">		jdbcTemplate.update(&quot;UPDATE positions SET trash_pending = 0 WHERE trash_pending = 1&quot;);</span>
 <span class="fc" id="L35">		addResponseColumn(&quot;response_status&quot;, &quot;ALTER TABLE responses ADD COLUMN response_status TEXT NOT NULL DEFAULT 'RECORDED'&quot;);</span>
 <span class="fc" id="L36">		addResponseColumn(&quot;gmail_draft_id&quot;, &quot;ALTER TABLE responses ADD COLUMN gmail_draft_id TEXT&quot;);</span>
-<span class="fc" id="L37">		addResponseColumn(&quot;gmail_message_id&quot;, &quot;ALTER TABLE responses ADD COLUMN gmail_message_id TEXT&quot;);</span>
-<span class="fc" id="L38">		addResponseColumn(&quot;gmail_thread_id&quot;, &quot;ALTER TABLE responses ADD COLUMN gmail_thread_id TEXT&quot;);</span>
-<span class="fc" id="L39">		addResponseColumn(&quot;updated_at&quot;, &quot;ALTER TABLE responses ADD COLUMN updated_at TEXT&quot;);</span>
-<span class="fc" id="L40">		addResponseColumn(&quot;sent_at&quot;, &quot;ALTER TABLE responses ADD COLUMN sent_at TIMESTAMP&quot;);</span>
-<span class="fc" id="L41">		addResponseColumn(&quot;follow_up_status&quot;, &quot;ALTER TABLE responses ADD COLUMN follow_up_status TEXT&quot;);</span>
-<span class="fc" id="L42">		addResponseColumn(&quot;follow_up_content&quot;, &quot;ALTER TABLE responses ADD COLUMN follow_up_content TEXT&quot;);</span>
-<span class="fc" id="L43">		addResponseColumn(&quot;follow_up_sent_at&quot;, &quot;ALTER TABLE responses ADD COLUMN follow_up_sent_at TIMESTAMP&quot;);</span>
-<span class="fc" id="L44">		addResponseColumn(&quot;follow_up_message_id&quot;, &quot;ALTER TABLE responses ADD COLUMN follow_up_message_id TEXT&quot;);</span>
-<span class="fc" id="L45">		addResponseColumn(&quot;recruiter_reply_at&quot;, &quot;ALTER TABLE responses ADD COLUMN recruiter_reply_at TIMESTAMP&quot;);</span>
-<span class="fc" id="L46">		addResponseColumn(&quot;recruiter_reply_message_id&quot;, &quot;ALTER TABLE responses ADD COLUMN recruiter_reply_message_id TEXT&quot;);</span>
-<span class="fc" id="L47">		removeSummaryIntroductions();</span>
-<span class="fc" id="L48">		createIndexes();</span>
-<span class="fc" id="L49">	}</span>
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">		final boolean legacySendState = !responseColumns().contains(&quot;send_attempted&quot;);</span>
+<span class="fc" id="L38">		addResponseColumn(&quot;send_identifier&quot;, &quot;ALTER TABLE responses ADD COLUMN send_identifier TEXT&quot;);</span>
+<span class="fc" id="L39">		addResponseColumn(&quot;send_attempted&quot;, &quot;ALTER TABLE responses ADD COLUMN send_attempted INTEGER NOT NULL DEFAULT 0&quot;);</span>
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">		if (legacySendState) {</span>
+<span class="nc" id="L41">			jdbcTemplate.update(&quot;&quot;&quot;</span>
+					UPDATE responses SET response_status = 'SEND_UNCONFIRMED', send_attempted = 1
+					WHERE response_type = 'INITIAL_RESPONSE' AND response_status IN ('SENDING', 'SEND_FAILED')
+					&quot;&quot;&quot;);
+		}
+<span class="fc" id="L46">		addResponseColumn(&quot;gmail_message_id&quot;, &quot;ALTER TABLE responses ADD COLUMN gmail_message_id TEXT&quot;);</span>
+<span class="fc" id="L47">		addResponseColumn(&quot;gmail_thread_id&quot;, &quot;ALTER TABLE responses ADD COLUMN gmail_thread_id TEXT&quot;);</span>
+<span class="fc" id="L48">		addResponseColumn(&quot;updated_at&quot;, &quot;ALTER TABLE responses ADD COLUMN updated_at TEXT&quot;);</span>
+<span class="fc" id="L49">		addResponseColumn(&quot;sent_at&quot;, &quot;ALTER TABLE responses ADD COLUMN sent_at TIMESTAMP&quot;);</span>
+<span class="fc" id="L50">		addResponseColumn(&quot;follow_up_status&quot;, &quot;ALTER TABLE responses ADD COLUMN follow_up_status TEXT&quot;);</span>
+<span class="fc" id="L51">		addResponseColumn(&quot;follow_up_content&quot;, &quot;ALTER TABLE responses ADD COLUMN follow_up_content TEXT&quot;);</span>
+<span class="fc" id="L52">		addResponseColumn(&quot;follow_up_sent_at&quot;, &quot;ALTER TABLE responses ADD COLUMN follow_up_sent_at TIMESTAMP&quot;);</span>
+<span class="fc" id="L53">		addResponseColumn(&quot;follow_up_message_id&quot;, &quot;ALTER TABLE responses ADD COLUMN follow_up_message_id TEXT&quot;);</span>
+<span class="fc" id="L54">		addResponseColumn(&quot;recruiter_reply_at&quot;, &quot;ALTER TABLE responses ADD COLUMN recruiter_reply_at TIMESTAMP&quot;);</span>
+<span class="fc" id="L55">		addResponseColumn(&quot;recruiter_reply_message_id&quot;, &quot;ALTER TABLE responses ADD COLUMN recruiter_reply_message_id TEXT&quot;);</span>
+<span class="fc" id="L56">		removeSummaryIntroductions();</span>
+<span class="fc" id="L57">		createIndexes();</span>
+<span class="fc" id="L58">	}</span>
 
 	private void removeSummaryIntroductions() {
-<span class="fc" id="L52">		final var rows = jdbcTemplate.query(&quot;&quot;&quot;</span>
+<span class="fc" id="L61">		final var rows = jdbcTemplate.query(&quot;&quot;&quot;</span>
 				SELECT id, summary FROM positions
 				WHERE summary IS NOT NULL AND LOWER(LTRIM(summary)) LIKE LOWER(?)
-<span class="fc" id="L55">				&quot;&quot;&quot;, (resultSet, rowNumber) -&gt; new SummaryRow(</span>
-<span class="fc" id="L56">				resultSet.getLong(&quot;id&quot;), resultSet.getString(&quot;summary&quot;)), SUMMARY_INTRO + &quot;%&quot;);</span>
-<span class="fc bfc" id="L57" title="All 2 branches covered.">		for (final SummaryRow row : rows) {</span>
-<span class="fc" id="L58">			final String summary = row.summary().stripLeading();</span>
-<span class="pc bpc" id="L59" title="1 of 2 branches missed.">			if (summary.regionMatches(true, 0, SUMMARY_INTRO, 0, SUMMARY_INTRO.length())) {</span>
-<span class="fc" id="L60">				jdbcTemplate.update(&quot;UPDATE positions SET summary = ? WHERE id = ?&quot;,</span>
-<span class="fc" id="L61">					summary.substring(SUMMARY_INTRO.length()).stripLeading(), row.id());</span>
+<span class="fc" id="L64">				&quot;&quot;&quot;, (resultSet, rowNumber) -&gt; new SummaryRow(</span>
+<span class="fc" id="L65">				resultSet.getLong(&quot;id&quot;), resultSet.getString(&quot;summary&quot;)), SUMMARY_INTRO + &quot;%&quot;);</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">		for (final SummaryRow row : rows) {</span>
+<span class="fc" id="L67">			final String summary = row.summary().stripLeading();</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">			if (summary.regionMatches(true, 0, SUMMARY_INTRO, 0, SUMMARY_INTRO.length())) {</span>
+<span class="fc" id="L69">				jdbcTemplate.update(&quot;UPDATE positions SET summary = ? WHERE id = ?&quot;,</span>
+<span class="fc" id="L70">					summary.substring(SUMMARY_INTRO.length()).stripLeading(), row.id());</span>
 			}
-<span class="fc" id="L63">		}</span>
-<span class="fc" id="L64">	}</span>
+<span class="fc" id="L72">		}</span>
+<span class="fc" id="L73">	}</span>
 
 	private void createBaseTables() {
-<span class="fc" id="L67">		jdbcTemplate.execute(&quot;&quot;&quot;</span>
+<span class="fc" id="L76">		jdbcTemplate.execute(&quot;&quot;&quot;</span>
 				CREATE TABLE IF NOT EXISTS recruiters (
 				id INTEGER PRIMARY KEY,
 				company VARCHAR(255),
@@ -75,7 +84,7 @@ public final class JobSearchDatabaseInitializer {
 				phone VARCHAR(255)
 				)
 				&quot;&quot;&quot;);
-<span class="fc" id="L78">		jdbcTemplate.execute(&quot;&quot;&quot;</span>
+<span class="fc" id="L87">		jdbcTemplate.execute(&quot;&quot;&quot;</span>
 				CREATE TABLE IF NOT EXISTS positions (
 				id INTEGER PRIMARY KEY,
 				company VARCHAR(255),
@@ -101,7 +110,7 @@ public final class JobSearchDatabaseInitializer {
 				FOREIGN KEY (recruiter_id) REFERENCES recruiters(id)
 				)
 				&quot;&quot;&quot;);
-<span class="fc" id="L104">		jdbcTemplate.execute(&quot;&quot;&quot;</span>
+<span class="fc" id="L113">		jdbcTemplate.execute(&quot;&quot;&quot;</span>
 				CREATE TABLE IF NOT EXISTS responses (
 				id INTEGER PRIMARY KEY,
 				created_at TIMESTAMP,
@@ -111,6 +120,8 @@ public final class JobSearchDatabaseInitializer {
 				'INITIAL_RESPONSE', 'FOLLOW_UP', 'INTERVIEW_CONFIRMATION', 'THANK_YOU', 'DECLINED')),
 				response_status TEXT NOT NULL DEFAULT 'RECORDED',
 				gmail_draft_id TEXT,
+				send_identifier TEXT,
+				send_attempted INTEGER NOT NULL DEFAULT 0,
 				gmail_message_id TEXT,
 				gmail_thread_id TEXT,
 				updated_at TEXT,
@@ -127,45 +138,45 @@ public final class JobSearchDatabaseInitializer {
 				FOREIGN KEY (recruiter_id) REFERENCES recruiters(id)
 				)
 				&quot;&quot;&quot;);
-<span class="fc" id="L130">	}</span>
+<span class="fc" id="L141">	}</span>
 
 	private void addPositionColumn(final String name, final String sql) {
-<span class="fc bfc" id="L133" title="All 2 branches covered.">		if (!positionColumns().contains(name)) {</span>
-<span class="fc" id="L134">			jdbcTemplate.execute(sql);</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">		if (!positionColumns().contains(name)) {</span>
+<span class="fc" id="L145">			jdbcTemplate.execute(sql);</span>
 		}
-<span class="fc" id="L136">	}</span>
+<span class="fc" id="L147">	}</span>
 
 	private void addResponseColumn(final String name, final String sql) {
-<span class="pc bpc" id="L139" title="1 of 2 branches missed.">		if (!responseColumns().contains(name)) {</span>
-<span class="nc" id="L140">			jdbcTemplate.execute(sql);</span>
+<span class="pc bpc" id="L150" title="1 of 2 branches missed.">		if (!responseColumns().contains(name)) {</span>
+<span class="nc" id="L151">			jdbcTemplate.execute(sql);</span>
 		}
-<span class="fc" id="L142">	}</span>
+<span class="fc" id="L153">	}</span>
 
 	private Set&lt;String&gt; positionColumns() {
-<span class="fc" id="L145">		return jdbcTemplate.query(&quot;PRAGMA table_info(positions)&quot;,</span>
-<span class="fc" id="L146">				(resultSet, rowNumber) -&gt; resultSet.getString(&quot;name&quot;)).stream().collect(Collectors.toUnmodifiableSet());</span>
+<span class="fc" id="L156">		return jdbcTemplate.query(&quot;PRAGMA table_info(positions)&quot;,</span>
+<span class="fc" id="L157">				(resultSet, rowNumber) -&gt; resultSet.getString(&quot;name&quot;)).stream().collect(Collectors.toUnmodifiableSet());</span>
 	}
 
 	private Set&lt;String&gt; responseColumns() {
-<span class="fc" id="L150">		return jdbcTemplate.query(&quot;PRAGMA table_info(responses)&quot;,</span>
-<span class="fc" id="L151">				(resultSet, rowNumber) -&gt; resultSet.getString(&quot;name&quot;)).stream().collect(Collectors.toUnmodifiableSet());</span>
+<span class="fc" id="L161">		return jdbcTemplate.query(&quot;PRAGMA table_info(responses)&quot;,</span>
+<span class="fc" id="L162">				(resultSet, rowNumber) -&gt; resultSet.getString(&quot;name&quot;)).stream().collect(Collectors.toUnmodifiableSet());</span>
 	}
 
 	private void createIndexes() {
-<span class="fc" id="L155">		jdbcTemplate.execute(&quot;&quot;&quot;</span>
+<span class="fc" id="L166">		jdbcTemplate.execute(&quot;&quot;&quot;</span>
 				CREATE UNIQUE INDEX IF NOT EXISTS uq_positions_source_message
 				ON positions(source_account, source_message_id)
 				WHERE source_account IS NOT NULL AND source_message_id IS NOT NULL
 				&quot;&quot;&quot;);
-<span class="fc" id="L160">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_positions_date_posted ON positions(date_posted)&quot;);</span>
-<span class="fc" id="L161">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_positions_created_at ON positions(created_at)&quot;);</span>
-<span class="fc" id="L162">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_positions_respond_to ON positions(respond_to)&quot;);</span>
-<span class="fc" id="L163">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_positions_recruiter_id ON positions(recruiter_id)&quot;);</span>
-<span class="fc" id="L164">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_responses_position_id ON responses(position_id)&quot;);</span>
-<span class="fc" id="L165">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_responses_status ON responses(response_status)&quot;);</span>
-<span class="fc" id="L166">	}</span>
+<span class="fc" id="L171">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_positions_date_posted ON positions(date_posted)&quot;);</span>
+<span class="fc" id="L172">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_positions_created_at ON positions(created_at)&quot;);</span>
+<span class="fc" id="L173">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_positions_respond_to ON positions(respond_to)&quot;);</span>
+<span class="fc" id="L174">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_positions_recruiter_id ON positions(recruiter_id)&quot;);</span>
+<span class="fc" id="L175">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_responses_position_id ON responses(position_id)&quot;);</span>
+<span class="fc" id="L176">		jdbcTemplate.execute(&quot;CREATE INDEX IF NOT EXISTS idx_responses_status ON responses(response_status)&quot;);</span>
+<span class="fc" id="L177">	}</span>
 
-<span class="fc" id="L168">	private record SummaryRow(long id, String summary) {</span>
+<span class="fc" id="L179">	private record SummaryRow(long id, String summary) {</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

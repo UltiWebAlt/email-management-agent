@@ -63,7 +63,7 @@
 </td>
 <td>
 <div class="infoBox duration">
-<div class="counter">0.640s</div>
+<div class="counter">0.780s</div>
 <p>duration</p>
 </div>
 </td>
@@ -88,54 +88,54 @@
 <div class="clipboard-copy-btn-container">
 <button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-runningApplicationChecksEmailsQueriesAiAndAppliesLabelsWithoutRepeatingInference()">Copy</button>
 </div>
-<pre id="root-0-test-stdout-runningApplicationChecksEmailsQueriesAiAndAppliesLabelsWithoutRepeatingInference()">2026-11-18T06:32:36.169Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
-2026-11-18T06:32:36.171Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 emails pending triage.
-2026-11-18T06:32:36.171Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=0, failed=0, labels applied=0.
-2026-11-18T06:32:36.171Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
-2026-11-18T06:32:36.235Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
-2026-11-18T06:32:36.244Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
-2026-11-18T06:32:36.245Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 emails pending triage.
-2026-11-18T06:32:36.245Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=0, failed=0, labels applied=0.
-2026-11-18T06:32:36.245Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
-2026-11-18T06:32:36.299Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
-2026-11-18T06:32:36.314Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
-2026-11-18T06:32:36.323Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
-2026-11-18T06:32:36.358Z  INFO 2801 --- [     virtual-54] com.ultiweb.jobs.svc.EmailTriageSvc      : Requesting AI summary for account=first@example.com, message=id, bodyCharacters=14
-2026-11-18T06:32:36.375Z  INFO 2801 --- [     virtual-54] com.ultiweb.jobs.svc.EmailTriageSvc      : Requesting AI label recommendation for account=first@example.com, message=id
-2026-11-18T06:32:36.377Z  INFO 2801 --- [     virtual-54] com.ultiweb.jobs.svc.EmailTriageSvc      : Analyzed account=first@example.com, message=id, recommendedLabel=Dev_Jobs
-2026-11-18T06:32:36.381Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Applied label: account=first@example.com, message=id, label=Dev_Jobs
-2026-11-18T06:32:36.382Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=1, already processed=0, failed=0, labels applied=1.
-2026-11-18T06:32:36.382Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 1 labels applied. Waiting for the next polling interval.
-2026-11-18T06:32:36.433Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
-2026-11-18T06:32:36.435Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
-2026-11-18T06:32:36.437Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
-2026-11-18T06:32:36.438Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
-2026-11-18T06:32:36.438Z  INFO 2801 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
-2026-11-18T06:32:36.494Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
-2026-11-18T06:32:36.495Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
-2026-11-18T06:32:36.495Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
-2026-11-18T06:32:36.495Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
-2026-11-18T06:32:36.496Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
-2026-11-18T06:32:36.550Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
-2026-11-18T06:32:36.551Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
-2026-11-18T06:32:36.551Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
-2026-11-18T06:32:36.551Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
-2026-11-18T06:32:36.552Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
-2026-11-18T06:32:36.605Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
-2026-11-18T06:32:36.606Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
-2026-11-18T06:32:36.607Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
-2026-11-18T06:32:36.607Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
-2026-11-18T06:32:36.607Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
-2026-11-18T06:32:36.660Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
-2026-11-18T06:32:36.661Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
-2026-11-18T06:32:36.661Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
-2026-11-18T06:32:36.661Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
-2026-11-18T06:32:36.661Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
-2026-11-18T06:32:36.714Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
-2026-11-18T06:32:36.715Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
-2026-11-18T06:32:36.715Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 emails pending triage.
-2026-11-18T06:32:36.715Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=0, failed=0, labels applied=0.
-2026-11-18T06:32:36.715Z  INFO 2801 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
+<pre id="root-0-test-stdout-runningApplicationChecksEmailsQueriesAiAndAppliesLabelsWithoutRepeatingInference()">2026-11-23T17:59:19.527Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-23T17:59:19.538Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 emails pending triage.
+2026-11-23T17:59:19.538Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=0, failed=0, labels applied=0.
+2026-11-23T17:59:19.538Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
+2026-11-23T17:59:19.641Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-23T17:59:19.643Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-23T17:59:19.662Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 emails pending triage.
+2026-11-23T17:59:19.662Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=0, failed=0, labels applied=0.
+2026-11-23T17:59:19.662Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
+2026-11-23T17:59:19.722Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-23T17:59:19.722Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-23T17:59:19.723Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 emails pending triage.
+2026-11-23T17:59:19.723Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=0, failed=0, labels applied=0.
+2026-11-23T17:59:19.723Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
+2026-11-23T17:59:19.781Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-23T17:59:19.841Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-23T17:59:19.843Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
+2026-11-23T17:59:19.883Z  INFO 2712 --- [     virtual-54] com.ultiweb.jobs.svc.EmailTriageSvc      : Requesting AI summary for account=first@example.com, message=id, bodyCharacters=14
+2026-11-23T17:59:19.921Z  INFO 2712 --- [     virtual-54] com.ultiweb.jobs.svc.EmailTriageSvc      : Requesting AI label recommendation for account=first@example.com, message=id
+2026-11-23T17:59:19.936Z  INFO 2712 --- [     virtual-54] com.ultiweb.jobs.svc.EmailTriageSvc      : Analyzed account=first@example.com, message=id, recommendedLabel=Dev_Jobs
+2026-11-23T17:59:19.940Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Applied label: account=first@example.com, message=id, label=Dev_Jobs
+2026-11-23T17:59:19.944Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=1, already processed=0, failed=0, labels applied=1.
+2026-11-23T17:59:19.945Z  INFO 2712 --- [   scheduling-1] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 1 labels applied. Waiting for the next polling interval.
+2026-11-23T17:59:19.995Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-23T17:59:19.996Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-23T17:59:19.996Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
+2026-11-23T17:59:19.997Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
+2026-11-23T17:59:19.997Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
+2026-11-23T17:59:20.053Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-23T17:59:20.054Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-23T17:59:20.054Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
+2026-11-23T17:59:20.055Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
+2026-11-23T17:59:20.055Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
+2026-11-23T17:59:20.109Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-23T17:59:20.110Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-23T17:59:20.110Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
+2026-11-23T17:59:20.110Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
+2026-11-23T17:59:20.110Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
+2026-11-23T17:59:20.168Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-23T17:59:20.169Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-23T17:59:20.169Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
+2026-11-23T17:59:20.169Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
+2026-11-23T17:59:20.169Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
+2026-11-23T17:59:20.222Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Starting unread-email poll for the configured Gmail accounts.
+2026-11-23T17:59:20.226Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 0 manually tagged architect emails pending persistence.
+2026-11-23T17:59:20.229Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Retrieved 1 emails pending triage.
+2026-11-23T17:59:20.230Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailTriageSvc      : Triage complete: analyzed=0, already processed=1, failed=0, labels applied=0.
+2026-11-23T17:59:20.230Z  INFO 2712 --- [   scheduling-2] com.ultiweb.jobs.svc.EmailPollingJob     : Unread-email poll finished: 0 labels applied. Waiting for the next polling interval.
 </pre>
 </span>
 </div>
@@ -149,7 +149,7 @@
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.9.1</a> at Nov 18, 2026, 6:32:52 AM</p>
+<a href="https://www.gradle.org">Gradle 9.9.1</a> at Nov 23, 2026, 5:59:36 PM</p>
 </div>
 </div>
 </body>

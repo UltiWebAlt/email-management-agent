@@ -172,7 +172,7 @@ public class JdbcJobDashboardRepository implements JobDashboardRepository {
 				AND response_status IN ('SAVED_FOR_REVIEW', 'DRAFT_CREATED', 'SENT', 'SENT_LABEL_FAILED')))
 				AND NOT EXISTS (
 				SELECT 1 FROM responses WHERE position_id = positions.id
-				AND response_status IN ('GENERATING', 'GENERATED', 'SENDING'))
+				AND response_status IN ('GENERATING', 'GENERATED', 'SENDING', 'SEND_UNCONFIRMED'))
 <span class="nc" id="L176">				&quot;&quot;&quot;, id) == 1;</span>
 	}
 

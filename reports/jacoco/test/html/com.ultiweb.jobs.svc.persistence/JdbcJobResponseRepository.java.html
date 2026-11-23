@@ -111,64 +111,85 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 <span class="fc" id="L111">	}</span>
 
 	@Override
-	public Optional&lt;ResponseSendCandidate&gt; claimResponseForSending(final long positionId, final Instant updatedAt) {
-<span class="fc" id="L115">		final int claimed = jdbcTemplate.update(&quot;&quot;&quot;</span>
-				UPDATE responses SET response_status = 'SENDING', updated_at = ?
+	public Optional&lt;ResponseSendCandidate&gt; claimResponseForSending(final long positionId, final Instant updatedAt,
+			final String sendIdentifier, final Instant staleBefore) {
+<span class="fc" id="L116">		final int claimed = jdbcTemplate.update(&quot;&quot;&quot;</span>
+				UPDATE responses SET send_attempted = CASE WHEN response_status = 'SENDING' THEN 1 ELSE send_attempted END,
+				response_status = 'SENDING', updated_at = ?, send_identifier = COALESCE(send_identifier, ?)
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE'
-				AND response_status IN ('SAVED_FOR_REVIEW', 'DRAFT_CREATED', 'SEND_FAILED')
+				AND (response_status IN ('SAVED_FOR_REVIEW', 'DRAFT_CREATED', 'SEND_FAILED', 'SEND_UNCONFIRMED')
+				OR (response_status = 'SENDING' AND datetime(updated_at) &lt;= datetime(?)))
 				AND NULLIF(TRIM(response_content), '') IS NOT NULL
 				AND EXISTS (
 				SELECT 1 FROM positions p JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
 				WHERE p.id = responses.position_id AND p.dismissed = 0
 				AND NULLIF(TRIM(p.source_account), '') IS NOT NULL
 				AND NULLIF(TRIM(recruiter.email), '') IS NOT NULL)
-<span class="fc" id="L125">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
-<span class="fc bfc" id="L126" title="All 2 branches covered.">		if (claimed != 1) {</span>
-<span class="fc" id="L127">			return Optional.empty();</span>
+<span class="fc" id="L128">				&quot;&quot;&quot;, updatedAt.toString(), sendIdentifier, positionId, staleBefore.toString());</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">		if (claimed != 1) {</span>
+<span class="fc" id="L130">			return Optional.empty();</span>
 		}
-<span class="fc" id="L129">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
+<span class="fc" id="L132">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
 				SELECT p.id, p.source_account, recruiter.email AS recruiter_email, p.source_subject,
-				response.response_content, response.gmail_draft_id
+				response.response_content, response.gmail_draft_id, response.send_identifier, response.send_attempted
 				FROM positions p
 				JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
 				JOIN responses response ON response.position_id = p.id
 				WHERE p.id = ? AND response.response_type = 'INITIAL_RESPONSE' AND response.response_status = 'SENDING'
-<span class="fc" id="L136">				&quot;&quot;&quot;, (resultSet, rowNumber) -&gt; new ResponseSendCandidate(</span>
-<span class="fc" id="L137">				resultSet.getLong(&quot;id&quot;), resultSet.getString(SOURCE_ACCOUNT),</span>
-<span class="fc" id="L138">				resultSet.getString(RECRUITER_EMAIL), resultSet.getString(SOURCE_SUBJECT),</span>
-<span class="fc" id="L139">				resultSet.getString(&quot;response_content&quot;), resultSet.getString(&quot;gmail_draft_id&quot;)), positionId)</span>
-<span class="fc" id="L140">				.stream().findFirst();</span>
+<span class="fc" id="L139">				&quot;&quot;&quot;, (resultSet, rowNumber) -&gt; new ResponseSendCandidate(</span>
+<span class="fc" id="L140">				resultSet.getLong(&quot;id&quot;), resultSet.getString(SOURCE_ACCOUNT),</span>
+<span class="fc" id="L141">				resultSet.getString(RECRUITER_EMAIL), resultSet.getString(SOURCE_SUBJECT),</span>
+<span class="fc" id="L142">				resultSet.getString(&quot;response_content&quot;), resultSet.getString(&quot;gmail_draft_id&quot;),</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">				resultSet.getString(&quot;send_identifier&quot;), resultSet.getInt(&quot;send_attempted&quot;) != 0), positionId)</span>
+<span class="fc" id="L144">				.stream().findFirst();</span>
 	}
 
 	@Override
+	public void markSendAttemptStarted(final long positionId, final Instant updatedAt) {
+<span class="fc" id="L149">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+				UPDATE responses SET send_attempted = 1, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
+<span class="fc" id="L152">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
+<span class="fc" id="L153">	}</span>
+
+	@Override
 	public void saveSendingDraftId(final long positionId, final String draftId, final Instant updatedAt) {
-<span class="fc" id="L145">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+<span class="fc" id="L157">		jdbcTemplate.update(&quot;&quot;&quot;</span>
 				UPDATE responses SET gmail_draft_id = ?, updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
-<span class="fc" id="L148">				&quot;&quot;&quot;, draftId, updatedAt.toString(), positionId);</span>
-<span class="fc" id="L149">	}</span>
+<span class="fc" id="L160">				&quot;&quot;&quot;, draftId, updatedAt.toString(), positionId);</span>
+<span class="fc" id="L161">	}</span>
 
 	@Override
 	public void markResponseSent(final long positionId, final String draftId, final String gmailMessageId,
 			final String gmailThreadId, final String status, final Instant sentAt) {
-<span class="fc" id="L154">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+<span class="fc" id="L166">		jdbcTemplate.update(&quot;&quot;&quot;</span>
 				UPDATE responses SET response_status = ?, gmail_draft_id = ?, gmail_message_id = ?,
 				gmail_thread_id = ?, sent_at = ?, updated_at = ?
-				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
-<span class="fc" id="L158">				&quot;&quot;&quot;, status, draftId, gmailMessageId, gmailThreadId, sentAt.toString(), sentAt.toString(), positionId);</span>
-<span class="fc" id="L159">	}</span>
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE'
+				AND response_status IN ('SENDING', 'SEND_UNCONFIRMED')
+<span class="fc" id="L171">				&quot;&quot;&quot;, status, draftId, gmailMessageId, gmailThreadId, sentAt.toString(), sentAt.toString(), positionId);</span>
+<span class="fc" id="L172">	}</span>
 
 	@Override
 	public void markResponseSendFailed(final long positionId, final Instant updatedAt) {
-<span class="fc" id="L163">		jdbcTemplate.update(&quot;&quot;&quot;</span>
-				UPDATE responses SET response_status = 'SEND_FAILED', updated_at = ?
+<span class="fc" id="L176">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+				UPDATE responses SET response_status = 'SEND_FAILED', send_attempted = 0, updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
-<span class="fc" id="L166">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
-<span class="fc" id="L167">	}</span>
+<span class="fc" id="L179">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
+<span class="fc" id="L180">	}</span>
+
+	@Override
+	public void markResponseSendUnconfirmed(final long positionId, final Instant updatedAt) {
+<span class="fc" id="L184">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+				UPDATE responses SET response_status = 'SEND_UNCONFIRMED', send_attempted = 1, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
+<span class="fc" id="L187">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
+<span class="fc" id="L188">	}</span>
 
 	@Override
 	public List&lt;ResponseFollowUpCandidate&gt; findResponsesForFollowUp(final Instant dueBefore) {
-<span class="fc" id="L171">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
+<span class="fc" id="L192">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
 				SELECT p.id, p.source_account, recruiter.email AS recruiter_email, recruiter.name AS recruiter_name,
 				p.title, p.source_subject, response.response_content, response.follow_up_content,
 				response.gmail_message_id, response.gmail_thread_id, response.sent_at, response.follow_up_status,
@@ -184,33 +205,33 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 				AND (response.follow_up_status IS NULL OR response.follow_up_status IN ('FAILED', 'SENT'))
 				AND p.dismissed = 0
 				ORDER BY response.sent_at, p.id
-<span class="fc" id="L187">				&quot;&quot;&quot;, JdbcJobResponseRepository::followUpCandidateRow, dueBefore.toString());</span>
+<span class="fc" id="L208">				&quot;&quot;&quot;, JdbcJobResponseRepository::followUpCandidateRow, dueBefore.toString());</span>
 	}
 
 	@Override
 	public int releaseStaleFollowUpChecks(final Instant staleBefore, final Instant updatedAt) {
-<span class="fc" id="L192">		return jdbcTemplate.update(&quot;&quot;&quot;</span>
+<span class="fc" id="L213">		return jdbcTemplate.update(&quot;&quot;&quot;</span>
 				UPDATE responses SET follow_up_status = 'FAILED', follow_up_needed = 1, updated_at = ?
 				WHERE response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
 				AND datetime(updated_at) &lt;= datetime(?)
-<span class="fc" id="L196">				&quot;&quot;&quot;, updatedAt.toString(), staleBefore.toString());</span>
+<span class="fc" id="L217">				&quot;&quot;&quot;, updatedAt.toString(), staleBefore.toString());</span>
 	}
 
 	@Override
 	public Optional&lt;ResponseFollowUpCandidate&gt; claimFollowUp(final long positionId, final Instant updatedAt,
 			final Instant dueBefore) {
-<span class="fc" id="L202">		final int claimed = jdbcTemplate.update(&quot;&quot;&quot;</span>
+<span class="fc" id="L223">		final int claimed = jdbcTemplate.update(&quot;&quot;&quot;</span>
 				UPDATE responses SET follow_up_status = 'CHECKING', updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE'
 				AND response_status IN ('SENT', 'SENT_LABEL_FAILED')
 				AND datetime(sent_at) &lt;= datetime(?)
 				AND (follow_up_status IS NULL OR follow_up_status IN ('FAILED', 'SENT'))
 				AND EXISTS (SELECT 1 FROM positions p WHERE p.id = responses.position_id AND p.dismissed = 0)
-<span class="fc" id="L209">				&quot;&quot;&quot;, updatedAt.toString(), positionId, dueBefore.toString());</span>
-<span class="fc bfc" id="L210" title="All 2 branches covered.">		if (claimed != 1) {</span>
-<span class="fc" id="L211">			return Optional.empty();</span>
+<span class="fc" id="L230">				&quot;&quot;&quot;, updatedAt.toString(), positionId, dueBefore.toString());</span>
+<span class="fc bfc" id="L231" title="All 2 branches covered.">		if (claimed != 1) {</span>
+<span class="fc" id="L232">			return Optional.empty();</span>
 		}
-<span class="fc" id="L213">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
+<span class="fc" id="L234">		return jdbcTemplate.query(&quot;&quot;&quot;</span>
 				SELECT p.id, p.source_account, recruiter.email AS recruiter_email, recruiter.name AS recruiter_name,
 				p.title, p.source_subject, response.response_content, response.follow_up_content,
 				response.gmail_message_id, response.gmail_thread_id, response.sent_at, response.follow_up_status,
@@ -220,82 +241,82 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 				JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
 				WHERE response.position_id = ? AND response.response_type = 'INITIAL_RESPONSE'
 				AND response.follow_up_status = 'CHECKING'
-<span class="fc" id="L223">				&quot;&quot;&quot;, JdbcJobResponseRepository::followUpCandidateRow, positionId).stream().findFirst();</span>
+<span class="fc" id="L244">				&quot;&quot;&quot;, JdbcJobResponseRepository::followUpCandidateRow, positionId).stream().findFirst();</span>
 	}
 
 	@Override
 	public void storeFollowUpContent(final long positionId, final String content, final Instant updatedAt) {
-<span class="fc" id="L228">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+<span class="fc" id="L249">		jdbcTemplate.update(&quot;&quot;&quot;</span>
 				UPDATE responses SET follow_up_content = ?, updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
-<span class="fc" id="L231">				&quot;&quot;&quot;, content, updatedAt.toString(), positionId);</span>
-<span class="fc" id="L232">	}</span>
+<span class="fc" id="L252">				&quot;&quot;&quot;, content, updatedAt.toString(), positionId);</span>
+<span class="fc" id="L253">	}</span>
 
 	@Override
 	public void markReplied(final long positionId, final String messageId, final Instant receivedAt) {
-<span class="fc" id="L236">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+<span class="fc" id="L257">		jdbcTemplate.update(&quot;&quot;&quot;</span>
 				UPDATE responses SET follow_up_status = 'REPLIED', recruiter_reply_message_id = ?,
 				recruiter_reply_at = ?, follow_up_needed = 0, updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
-<span class="fc" id="L240">				&quot;&quot;&quot;, messageId, receivedAt.toString(), receivedAt.toString(), positionId);</span>
-<span class="fc" id="L241">	}</span>
+<span class="fc" id="L261">				&quot;&quot;&quot;, messageId, receivedAt.toString(), receivedAt.toString(), positionId);</span>
+<span class="fc" id="L262">	}</span>
 
 	@Override
 	public void markFollowUpSent(final long positionId, final String content, final String messageId,
 			final Instant sentAt) {
-<span class="fc" id="L246">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+<span class="fc" id="L267">		jdbcTemplate.update(&quot;&quot;&quot;</span>
 				UPDATE responses SET follow_up_status = 'SENT', follow_up_content = ?,
 				follow_up_sent_at = ?, follow_up_message_id = ?,
 				follow_up_needed = 0, updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
-<span class="fc" id="L251">				&quot;&quot;&quot;, content, sentAt.toString(), messageId, sentAt.toString(), positionId);</span>
-<span class="fc" id="L252">	}</span>
+<span class="fc" id="L272">				&quot;&quot;&quot;, content, sentAt.toString(), messageId, sentAt.toString(), positionId);</span>
+<span class="fc" id="L273">	}</span>
 
 	@Override
 	public void markFollowUpUnanswered(final long positionId, final Instant updatedAt) {
-<span class="fc" id="L256">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+<span class="fc" id="L277">		jdbcTemplate.update(&quot;&quot;&quot;</span>
 				UPDATE responses SET follow_up_status = 'SENT', updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
-<span class="fc" id="L259">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
-<span class="fc" id="L260">	}</span>
+<span class="fc" id="L280">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
+<span class="fc" id="L281">	}</span>
 
 	@Override
 	public void markFollowUpFailed(final long positionId, final Instant updatedAt) {
-<span class="fc" id="L264">		jdbcTemplate.update(&quot;&quot;&quot;</span>
+<span class="fc" id="L285">		jdbcTemplate.update(&quot;&quot;&quot;</span>
 				UPDATE responses SET follow_up_status = 'FAILED', follow_up_needed = 1, updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND follow_up_status = 'CHECKING'
-<span class="fc" id="L267">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
-<span class="fc" id="L268">	}</span>
+<span class="fc" id="L288">				&quot;&quot;&quot;, updatedAt.toString(), positionId);</span>
+<span class="fc" id="L289">	}</span>
 
 	private static ResponseFollowUpCandidate followUpCandidateRow(final ResultSet resultSet, final int rowNumber)
 			throws SQLException {
-<span class="fc" id="L272">		return new ResponseFollowUpCandidate(resultSet.getLong(&quot;id&quot;), resultSet.getString(SOURCE_ACCOUNT),</span>
-<span class="fc" id="L273">				resultSet.getString(RECRUITER_EMAIL), resultSet.getString(&quot;recruiter_name&quot;),</span>
-<span class="fc" id="L274">				resultSet.getString(&quot;title&quot;), resultSet.getString(SOURCE_SUBJECT),</span>
-<span class="fc" id="L275">				resultSet.getString(&quot;response_content&quot;), resultSet.getString(&quot;follow_up_content&quot;),</span>
-<span class="fc" id="L276">				resultSet.getString(&quot;gmail_message_id&quot;),</span>
-<span class="fc" id="L277">				resultSet.getString(&quot;gmail_thread_id&quot;), instant(resultSet.getString(&quot;sent_at&quot;)),</span>
-<span class="fc" id="L278">				resultSet.getString(&quot;follow_up_status&quot;), instant(resultSet.getString(&quot;follow_up_sent_at&quot;)),</span>
-<span class="fc" id="L279">				resultSet.getString(&quot;follow_up_message_id&quot;), instant(resultSet.getString(&quot;recruiter_reply_at&quot;)),</span>
-<span class="fc" id="L280">				resultSet.getString(&quot;recruiter_reply_message_id&quot;));</span>
+<span class="fc" id="L293">		return new ResponseFollowUpCandidate(resultSet.getLong(&quot;id&quot;), resultSet.getString(SOURCE_ACCOUNT),</span>
+<span class="fc" id="L294">				resultSet.getString(RECRUITER_EMAIL), resultSet.getString(&quot;recruiter_name&quot;),</span>
+<span class="fc" id="L295">				resultSet.getString(&quot;title&quot;), resultSet.getString(SOURCE_SUBJECT),</span>
+<span class="fc" id="L296">				resultSet.getString(&quot;response_content&quot;), resultSet.getString(&quot;follow_up_content&quot;),</span>
+<span class="fc" id="L297">				resultSet.getString(&quot;gmail_message_id&quot;),</span>
+<span class="fc" id="L298">				resultSet.getString(&quot;gmail_thread_id&quot;), instant(resultSet.getString(&quot;sent_at&quot;)),</span>
+<span class="fc" id="L299">				resultSet.getString(&quot;follow_up_status&quot;), instant(resultSet.getString(&quot;follow_up_sent_at&quot;)),</span>
+<span class="fc" id="L300">				resultSet.getString(&quot;follow_up_message_id&quot;), instant(resultSet.getString(&quot;recruiter_reply_at&quot;)),</span>
+<span class="fc" id="L301">				resultSet.getString(&quot;recruiter_reply_message_id&quot;));</span>
 	}
 
 	private static Instant instant(final String value) {
-<span class="pc bpc" id="L284" title="1 of 4 branches missed.">		return value == null || value.isBlank() ? null : Instant.parse(value);</span>
+<span class="pc bpc" id="L305" title="1 of 4 branches missed.">		return value == null || value.isBlank() ? null : Instant.parse(value);</span>
 	}
 
 	private static ResponseCandidate candidateRow(final ResultSet resultSet, final int rowNumber) throws SQLException {
-<span class="fc" id="L288">		return new ResponseCandidate(</span>
-<span class="fc" id="L289">				resultSet.getLong(&quot;id&quot;),</span>
-<span class="fc" id="L290">				resultSet.getLong(&quot;recruiter_id&quot;),</span>
-<span class="fc" id="L291">				resultSet.getString(SOURCE_ACCOUNT),</span>
-<span class="fc" id="L292">				resultSet.getString(SOURCE_SUBJECT),</span>
-<span class="fc" id="L293">				resultSet.getString(&quot;source_sender&quot;),</span>
-<span class="fc" id="L294">				resultSet.getString(&quot;description&quot;),</span>
-<span class="fc" id="L295">				resultSet.getString(&quot;summary&quot;),</span>
-<span class="fc" id="L296">				resultSet.getString(&quot;title&quot;),</span>
-<span class="fc" id="L297">				resultSet.getString(RECRUITER_EMAIL),</span>
-<span class="fc" id="L298">				resultSet.getString(&quot;recruiter_name&quot;));</span>
+<span class="fc" id="L309">		return new ResponseCandidate(</span>
+<span class="fc" id="L310">				resultSet.getLong(&quot;id&quot;),</span>
+<span class="fc" id="L311">				resultSet.getLong(&quot;recruiter_id&quot;),</span>
+<span class="fc" id="L312">				resultSet.getString(SOURCE_ACCOUNT),</span>
+<span class="fc" id="L313">				resultSet.getString(SOURCE_SUBJECT),</span>
+<span class="fc" id="L314">				resultSet.getString(&quot;source_sender&quot;),</span>
+<span class="fc" id="L315">				resultSet.getString(&quot;description&quot;),</span>
+<span class="fc" id="L316">				resultSet.getString(&quot;summary&quot;),</span>
+<span class="fc" id="L317">				resultSet.getString(&quot;title&quot;),</span>
+<span class="fc" id="L318">				resultSet.getString(RECRUITER_EMAIL),</span>
+<span class="fc" id="L319">				resultSet.getString(&quot;recruiter_name&quot;));</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
