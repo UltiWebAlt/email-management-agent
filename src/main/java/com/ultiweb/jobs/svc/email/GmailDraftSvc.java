@@ -104,11 +104,11 @@ public class GmailDraftSvc {
 			return Optional.empty();
 		}
 		final Gmail gmail = gmailFactory.create(List.of(GmailScopes.GMAIL_MODIFY), account);
-		String pageToken = null;
+		String pageToken = "";
 		do {
 			final var request = gmail.users().messages().list("me")
 					.setQ("in:sent rfc822msgid:" + sendIdentifier).setMaxResults(100L);
-			if (pageToken != null) {
+			if (!pageToken.isBlank()) {
 				request.setPageToken(pageToken);
 			}
 			final ListMessagesResponse page = request.execute();
@@ -127,8 +127,8 @@ public class GmailDraftSvc {
 							internalDate(message), true));
 				}
 			}
-			pageToken = page.getNextPageToken();
-		} while (pageToken != null && !pageToken.isBlank());
+			pageToken = Optional.ofNullable(page.getNextPageToken()).orElse("");
+		} while (!pageToken.isBlank());
 		return Optional.empty();
 	}
 
