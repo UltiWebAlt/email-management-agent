@@ -6,6 +6,7 @@ import com.google.api.services.gmail.model.Draft;
 import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListLabelsResponse;
 import com.google.api.services.gmail.model.Message;
+import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.ModifyMessageRequest;
 import com.google.api.services.gmail.model.MessagePartHeader;
 import com.google.api.services.gmail.model.Thread;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.InternetAddress;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,7 @@ public class GmailDraftSvc {
 	private static final String MESSAGE_ID_HEADER = "Message-ID";
 	private static final String REFERENCES_HEADER = "References";
 	private static final String FOLLOW_UP_HEADER = "X-Email-Agent-Follow-Up";
+	private static final String SEND_ID_HEADER = "X-Email-Agent-Response-ID";
 	private final GmailFactory gmailFactory;
 
 	@Autowired
@@ -57,16 +60,24 @@ public class GmailDraftSvc {
 	public GmailSentMessage sendReply(final String account, final String draftId, final String recipient,
 			final String subject, final String body, final String labelName, final boolean redirectDraft)
 			throws IOException, MessagingException {
+		return sendReply(account, draftId, recipient, subject, body, labelName, redirectDraft, null);
+	}
+
+	public GmailSentMessage sendReply(final String account, final String draftId, final String recipient,
+			final String subject, final String body, final String labelName, final boolean redirectDraft,
+			final String sendIdentifier)
+			throws IOException, MessagingException {
 		final Gmail gmail = gmailFactory.create(List.of(GmailScopes.GMAIL_MODIFY), account);
 		String effectiveDraftId = draftId;
 		if (effectiveDraftId == null || effectiveDraftId.isBlank()) {
-			final Draft created = gmail.users().drafts().create("me", draft(account, recipient, subject, body)).execute();
+			final Draft created = gmail.users().drafts().create("me", draft(account, recipient, subject, body, sendIdentifier)).execute();
 			if (created == null || created.getId() == null || created.getId().isBlank()) {
 				throw new IOException("Gmail returned no draft ID");
 			}
 			effectiveDraftId = created.getId();
-		} else if (redirectDraft) {
-			gmail.users().drafts().update("me", effectiveDraftId, draft(account, recipient, subject, body)).execute();
+		} else if (redirectDraft || sendIdentifier != null) {
+			gmail.users().drafts().update("me", effectiveDraftId,
+					draft(account, recipient, subject, body, sendIdentifier)).execute();
 		}
 		final Message message = gmail.users().drafts().send("me", new Draft().setId(effectiveDraftId)).execute();
 		if (message == null || message.getId() == null || message.getId().isBlank()) {
@@ -85,6 +96,53 @@ public class GmailDraftSvc {
 		}
 		return new GmailSentMessage(effectiveDraftId, message.getId(), message.getThreadId(),
 				internalDate(message), labelApplied);
+	}
+
+	public Optional<GmailSentMessage> findSentReply(final String account, final String sendIdentifier,
+			final String recipient) throws IOException {
+		if (sendIdentifier == null || sendIdentifier.isBlank()) {
+			return Optional.empty();
+		}
+		final Gmail gmail = gmailFactory.create(List.of(GmailScopes.GMAIL_MODIFY), account);
+		String pageToken = null;
+		do {
+			final var request = gmail.users().messages().list("me")
+					.setQ("in:sent rfc822msgid:" + sendIdentifier).setMaxResults(100L);
+			if (pageToken != null) {
+				request.setPageToken(pageToken);
+			}
+			final ListMessagesResponse page = request.execute();
+			if (page == null) {
+				throw new IOException("Gmail returned no sent-message search result");
+			}
+			for (final Message listed : Optional.ofNullable(page.getMessages()).orElseGet(List::of)) {
+				final Message message = gmail.users().messages().get("me", listed.getId())
+						.setFormat(METADATA_FORMAT)
+						.setMetadataHeaders(List.of(MESSAGE_ID_HEADER, "From", "To")).execute();
+				if (message != null && message.getLabelIds() != null && message.getLabelIds().contains("SENT")
+						&& sendIdentifier.equalsIgnoreCase(header(message, MESSAGE_ID_HEADER))
+						&& addressMatches(header(message, "From"), account)
+						&& addressMatches(header(message, "To"), recipient)) {
+					return Optional.of(new GmailSentMessage(null, message.getId(), message.getThreadId(),
+							internalDate(message), true));
+				}
+			}
+			pageToken = page.getNextPageToken();
+		} while (pageToken != null && !pageToken.isBlank());
+		return Optional.empty();
+	}
+
+	private static boolean addressMatches(final String header, final String expected) {
+		try {
+			for (final InternetAddress address : InternetAddress.parse(header, true)) {
+				if (expected.equalsIgnoreCase(address.getAddress())) {
+					return true;
+				}
+			}
+		} catch (final javax.mail.internet.AddressException exception) {
+			return false;
+		}
+		return false;
 	}
 
 	public Optional<GmailIncomingReply> findExternalReply(final String account, final String threadId,
@@ -156,9 +214,15 @@ public class GmailDraftSvc {
 						internalDate(message), true));
 	}
 
-	private static Draft draft(final String account, final String recipient, final String subject, final String body)
+	private static Draft draft(final String account, final String recipient, final String subject, final String body,
+			final String sendIdentifier)
 			throws IOException, MessagingException {
 		final var mimeMessage = CreateEmail.createEmail(recipient, account, subject, body);
+		if (sendIdentifier != null) {
+			mimeMessage.saveChanges();
+			mimeMessage.setHeader(MESSAGE_ID_HEADER, sendIdentifier);
+			mimeMessage.setHeader(SEND_ID_HEADER, sendIdentifier);
+		}
 		final Message message = CreateMessage.createMessageWithEmail(mimeMessage);
 		return new Draft().setMessage(message);
 	}

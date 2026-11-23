@@ -6,5 +6,7 @@ public record ResponseSendCandidate(
 		String recruiterEmail,
 		String sourceSubject,
 		String responseContent,
-		String gmailDraftId) {
+		String gmailDraftId,
+		String sendIdentifier,
+		boolean reconcileOnly) {
 }

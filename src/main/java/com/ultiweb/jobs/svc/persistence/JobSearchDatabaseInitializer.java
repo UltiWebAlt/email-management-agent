@@ -34,6 +34,15 @@ public final class JobSearchDatabaseInitializer {
 		jdbcTemplate.update("UPDATE positions SET trash_pending = 0 WHERE trash_pending = 1");
 		addResponseColumn("response_status", "ALTER TABLE responses ADD COLUMN response_status TEXT NOT NULL DEFAULT 'RECORDED'");
 		addResponseColumn("gmail_draft_id", "ALTER TABLE responses ADD COLUMN gmail_draft_id TEXT");
+		final boolean legacySendState = !responseColumns().contains("send_attempted");
+		addResponseColumn("send_identifier", "ALTER TABLE responses ADD COLUMN send_identifier TEXT");
+		addResponseColumn("send_attempted", "ALTER TABLE responses ADD COLUMN send_attempted INTEGER NOT NULL DEFAULT 0");
+		if (legacySendState) {
+			jdbcTemplate.update("""
+					UPDATE responses SET response_status = 'SEND_UNCONFIRMED', send_attempted = 1
+					WHERE response_type = 'INITIAL_RESPONSE' AND response_status IN ('SENDING', 'SEND_FAILED')
+					""");
+		}
 		addResponseColumn("gmail_message_id", "ALTER TABLE responses ADD COLUMN gmail_message_id TEXT");
 		addResponseColumn("gmail_thread_id", "ALTER TABLE responses ADD COLUMN gmail_thread_id TEXT");
 		addResponseColumn("updated_at", "ALTER TABLE responses ADD COLUMN updated_at TEXT");
@@ -111,6 +120,8 @@ public final class JobSearchDatabaseInitializer {
 				'INITIAL_RESPONSE', 'FOLLOW_UP', 'INTERVIEW_CONFIRMATION', 'THANK_YOU', 'DECLINED')),
 				response_status TEXT NOT NULL DEFAULT 'RECORDED',
 				gmail_draft_id TEXT,
+				send_identifier TEXT,
+				send_attempted INTEGER NOT NULL DEFAULT 0,
 				gmail_message_id TEXT,
 				gmail_thread_id TEXT,
 				updated_at TEXT,

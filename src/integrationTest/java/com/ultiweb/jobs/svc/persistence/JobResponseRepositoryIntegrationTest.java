@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -35,8 +38,8 @@ class JobResponseRepositoryIntegrationTest {
 		insertResponse(1, "SAVED_FOR_REVIEW", "Prepared response", "gmail-draft-1", null, null, null);
 
 		// when
-		final var candidate = repository.claimResponseForSending(1, NOW).orElseThrow();
-		final var duplicateClaim = repository.claimResponseForSending(1, NOW.plusSeconds(1));
+		final var candidate = repository.claimResponseForSending(1, NOW, "<id-1@example.invalid>", NOW.minusSeconds(300)).orElseThrow();
+		final var duplicateClaim = repository.claimResponseForSending(1, NOW.plusSeconds(1), "<id-2@example.invalid>", NOW.minusSeconds(300));
 		repository.saveSendingDraftId(1, "gmail-draft-2", NOW.plusSeconds(2));
 		repository.markResponseSent(1, "gmail-draft-2", "message-1", "thread-1", "SENT", SENT_AT);
 
@@ -47,13 +50,15 @@ class JobResponseRepositoryIntegrationTest {
 		assertEquals("Architect role", candidate.sourceSubject());
 		assertEquals("Prepared response", candidate.responseContent());
 		assertEquals("gmail-draft-1", candidate.gmailDraftId());
+		assertEquals("<id-1@example.invalid>", candidate.sendIdentifier());
+		assertEquals(false, candidate.reconcileOnly());
 		assertTrue(duplicateClaim.isEmpty());
 		assertEquals("SENT", responseValue(1, "response_status"));
 		assertEquals("gmail-draft-2", responseValue(1, "gmail_draft_id"));
 		assertEquals("message-1", responseValue(1, "gmail_message_id"));
 		assertEquals("thread-1", responseValue(1, "gmail_thread_id"));
 		assertEquals(SENT_AT.toString(), responseValue(1, "sent_at"));
-		assertTrue(repository.claimResponseForSending(1, NOW).isEmpty());
+		assertTrue(repository.claimResponseForSending(1, NOW, "<id-1@example.invalid>", NOW.minusSeconds(300)).isEmpty());
 	}
 
 	@Test
@@ -61,16 +66,92 @@ class JobResponseRepositoryIntegrationTest {
 		// given
 		insertPosition(1, "owner@example.com", false);
 		insertResponse(1, "DRAFT_CREATED", "Prepared response", "gmail-draft-1", null, null, null);
-		repository.claimResponseForSending(1, NOW).orElseThrow();
+		repository.claimResponseForSending(1, NOW, "<id-1@example.invalid>", NOW.minusSeconds(300)).orElseThrow();
 		repository.saveSendingDraftId(1, "gmail-draft-2", NOW.plusSeconds(1));
+		repository.markSendAttemptStarted(1, NOW.plusSeconds(1));
 
 		// when
 		repository.markResponseSendFailed(1, NOW.plusSeconds(2));
-		final var retry = repository.claimResponseForSending(1, NOW.plusSeconds(3)).orElseThrow();
+		final var retry = repository.claimResponseForSending(1, NOW.plusSeconds(3), "<id-2@example.invalid>", NOW.minusSeconds(300)).orElseThrow();
 
 		// then
 		assertEquals("gmail-draft-2", retry.gmailDraftId());
+		assertEquals("<id-1@example.invalid>", retry.sendIdentifier());
+		assertEquals(false, retry.reconcileOnly());
 		assertEquals("SENDING", responseValue(1, "response_status"));
+	}
+
+	@Test
+	void uncertainSendSurvivesRestartAndCannotBeResentWithoutReconciliation() {
+		// given
+		insertPosition(1, "owner@example.com", false);
+		insertResponse(1, "DRAFT_CREATED", "Prepared response", "draft-1", null, null, null);
+		final var first = repository.claimResponseForSending(1, NOW, "<stable@example.invalid>",
+				NOW.minusSeconds(300)).orElseThrow();
+		repository.markSendAttemptStarted(1, NOW);
+		assertTrue(repository.claimResponseForSending(1, NOW.plusSeconds(1), "<other@example.invalid>",
+				NOW.minusSeconds(299)).isEmpty());
+
+		// when: a new repository instance sees the abandoned claim after the lease expires
+		repository = new JdbcJobResponseRepository(jdbcTemplate);
+		final var recovered = repository.claimResponseForSending(1, NOW.plusSeconds(301),
+				"<other@example.invalid>", NOW.plusSeconds(1)).orElseThrow();
+		repository.markResponseSendUnconfirmed(1, NOW.plusSeconds(302));
+		final var nextCheck = repository.claimResponseForSending(1, NOW.plusSeconds(303),
+				"<third@example.invalid>", NOW.plusSeconds(3)).orElseThrow();
+
+		// then
+		assertEquals(first.sendIdentifier(), recovered.sendIdentifier());
+		assertEquals(first.sendIdentifier(), nextCheck.sendIdentifier());
+		assertTrue(recovered.reconcileOnly());
+		assertTrue(nextCheck.reconcileOnly());
+	}
+
+	@Test
+	void concurrentSendClaimsChooseOnlyOneIdentifier() throws Exception {
+		// given
+		insertPosition(1, "owner@example.com", false);
+		insertResponse(1, "DRAFT_CREATED", "Prepared response", "draft-1", null, null, null);
+		final var start = new CountDownLatch(1);
+		try (final var pool = Executors.newFixedThreadPool(2)) {
+			final var first = pool.submit(() -> {
+				start.await();
+				return repository.claimResponseForSending(1, NOW, "<first@example.invalid>", NOW.minusSeconds(300));
+			});
+			final var second = pool.submit(() -> {
+				start.await();
+				return repository.claimResponseForSending(1, NOW, "<second@example.invalid>", NOW.minusSeconds(300));
+			});
+
+			// when
+			start.countDown();
+			final var a = first.get(5, TimeUnit.SECONDS);
+			final var b = second.get(5, TimeUnit.SECONDS);
+
+			// then
+			assertEquals(1, (a.isPresent() ? 1 : 0) + (b.isPresent() ? 1 : 0));
+			assertEquals(a.or(() -> b).orElseThrow().sendIdentifier(), responseValue(1, "send_identifier"));
+		}
+	}
+
+	@Test
+	void staleClaimBeforeAttemptStillRequiresReconciliationAndLateCompletionWins() {
+		// given
+		insertPosition(1, "owner@example.com", false);
+		insertResponse(1, "DRAFT_CREATED", "Prepared response", "draft-1", null, null, null);
+		repository.claimResponseForSending(1, NOW, "<stable@example.invalid>", NOW.minusSeconds(300)).orElseThrow();
+
+		// when
+		final var recovered = repository.claimResponseForSending(1, NOW.plusSeconds(301),
+				"<other@example.invalid>", NOW.plusSeconds(1)).orElseThrow();
+		repository.markResponseSendUnconfirmed(1, NOW.plusSeconds(302));
+		repository.markResponseSent(1, "draft-1", "sent-late", "thread-1", "SENT", NOW.plusSeconds(303));
+
+		// then
+		assertTrue(recovered.reconcileOnly());
+		assertEquals("<stable@example.invalid>", recovered.sendIdentifier());
+		assertEquals("SENT", responseValue(1, "response_status"));
+		assertEquals("sent-late", responseValue(1, "gmail_message_id"));
 	}
 
 	@Test
@@ -89,7 +170,7 @@ class JobResponseRepositoryIntegrationTest {
 
 		// when / then
 		for (long positionId = 1; positionId <= 5; positionId++) {
-			assertTrue(repository.claimResponseForSending(positionId, NOW).isEmpty(),
+			assertTrue(repository.claimResponseForSending(positionId, NOW, "<id@example.invalid>", NOW.minusSeconds(300)).isEmpty(),
 					"position " + positionId + " should not be sendable");
 		}
 	}
