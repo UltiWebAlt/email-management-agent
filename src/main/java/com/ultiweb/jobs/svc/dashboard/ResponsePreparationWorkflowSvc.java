@@ -5,11 +5,14 @@ import com.ultiweb.jobs.svc.email.GmailSentMessage;
 import com.ultiweb.jobs.svc.email.EmailWorkflowLabels;
 import com.ultiweb.jobs.svc.persistence.JobResponseRepository;
 import com.ultiweb.jobs.svc.persistence.ResponseSelectionChange;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import javax.mail.MessagingException;
 import org.slf4j.Logger;
@@ -115,22 +118,42 @@ public class ResponsePreparationWorkflowSvc {
 	}
 
 	public boolean send(final long positionId) throws IOException, MessagingException {
-		final var candidate = repository.claimResponseForSending(positionId, clock.instant());
+		final var candidate = repository.claimResponseForSending(positionId, clock.instant(),
+				"<" + UUID.randomUUID() + "@email-management-agent.invalid>",
+				clock.instant().minus(Duration.ofMinutes(5)));
 		if (candidate.isEmpty()) {
 			return false;
 		}
+		final var response = candidate.orElseThrow();
+		final String recipient = productionMode ? response.recruiterEmail() : response.sourceAccount();
+		boolean attemptStarted = response.reconcileOnly();
 		try {
-			final var response = candidate.orElseThrow();
+			if (response.reconcileOnly()) {
+				final var existing = gmailDraftSvc.findSentReply(response.sourceAccount(),
+						response.sendIdentifier(), recipient);
+				if (existing.isEmpty()) {
+					repository.markResponseSendUnconfirmed(positionId, clock.instant());
+					notifyResponseUpdated(positionId);
+					return false;
+				}
+				final GmailSentMessage sent = existing.orElseThrow();
+				repository.markResponseSent(positionId, response.gmailDraftId(), sent.messageId(), sent.threadId(),
+						"SENT", sent.sentAt() == null ? clock.instant() : sent.sentAt());
+				notifyResponseUpdated(positionId);
+				return true;
+			}
 			String draftId = response.gmailDraftId();
 			if (draftId == null || draftId.isBlank()) {
 				draftId = gmailDraftSvc.createDraft(response.sourceAccount(), response.recruiterEmail(),
 						replySubject(response.sourceSubject()), response.responseContent());
 				repository.saveSendingDraftId(positionId, draftId, clock.instant());
 			}
-			final String recipient = productionMode ? response.recruiterEmail() : response.sourceAccount();
 			final String label = productionMode ? null : EmailWorkflowLabels.EMAIL_AGENT_TEST;
+			repository.markSendAttemptStarted(positionId, clock.instant());
+			attemptStarted = true;
 			final GmailSentMessage sent = gmailDraftSvc.sendReply(response.sourceAccount(), draftId,
-					recipient, replySubject(response.sourceSubject()), response.responseContent(), label, !productionMode);
+					recipient, replySubject(response.sourceSubject()), response.responseContent(), label, !productionMode,
+					response.sendIdentifier());
 			repository.saveSendingDraftId(positionId, sent.draftId(), clock.instant());
 			final var sentAt = sent.sentAt() == null ? clock.instant() : sent.sentAt();
 			final String status = !productionMode && !sent.labelApplied() ? "SENT_LABEL_FAILED" : "SENT";
@@ -139,10 +162,25 @@ public class ResponsePreparationWorkflowSvc {
 			LOGGER.info("Sent Gmail response for position {} (message {}).", positionId, sent.messageId());
 			return true;
 		} catch (final IOException | MessagingException exception) {
-			repository.markResponseSendFailed(positionId, clock.instant());
+			if (attemptStarted && !definitelyRejected(exception)) {
+				repository.markResponseSendUnconfirmed(positionId, clock.instant());
+			} else {
+				repository.markResponseSendFailed(positionId, clock.instant());
+			}
 			notifyResponseUpdated(positionId);
 			throw exception;
 		}
+	}
+
+	private static boolean definitelyRejected(final Exception exception) {
+		if (exception instanceof MessagingException) {
+			return true;
+		}
+		if (exception instanceof GoogleJsonResponseException gmailException) {
+			final int status = gmailException.getStatusCode();
+			return status >= 400 && status < 500 && status != 408 && status != 429;
+		}
+		return false;
 	}
 
 	private void prepareResponse(final long positionId) {
