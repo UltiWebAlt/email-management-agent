@@ -1,9 +1,13 @@
 gmail:
   polling:
-    enabled: false
+    enabled: ${GMAIL_POLLING_ENABLED:false}
 
 dashboard:
   email-import-enabled: true
+
+email:
+  inference:
+    log-prompts: true
 
 logging:
   level:

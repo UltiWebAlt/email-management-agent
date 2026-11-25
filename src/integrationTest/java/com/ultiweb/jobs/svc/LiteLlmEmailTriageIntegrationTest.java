@@ -23,18 +23,18 @@ import org.springframework.test.context.TestConstructor;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = {"gmail.polling.enabled=false", "spring.ai.model.chat=openai"})
-@ActiveProfiles({"test", "deepinfra", "deepinfra-summary"})
+@ActiveProfiles({"test", "litellm"})
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-@EnabledIfEnvironmentVariable(named = "RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST", matches = "true")
-class DeepInfraEmailTriageIntegrationTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(DeepInfraEmailTriageIntegrationTest.class);
+@EnabledIfEnvironmentVariable(named = "RUN_GMAIL_LITELLM_INTEGRATION_TEST", matches = "true")
+class LiteLlmEmailTriageIntegrationTest {
+	private static final Logger LOGGER = LoggerFactory.getLogger(LiteLlmEmailTriageIntegrationTest.class);
 	private static final int EMAIL_LIMIT = 50;
 
 	private final GmailMailboxSvc gmailMailboxSvc;
 	private final EmailSummarySvc emailSummarySvc;
 	private final EmailTagSvc emailTagSvc;
 
-	DeepInfraEmailTriageIntegrationTest(final GmailMailboxSvc gmailMailboxSvc,
+	LiteLlmEmailTriageIntegrationTest(final GmailMailboxSvc gmailMailboxSvc,
 			final EmailSummarySvc emailSummarySvc, final EmailTagSvc emailTagSvc) {
 		this.gmailMailboxSvc = gmailMailboxSvc;
 		this.emailSummarySvc = emailSummarySvc;
@@ -42,10 +42,10 @@ class DeepInfraEmailTriageIntegrationTest {
 	}
 
 	@Test
-	void summarizesAndRecommendsLabelsUsingDeepInfra() throws Exception {
+	void summarizesAndRecommendsLabelsUsingLiteLLM() throws Exception {
 		// given
 		final List<EmailMessage> emails = gmailMailboxSvc.readLatestEmails(EMAIL_LIMIT);
-		assertFalse(emails.isEmpty(), "No emails were returned; the live DeepInfra test needs at least one email");
+		assertFalse(emails.isEmpty(), "No emails were returned; the live LiteLLM test needs at least one email");
 		assertTrue(emails.stream().collect(Collectors.groupingBy(EmailMessage::account, Collectors.counting()))
 				.values().stream().allMatch(count -> count <= EMAIL_LIMIT));
 
@@ -56,19 +56,19 @@ class DeepInfraEmailTriageIntegrationTest {
 			// Wait for every message so one failure does not hide other recommendations.
 			CompletableFuture.allOf(analyses).join();
 		}
-		LOGGER.info("Live DeepInfra analysis completed for {} emails; Gmail labels were not modified.", emails.size());
+		LOGGER.info("Live LiteLLM analysis completed for {} emails; Gmail labels were not modified.", emails.size());
 	}
 
 	private void analyze(final EmailMessage email) {
 		// when
-		LOGGER.info("Requesting DeepInfra summary for account={}, email id={}, bodyCharacters={}",
+		LOGGER.info("Requesting LiteLLM summary for account={}, email id={}, bodyCharacters={}",
 				email.account(), email.id(), email.body().length());
 		final String summary = emailSummarySvc.summarize(email);
 
 		// then
-		assertNotNull(summary, "DeepInfra returned no summary for " + email.account() + "/" + email.id());
-		assertFalse(summary.isBlank(), "DeepInfra returned a blank summary for " + email.account() + "/" + email.id());
-		LOGGER.info("Sending summary to DeepInfra classifier for account={}, email id={}", email.account(), email.id());
+		assertNotNull(summary, "LiteLLM returned no summary for " + email.account() + "/" + email.id());
+		assertFalse(summary.isBlank(), "LiteLLM returned a blank summary for " + email.account() + "/" + email.id());
+		LOGGER.info("Sending summary to LiteLLM classifier for account={}, email id={}", email.account(), email.id());
 		final String recommendedLabel = emailTagSvc.suggestTag(summary).map(EmailTag::labelName).orElse("NONE");
 		LOGGER.info("Account={}, email id={}, subject={}, summary={}, recommendedLabel={}",
 				email.account(), email.id(), boundedLogText(email.subject(), 300), boundedLogText(summary, 1_000), recommendedLabel);

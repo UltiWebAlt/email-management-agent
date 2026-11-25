@@ -23,21 +23,21 @@ public final class ResponseFollowUpSvc {
 	private static final Duration FOLLOW_UP_DELAY = Duration.ofHours(48);
 	private final JobResponseRepository repository;
 	private final GmailDraftSvc gmailDraftSvc;
-	private final DeepInfraEmailReplyGenerator replyGenerator;
+	private final EmailReplyGenerator replyGenerator;
 	private final ApplicationEventPublisher eventPublisher;
 	private final Clock clock;
 	private final boolean productionMode;
 
 	@Autowired
 	public ResponseFollowUpSvc(final JobResponseRepository repository, final GmailDraftSvc gmailDraftSvc,
-			final DeepInfraEmailReplyGenerator replyGenerator, final ApplicationEventPublisher eventPublisher,
+			final EmailReplyGenerator replyGenerator, final ApplicationEventPublisher eventPublisher,
 			final Environment environment) {
 		this(repository, gmailDraftSvc, replyGenerator, eventPublisher, Clock.systemUTC(),
 			environment.acceptsProfiles(Profiles.of("production")));
 	}
 
 	ResponseFollowUpSvc(final JobResponseRepository repository, final GmailDraftSvc gmailDraftSvc,
-			final DeepInfraEmailReplyGenerator replyGenerator, final ApplicationEventPublisher eventPublisher,
+			final EmailReplyGenerator replyGenerator, final ApplicationEventPublisher eventPublisher,
 			final Clock clock, final boolean productionMode) {
 		this.repository = repository;
 		this.gmailDraftSvc = gmailDraftSvc;

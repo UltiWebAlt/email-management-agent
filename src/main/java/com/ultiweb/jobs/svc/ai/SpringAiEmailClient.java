@@ -3,7 +3,7 @@ package com.ultiweb.jobs.svc.ai;
 import org.springframework.ai.chat.client.ChatClient;
 
 /**
- * Spring AI adapter for the configured chat model (Ollama or DeepInfra).
+ * Spring AI adapter for the configured LiteLLM email-router chat model.
  */
 public class SpringAiEmailClient implements EmailAiClient {
 	private final ChatClient chatClient;

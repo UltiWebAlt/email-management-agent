@@ -208,7 +208,6 @@ dependencies {
     implementation platform('org.ow2.asm:asm-bom:9.11.1')
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-    implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     implementation 'org.slf4j:slf4j-api'
@@ -245,9 +244,8 @@ tasks.register('integrationTest', Test) {
     systemProperty 'java.awt.headless', 'true'
     testLogging {
         showStandardStreams = System.getenv('RUN_GMAIL_SEND_INTEGRATION_TEST') == 'true'
-                || System.getenv('RUN_GMAIL_OLLAMA_INTEGRATION_TEST') == 'true'
-                || System.getenv('RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST') == 'true'
-                || System.getenv('RUN_DEEPINFRA_CLASSIFICATION_INTEGRATION_TEST') == 'true'
+                || System.getenv('RUN_GMAIL_LITELLM_INTEGRATION_TEST') == 'true'
+                || System.getenv('RUN_LITELLM_CLASSIFICATION_INTEGRATION_TEST') == 'true'
     }
     useJUnitPlatform()
 }

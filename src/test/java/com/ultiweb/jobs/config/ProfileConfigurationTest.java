@@ -22,9 +22,7 @@ class ProfileConfigurationTest {
 			// then
 			assertThat(context).hasNotFailed();
 			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("dev"))).isTrue();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("ollama"))).isFalse();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra-summary"))).isTrue();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra"))).isTrue();
+			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("litellm"))).isTrue();
 			assertThat(context.getEnvironment().getProperty("gmail.polling.enabled", Boolean.class)).isFalse();
 			assertThat(context.getEnvironment().getProperty("spring.datasource.url"))
 					.isEqualTo("jdbc:sqlite:data/job-search-dev.db");
@@ -32,15 +30,13 @@ class ProfileConfigurationTest {
 	}
 
 	@Test
-	void productionUsesDeepInfraAndTheProductionDatabase() {
+	void productionUsesLiteLlmAndTheProductionDatabase() {
 		// given / when
 		runner.withPropertyValues("spring.profiles.active=production").run(context -> {
 			// then
 			assertThat(context).hasNotFailed();
 			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("production"))).isTrue();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra"))).isTrue();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("ollama"))).isFalse();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra-summary"))).isTrue();
+			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("litellm"))).isTrue();
 			assertThat(context.getEnvironment().getProperty("gmail.polling.enabled", Boolean.class)).isTrue();
 			assertThat(context.getEnvironment().getProperty("spring.datasource.url"))
 					.isEqualTo("jdbc:sqlite:data/job-search.db");
@@ -48,18 +44,45 @@ class ProfileConfigurationTest {
 	}
 
 	@Test
-	void localProductionUsesDeepInfraSummariesAndClassification() {
+	void localProductionUsesLiteLlmAndTheProductionDatabase() {
 		// given / when
 		runner.withPropertyValues("spring.profiles.active=local-production").run(context -> {
 			// then
 			assertThat(context).hasNotFailed();
 			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("local-production"))).isTrue();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("ollama"))).isFalse();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra-summary"))).isTrue();
-			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("deepinfra"))).isTrue();
+			assertThat(context.getEnvironment().acceptsProfiles(Profiles.of("litellm"))).isTrue();
 			assertThat(context.getEnvironment().getProperty("gmail.polling.enabled", Boolean.class)).isTrue();
 			assertThat(context.getEnvironment().getProperty("spring.datasource.url"))
 					.isEqualTo("jdbc:sqlite:data/job-search.db");
+		});
+	}
+
+	@Test
+	void developmentLogsRouterPromptsAndKeepsPollingOptIn() {
+		// given / when
+		runner.run(context -> {
+			// then
+			assertThat(context.getEnvironment().getProperty("email.inference.log-prompts", Boolean.class)).isTrue();
+			assertThat(context.getEnvironment().getProperty("dashboard.email-import-enabled", Boolean.class)).isTrue();
+		});
+	}
+
+	@Test
+	void developmentPollingCanBeEnabledWithoutSwitchingProfiles() {
+		// given / when
+		runner.withPropertyValues("GMAIL_POLLING_ENABLED=true").run(context -> {
+			// then
+			assertThat(context.getEnvironment().getProperty("gmail.polling.enabled", Boolean.class)).isTrue();
+		});
+	}
+
+	@Test
+	void productionDoesNotLogPrompts() {
+		// given / when
+		runner.withPropertyValues("spring.profiles.active=production").run(context -> {
+			// then
+			assertThat(context.getEnvironment().getProperty("email.inference.log-prompts", Boolean.class, false))
+					.isFalse();
 		});
 	}
 

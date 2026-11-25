@@ -124,13 +124,13 @@ public class EmailTriageSvc {
 	}
 
 	private EmailAnalysis analyzeEmail(final EmailMessage email) {
-		LOGGER.info("Requesting AI summary for account={}, message={}, bodyCharacters={}",
-				email.account(), email.id(), email.body().length());
+		LOGGER.info("Requesting AI summary for account={}, message={}, subject=\"{}\", from=\"{}\", bodyCharacters={}",
+				email.account(), email.id(), email.subject(), email.from(), email.body().length());
 		final String summary = emailSummarySvc.summarize(email);
-		LOGGER.info("Requesting AI label recommendation for account={}, message={}", email.account(), email.id());
+		LOGGER.info("Summary for account={}, message={}: \"{}\"", email.account(), email.id(), summary);
 		final Optional<EmailTag> suggestedLabel = emailTagSvc.suggestTag(summary);
 		if (LOGGER.isInfoEnabled()) {
-			LOGGER.info("Analyzed account={}, message={}, recommendedLabel={}",
+			LOGGER.info("Classified account={}, message={}, recommendedLabel={}",
 					email.account(), email.id(), suggestedLabel.map(EmailTag::labelName).orElse("NONE"));
 		}
 		return new EmailAnalysis(email, summary, suggestedLabel);

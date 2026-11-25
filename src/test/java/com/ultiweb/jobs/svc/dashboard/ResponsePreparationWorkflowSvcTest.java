@@ -42,7 +42,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 class ResponsePreparationWorkflowSvcTest {
 	private static final Instant NOW = Instant.parse("2026-10-04T12:00:00Z");
 	@Mock private JobResponseRepository repository;
-	@Mock private DeepInfraEmailReplyGenerator generator;
+	@Mock private EmailReplyGenerator generator;
 	@Mock private GmailDraftSvc drafts;
 	@Mock private ApplicationEventPublisher events;
 	@Mock private Executor executor;

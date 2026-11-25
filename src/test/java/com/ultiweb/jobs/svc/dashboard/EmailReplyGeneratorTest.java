@@ -27,13 +27,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DeepInfraEmailReplyGeneratorTest {
+class EmailReplyGeneratorTest {
 	@Mock private EmailAiClient client;
 
 	@Test
 	void includesTheSourceContextAndReturnsTrimmedReplyText() {
 		// given
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client);
+		final var generator = new EmailReplyGenerator(client);
 		final var candidate = new ResponseCandidate(7, 3, "owner@example.com", "Role", "Pat", "Original body",
 				"Summary", "Architect", "pat@example.com", "Pat");
 		when(client.complete(anyString(), anyString())).thenReturn(" \nThanks for the opportunity. \n");
@@ -55,7 +55,7 @@ class DeepInfraEmailReplyGeneratorTest {
 	@Test
 	void boundsLargeBodiesAndSuppliesDefaultsForMissingMetadata() {
 		// given
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client);
+		final var generator = new EmailReplyGenerator(client);
 		final var candidate = candidate("x".repeat(16_000) + "CLIPPED_SUFFIX");
 		when(client.complete(anyString(), anyString())).thenReturn("Reply");
 
@@ -74,7 +74,7 @@ class DeepInfraEmailReplyGeneratorTest {
 	@Test
 	void handlesMissingEmailBodies() {
 		// given
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client);
+		final var generator = new EmailReplyGenerator(client);
 		when(client.complete(anyString(), anyString())).thenReturn("Reply");
 		final var candidate = candidate(null);
 
@@ -90,23 +90,12 @@ class DeepInfraEmailReplyGeneratorTest {
 	@ValueSource(strings = {" ", "\n"})
 	void rejectsEmptyAiResponses(final String response) {
 		// given
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client);
+		final var generator = new EmailReplyGenerator(client);
 		final var candidate = candidate("Body");
 		when(client.complete(anyString(), anyString())).thenReturn(response);
 
 		// when / then
 		assertThrows(IllegalStateException.class, () -> generator.generate(candidate));
-	}
-
-	@Test
-	void requiresAnApiKeyBeforeCallingTheClient() {
-		// given
-		final var generator = new DeepInfraEmailReplyGenerator("", client);
-		final var candidate = candidate("Body");
-
-		// when / then
-		assertThrows(IllegalArgumentException.class, () -> generator.generate(candidate));
-		verifyNoInteractions(client);
 	}
 
 	private static ResponseCandidate candidate(final String body) {
@@ -117,7 +106,7 @@ class DeepInfraEmailReplyGeneratorTest {
 	void includesThePriorResponseAndProfileInFollowUpRequests() {
 		// given
 		final var profile = new ByteArrayResource("# Background\nJava developer\n<!-- Private note -->".getBytes(StandardCharsets.UTF_8));
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client, profile);
+		final var generator = new EmailReplyGenerator(client, profile);
 		when(client.complete(anyString(), anyString())).thenReturn("  Still interested. \n");
 
 		// when
@@ -138,7 +127,7 @@ class DeepInfraEmailReplyGeneratorTest {
 	@ValueSource(strings = {" ", "\n"})
 	void rejectsEmptyFollowUpResponses(final String response) {
 		// given
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client);
+		final var generator = new EmailReplyGenerator(client);
 		final var candidate = followUp();
 		when(client.complete(anyString(), anyString())).thenReturn(response);
 
@@ -146,23 +135,12 @@ class DeepInfraEmailReplyGeneratorTest {
 		assertThrows(IllegalStateException.class, () -> generator.generateFollowUp(candidate));
 	}
 
-	@Test
-	void requiresCredentialsBeforeGeneratingFollowUps() {
-		// given
-		final var generator = new DeepInfraEmailReplyGenerator("", client);
-		final var candidate = followUp();
-
-		// when / then
-		assertThrows(IllegalArgumentException.class, () -> generator.generateFollowUp(candidate));
-		verifyNoInteractions(client);
-	}
-
 	@ParameterizedTest
 	@ValueSource(strings = {"", " \n", "# Background\n## Experience\n<!-- Fill this in -->"})
 	void reportsEmptyOrTemplateProfilesAsMissing(final String profile) {
 		// given
 		final var resource = new ByteArrayResource(profile.getBytes(StandardCharsets.UTF_8));
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client, resource);
+		final var generator = new EmailReplyGenerator(client, resource);
 		when(client.complete(anyString(), anyString())).thenReturn("Reply");
 
 		// when
@@ -178,7 +156,7 @@ class DeepInfraEmailReplyGeneratorTest {
 	void acceptsAnAbsentOptionalProfile() {
 		// given
 		final Resource profile = mock(Resource.class);
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client, profile);
+		final var generator = new EmailReplyGenerator(client, profile);
 		when(client.complete(anyString(), anyString())).thenReturn("Reply");
 
 		// when
@@ -196,7 +174,7 @@ class DeepInfraEmailReplyGeneratorTest {
 		final String unclosedComment = "<!--".repeat(5_000) + "Unclosed note";
 		final var profile = new ByteArrayResource(("Java<!-- private\nnotes --> developer<!-- second -->\n" + unclosedComment)
 				.getBytes(StandardCharsets.UTF_8));
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client, profile);
+		final var generator = new EmailReplyGenerator(client, profile);
 		when(client.complete(anyString(), anyString())).thenReturn("Reply");
 
 		// when
@@ -218,7 +196,7 @@ class DeepInfraEmailReplyGeneratorTest {
 		when(profile.exists()).thenReturn(true);
 		final var failure = new IOException("Unreadable profile");
 		when(profile.getInputStream()).thenThrow(failure);
-		final var generator = new DeepInfraEmailReplyGenerator("test-key", client, profile);
+		final var generator = new EmailReplyGenerator(client, profile);
 		final var candidate = candidate("Body");
 
 		// when / then

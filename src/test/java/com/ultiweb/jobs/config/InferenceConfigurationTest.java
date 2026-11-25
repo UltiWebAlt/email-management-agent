@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.ultiweb.jobs.EmailManagementAgent;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -18,85 +17,65 @@ class InferenceConfigurationTest {
 					context.getEnvironment().getPropertySources().remove("systemEnvironment");
 					context.getEnvironment().getPropertySources().remove("systemProperties");
 					if (apiKey != null) {
-						context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("testDeepInfraApiKey",
-								Map.of("DEEPINFRA_API_KEY", apiKey)));
+						context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("testLiteLlmApiKey",
+								Map.of("LITELLM_API_KEY", apiKey)));
 					}
 					new ConfigDataApplicationContextInitializer().initialize(context);
 				})
 				.withUserConfiguration(EmailManagementAgent.class)
-				.withPropertyValues("spring.profiles.active=test,ollama,deepinfra",
+				.withPropertyValues("spring.profiles.active=test,litellm",
 						"GMAIL_CLIENT_ID=test-client", "GMAIL_CLIENT_SECRET=test-secret");
 	}
 
 	@Test
-	void usesLocalOllamaForSummariesAndDeepInfraForClassification() {
+	void usesOneLiteLlmModelForSummariesAndClassification() {
 		// given / when
-		runner("test-deepinfra-key").withPropertyValues("DEEPINFRA_API_KEY=test-deepinfra-key").run(context -> {
+		runner("test-litellm-key").run(context -> {
 			// then
-			assertThat(context.getEnvironment().getProperty("spring.ai.openai.api-key")).isEqualTo("test-deepinfra-key");
 			assertThat(context).hasNotFailed().hasBean("summaryAiClient").hasBean("tagAiClient");
-			assertThat(context).hasSingleBean(OpenAiChatModel.class).hasSingleBean(OllamaChatModel.class);
-			assertThat(context.getBean(OllamaChatModel.class).getOptions().getModel()).isEqualTo("llama3.2:3b");
+			assertThat(context).hasSingleBean(OpenAiChatModel.class);
+			final OpenAiChatModel model = context.getBean(OpenAiChatModel.class);
+			assertThat(model.getOptions().getModel()).isEqualTo("email-router");
 			assertThat(context.getBean("summaryAiClient")).isNotSameAs(context.getBean("tagAiClient"));
-			assertThat(context.getEnvironment().getProperty("spring.ai.openai.api-key")).isEqualTo("test-deepinfra-key");
+			assertThat(context.getEnvironment().getProperty("spring.ai.openai.api-key")).isEqualTo("test-litellm-key");
 			assertThat(context.getEnvironment().getProperty("spring.ai.openai.base-url"))
-					.isEqualTo("https://api.deepinfra.com/v1/openai");
-			assertThat(context.getBean(OpenAiChatModel.class).getOptions().getModel())
-					.isEqualTo("meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo");
+					.isEqualTo("http://localhost:4000");
 		});
 	}
 
 	@Test
-	void allowsOverridingTheDeepInfraModel() {
+	void allowsOverridingTheRouterEndpointAndModel() {
 		// given / when
-		runner("test-deepinfra-key")
-				.withPropertyValues("DEEPINFRA_API_KEY=test-deepinfra-key", "DEEPINFRA_MODEL=custom/model").run(context -> {
+		runner("test-litellm-key")
+				.withPropertyValues("LITELLM_API_KEY=test-litellm-key", "LITELLM_MODEL=custom/router",
+						"LITELLM_BASE_URL=http://litellm.internal:4000").run(context -> {
 			// then
 			assertThat(context).hasNotFailed();
-			assertThat(context.getBean(OpenAiChatModel.class).getOptions().getModel()).isEqualTo("custom/model");
+			assertThat(context.getBean(OpenAiChatModel.class).getOptions().getModel()).isEqualTo("custom/router");
+			assertThat(context.getEnvironment().getProperty("spring.ai.openai.base-url"))
+					.isEqualTo("http://litellm.internal:4000");
 		});
 	}
 
 	@Test
-	void ollamaSummariesUseDeepInfraForClassification() {
+	void acceptsABaseUrlThatAlreadyEndsInV1() {
 		// given / when
-		runner("test-key").withPropertyValues("spring.profiles.active=test,ollama,deepinfra",
-				"DEEPINFRA_API_KEY=test-key",
-				"OLLAMA_BASE_URL=http://localhost:11434", "OLLAMA_MODEL=llama3.2:3b").run(context -> {
+		runner("test-litellm-key")
+				.withPropertyValues("LITELLM_API_KEY=test-litellm-key",
+						"LITELLM_BASE_URL=http://litellm.internal:4000/v1").run(context -> {
 			// then
-			assertThat(context).hasNotFailed().hasBean("summaryAiClient").hasBean("tagAiClient");
-			assertThat(context).hasSingleBean(OllamaChatModel.class).hasSingleBean(OpenAiChatModel.class);
-			assertThat(context.getBean(OllamaChatModel.class).getOptions().getModel()).isEqualTo("llama3.2:3b");
+			assertThat(context).hasNotFailed();
+			assertThat(EmailInferenceConfiguration.v1BaseUrl("http://litellm.internal:4000/v1"))
+					.isEqualTo("http://litellm.internal:4000/v1");
+			assertThat(EmailInferenceConfiguration.v1BaseUrl("http://litellm.internal:4000"))
+					.isEqualTo("http://litellm.internal:4000/v1");
 		});
 	}
 
 	@Test
-	void lmStudioCanReplaceOnlyTheSummaryModelWhileDeepInfraRemainsTheClassifier() {
+	void rejectsClassificationConcurrencyAboveTheRouterLimit() {
 		// given / when
-		runner("test-deepinfra-key")
-				.withPropertyValues("spring.profiles.active=test,ollama,deepinfra,lmstudio",
-				"DEEPINFRA_API_KEY=test-deepinfra-key",
-				"LMSTUDIO_MODEL=qwen-local",
-				"LMSTUDIO_BASE_URL=http://localhost:1234/v1").run(context -> {
-				// then
-				assertThat(context).hasNotFailed().hasBean("summaryAiClient").hasBean("tagAiClient");
-				assertThat(context).hasBean("lmStudioSummaryChatModel").hasSingleBean(OllamaChatModel.class);
-				assertThat(context.getEnvironment().getProperty("spring.ai.openai.base-url"))
-						.isEqualTo("https://api.deepinfra.com/v1/openai");
-				assertThat(context.getBean("lmStudioSummaryChatModel", OpenAiChatModel.class).getOptions().getModel())
-						.isEqualTo("qwen-local");
-				assertThat(context.getBean("deepInfraClassifierChatModel", OpenAiChatModel.class).getOptions().getModel())
-						.isEqualTo("meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo");
-				assertThat(context.getBean("summaryAiClient")).isNotSameAs(context.getBean("tagAiClient"));
-				assertThat(context.getBean(OllamaChatModel.class).getOptions().getModel()).isEqualTo("llama3.2:3b");
-			});
-	}
-
-	@Test
-	void rejectsConcurrencyAboveThePublishedDeepInfraQuota() {
-		// given / when
-		runner("test-key").withPropertyValues("DEEPINFRA_API_KEY=test-key",
-				"DEEPINFRA_MAX_CONCURRENT_REQUESTS=201").run(context -> {
+		runner("test-litellm-key").withPropertyValues("LITELLM_MAX_CONCURRENT_REQUESTS=201").run(context -> {
 			// then
 			assertThat(context).hasFailed();
 			assertThat(context.getStartupFailure()).hasStackTraceContaining("between 1 and 200");
@@ -104,12 +83,22 @@ class InferenceConfigurationTest {
 	}
 
 	@Test
-	void deepInfraRequiresItsApiKey() {
+	void rejectsSummaryConcurrencyAboveTheRouterLimit() {
+		// given / when
+		runner("test-litellm-key").withPropertyValues("LITELLM_SUMMARY_MAX_CONCURRENT_REQUESTS=0").run(context -> {
+			// then
+			assertThat(context).hasFailed();
+			assertThat(context.getStartupFailure()).hasStackTraceContaining("between 1 and 200");
+		});
+	}
+
+	@Test
+	void litellmRequiresItsApiKey() {
 		// given / when
 		runner(null).run(context -> {
 			// then
 			assertThat(context).hasFailed();
-			assertThat(context.getStartupFailure()).hasStackTraceContaining("DEEPINFRA_API_KEY");
+			assertThat(context.getStartupFailure()).hasStackTraceContaining("LITELLM_API_KEY");
 		});
 	}
 }

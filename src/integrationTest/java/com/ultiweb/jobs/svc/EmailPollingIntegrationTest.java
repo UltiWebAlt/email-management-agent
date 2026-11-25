@@ -19,18 +19,18 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @SpringBootTest(useMainMethod = SpringBootTest.UseMainMethod.ALWAYS,
 		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
 		properties = {
-				"spring.profiles.active=test,ollama,deepinfra",
+				"spring.profiles.active=test,litellm",
 				"gmail.polling.enabled=true",
 				"gmail.polling.interval=50ms",
 				"GMAIL_CLIENT_ID=test-client",
 				"GMAIL_CLIENT_SECRET=test-secret",
-				"DEEPINFRA_API_KEY=test-key"
+				"LITELLM_API_KEY=test-key"
 		})
 @DirtiesContext
 class EmailPollingIntegrationTest {
 	@DynamicPropertySource
 	static void testAiCredentials(final DynamicPropertyRegistry registry) {
-		registry.add("DEEPINFRA_API_KEY", () -> "test-key");
+		registry.add("LITELLM_API_KEY", () -> "test-key");
 	}
 
 	@MockitoBean private GmailMailboxSvc mailbox;

@@ -1,9 +1,0 @@
-lmstudio:
-  base-url: ${LMSTUDIO_BASE_URL:http://localhost:1234/v1}
-  api-key: ${LMSTUDIO_API_KEY:lm-studio}
-  model: ${LMSTUDIO_MODEL}
-
-email:
-  inference:
-    lmstudio-max-concurrent-requests: ${LMSTUDIO_MAX_CONCURRENT_REQUESTS:2}
-    lmstudio-disable-thinking: ${LMSTUDIO_DISABLE_THINKING:true}

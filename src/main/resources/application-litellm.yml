@@ -1,0 +1,23 @@
+spring:
+  ai:
+    retry:
+      max-attempts: 2
+      on-http-codes: [429]
+      backoff:
+        initial-interval: 2s
+        multiplier: 2
+        max-interval: 10s
+    model:
+      chat: openai
+    openai:
+      base-url: ${LITELLM_BASE_URL:http://localhost:4000}
+      api-key: ${LITELLM_API_KEY:}
+      chat:
+        options:
+          model: ${LITELLM_MODEL:email-router}
+          temperature: 0.0
+
+email:
+  inference:
+    max-concurrent-requests: ${LITELLM_MAX_CONCURRENT_REQUESTS:8}
+    summary-max-concurrent-requests: ${LITELLM_SUMMARY_MAX_CONCURRENT_REQUESTS:8}

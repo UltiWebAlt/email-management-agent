@@ -48,15 +48,23 @@ Mail processing visits every configured account. Latest-mail analysis reads up t
 
 ### 🤖 AI providers and models
 
-The `dev`, `production`, and `local-production` Spring profile groups use DeepInfra for both summarization and classification. DeepInfra reads its API key from `DEEPINFRA_API_KEY`. No key is stored in configuration. DeepInfra uses its [OpenAI-compatible chat endpoint](https://docs.deepinfra.com/chat/overview) through Spring AI; an OpenAI account or key is not needed. Email subject, sender, and normalized visible body text go to DeepInfra's `google/gemma-3-4b-it` model for summarization. HTML mail is converted to bounded plain text while preserving links, lists, image alternative text, and table cell relationships; scripts, styles, hidden elements, tracking query strings, attachments, and markup are excluded. Only the resulting summary is sent directly to DeepInfra's classifier; the original email and metadata are not included in that request.
+The `dev`, `production`, and `local-production` Spring profile groups activate the `litellm` profile. Every inference request — summarization, classification, job-detail extraction, and reply drafting — goes to a single [LiteLLM](https://docs.litellm.ai/) proxy model, `email-router`, through its OpenAI-compatible chat endpoint. Email subject, sender, and normalized visible body text are summarized through the router. HTML mail is converted to bounded plain text while preserving links, lists, image alternative text, and table cell relationships; scripts, styles, hidden elements, tracking query strings, attachments, and markup are excluded. Only the resulting summary is sent for classification; the original email and metadata are not included in that request.
 
-The default DeepInfra classifier is `meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo`; the summary model is `google/gemma-3-4b-it`. Set `DEEPINFRA_MODEL` or `DEEPINFRA_SUMMARY_MODEL` to change them. `DEEPINFRA_BASE_URL` overrides the shared endpoint. These settings live in `src/main/resources/application-deepinfra.yml`.
-
-Ollama must be running locally with the configured `OLLAMA_MODEL` (default `llama3.2:3b`) available. For the default model:
+The application reads the router settings from these environment variables:
 
 ```bash
-ollama pull llama3.2:3b
+export LITELLM_BASE_URL=http://localhost:4000
+export LITELLM_API_KEY=sk-your-litellm-key
+export LITELLM_MODEL=email-router
 ```
+
+`LITELLM_BASE_URL` defaults to `http://localhost:4000` (the root of the proxy; the application adds the OpenAI `/v1` path itself), and `LITELLM_MODEL` defaults to `email-router`. `LITELLM_API_KEY` is required; startup fails with a clear message when it is missing. Which upstream models the router selects for each request is configured in LiteLLM, not in this application. These settings live in `src/main/resources/application-litellm.yml`.
+
+### 🔎 Development activity logs
+
+The `dev` profile sets `email.inference.log-prompts=true`, so every LiteLLM call logs the complete user prompt (the email text or summary sent for evaluation) and the raw response, tagged `[summary]` or `[classifier]`. The fixed system prompt is omitted because it is identical on every call. Full email bodies therefore appear in the console; use `production` or set `email.inference.log-prompts=false` to turn it off. Triage also logs each email's subject, sender, generated summary, recommended label, and the label actually applied.
+
+Polling stays off in `dev` by default, so these logs appear when you either set `GMAIL_POLLING_ENABLED=true` or use the dashboard's import action.
 
 ### ⏱️ Polling settings
 
@@ -78,7 +86,7 @@ Do not commit credentials or the local `tokens/` directory.
 
 ### 🛠️ Development
 
-The safe default profile is `dev`: polling is disabled, summaries and classification use DeepInfra, and persistence uses `data/job-search-dev.db`. Set `DEEPINFRA_API_KEY` before starting:
+The safe default profile is `dev`: polling is disabled unless `GMAIL_POLLING_ENABLED=true` is set, inference goes through the LiteLLM `email-router` model, and persistence uses `data/job-search-dev.db`. Set `LITELLM_API_KEY` (and `LITELLM_BASE_URL` when the proxy is not on `http://localhost:4000`) before starting:
 
 ```bash
 ./gradlew bootRun
@@ -88,7 +96,7 @@ Development runs include Spring Boot DevTools. Java changes take effect after yo
 
 ### 🚀 Production
 
-Production must be selected explicitly. It enables Gmail polling, writes `data/job-search.db`, and activates DeepInfra summary and classifier profiles:
+Production must be selected explicitly. It enables Gmail polling, writes `data/job-search.db`, and activates the LiteLLM router profile:
 
 ```bash
 SPRING_PROFILES_ACTIVE=production ./gradlew bootRun
@@ -96,7 +104,7 @@ SPRING_PROFILES_ACTIVE=production ./gradlew bootRun
 
 ### 🏠 Production with local database
 
-To run the production workflow with DeepInfra summaries and classification, using the local SQLite database:
+To run the production workflow with the LiteLLM router, using the local SQLite database:
 
 ```bash
 SPRING_PROFILES_ACTIVE=local-production ./gradlew bootRun
@@ -104,15 +112,7 @@ SPRING_PROFILES_ACTIVE=local-production ./gradlew bootRun
 
 ### 🤖 Provider profiles
 
-The lower-level `deepinfra-summary` profile selects DeepInfra for summaries, and `deepinfra` supplies classification. The explicit `ollama` profile remains available for local summary comparisons. These lower-level profiles do not independently enable production behavior. All profiles use the same classification categories and prompts. `DEEPINFRA_API_KEY` is required in development and production.
-
-To compare LM Studio with Ollama for summaries, start LM Studio's OpenAI-compatible server and activate `lmstudio` alongside `dev`:
-
-```bash
-LMSTUDIO_MODEL='<model-id-from-LM-Studio>' SPRING_PROFILES_ACTIVE=dev,lmstudio ./gradlew bootRun
-```
-
-The LM Studio profile defaults to `http://localhost:1234/v1` and API key `lm-studio`; override these with `LMSTUDIO_BASE_URL` and `LMSTUDIO_API_KEY` if needed. It routes summaries to LM Studio while keeping DeepInfra as the classifier. `LMSTUDIO_MAX_CONCURRENT_REQUESTS` controls summary request concurrency and defaults to 2.
+The `litellm` profile is the only inference profile and supplies the router’s base URL, API key, and model. It does not independently enable production behavior. Every profile uses the same classification categories and prompts. `LITELLM_API_KEY` is required in development and production.
 
 ### 📊 Dashboard
 
@@ -120,7 +120,7 @@ The application stays running with an embedded HTTP server on port 8080 and logs
 
 ### ✉️ Selecting opportunities and preparing replies
 
-Select opportunities and choose **Save selections & prepare replies**, or prepare one from its detail view. DeepInfra creates a concise response using the original email and the private Markdown resume in `src/main/resources/resumes`; set `DEEPINFRA_API_KEY` to enable generation. Generated responses, Gmail draft IDs, sent message IDs, thread IDs, and send times are stored in the `responses` table. The detail view can send a prepared reply after confirmation. The `production` profile sends to the recruiter. Every other profile redirects sends to the source mailbox and applies the Gmail label `EMail Agent Test`.
+Select opportunities and choose **Save selections & prepare replies**, or prepare one from its detail view. The LiteLLM `email-router` model creates a concise response using the original email and the private Markdown resume in `src/main/resources/resumes`; set `LITELLM_API_KEY` to enable generation. Generated responses, Gmail draft IDs, sent message IDs, thread IDs, and send times are stored in the `responses` table. The detail view can send a prepared reply after confirmation. The `production` profile sends to the recruiter. Every other profile redirects sends to the source mailbox and applies the Gmail label `EMail Agent Test`.
 
 The application checks sent-response threads every hour. At 48 hours after an initial response, if no incoming reply is found, it automatically generates and sends one follow-up in the same Gmail thread. It continues tracking the thread and records when a reply arrives. Non-production follow-ups also go to the source mailbox and receive the `EMail Agent Test` label.
 
@@ -156,7 +156,7 @@ Manually applying `Architect_Jobs` in Gmail also schedules that message for pers
 
 ### 🔁 Inference concurrency and retries
 
-Triage runs email inference concurrently on Java 21 virtual threads, preserving result order and serial Gmail writes. Ollama summary calls share a concurrency limit of 2 (`OLLAMA_MAX_CONCURRENT_REQUESTS`). DeepInfra summary and classifier calls have separate concurrency limits of 8 (`DEEPINFRA_SUMMARY_MAX_CONCURRENT_REQUESTS` and `DEEPINFRA_MAX_CONCURRENT_REQUESTS`, each allowed range 1–200), including time spent retrying. [DeepInfra's published quota](https://docs.deepinfra.com/account/rate-limits) is 200 concurrent requests per model per account, not a requests-per-minute allowance. These limits apply per application instance; divide the account budget across instances and other clients. HTTP 429 and transient server failures receive at most two retries with exponential delays starting at two seconds; other client errors are not retried. Failed messages remain eligible for the next poll.
+Triage runs email inference concurrently on Java 21 virtual threads, preserving result order and serial Gmail writes. Summary and classifier calls share the `email-router` model but keep separate concurrency limits of 8 (`LITELLM_SUMMARY_MAX_CONCURRENT_REQUESTS` and `LITELLM_MAX_CONCURRENT_REQUESTS`, each allowed range 1–200), including time spent retrying. These limits apply per application instance; divide the router or upstream provider budget across instances and other clients. HTTP 429 and transient server failures receive at most two retries with exponential delays starting at two seconds; other client errors are not retried. Failed messages remain eligible for the next poll.
 
 ## 🧪 Testing and validation
 
@@ -170,37 +170,29 @@ Run isolated checks with:
 ./gradlew check
 ```
 
-### 📬 Live Gmail and DeepInfra analysis
+### 📬 Live Gmail and LiteLLM analysis
 
-Real Gmail analysis with DeepInfra summaries and classification remains opt-in and does not apply labels:
-
-```bash
-RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.EmailTriageIntegrationTest --rerun-tasks
-```
-
-### 📬 Live Gmail and DeepInfra analysis
-
-To run real Gmail/DeepInfra analysis:
+To log summaries and labels for up to 50 emails per account:
 
 ```bash
-RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.DeepInfraEmailTriageIntegrationTest --rerun-tasks
+RUN_GMAIL_LITELLM_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.LiteLlmEmailTriageIntegrationTest --rerun-tasks
 ```
 
-This requires `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `DEEPINFRA_API_KEY`. `GMAIL_ACCOUNTS` selects the accounts; `DEEPINFRA_MODEL` and `DEEPINFRA_SUMMARY_MODEL` override the classifier and summary models. The test disables background polling and analyzes up to 50 latest emails per account. For manual classification review, it logs a bounded subject, generated summary, and recommended label, including `NONE`; it never logs the full body and does not modify messages or labels. It fails if no messages are available or a summary is missing or blank. The opt-in flag enables console output; `--rerun-tasks` ensures Gradle runs it again even if previous test results are up to date. Normal checks skip this live test.
+This requires `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `LITELLM_API_KEY`, plus a reachable `LITELLM_BASE_URL`. `GMAIL_ACCOUNTS` selects the accounts; `LITELLM_MODEL` overrides the router model. The test disables background polling and analyzes up to 50 latest emails per account. For manual classification review, it logs a bounded subject, generated summary, and recommended label, including `NONE`; it never logs the full body and does not modify messages or labels. It fails if no messages are available or a summary is missing or blank. The opt-in flag enables console output; `--rerun-tasks` ensures Gradle runs it again even if previous test results are up to date. Normal checks skip this live test.
 
 ### 🔐 OAuth approval for live integration tests
 
 Integration tests print the OAuth URL for manual approval instead of launching a desktop browser. Open the URL in your browser, sign in as the account shown, and finish consent. The test waits for the localhost callback and then resumes automatically; pressing Enter in the terminal is not required. Cached credentials skip this approval step.
 
-### 🤖 Synthetic DeepInfra classification regression
+### 🤖 Synthetic classification regression
 
-To evaluate DeepInfra classification independently using 27 synthetic regression summaries (all twelve categories, unmatched cases, and an embedded instruction):
+To evaluate `email-router` classification independently using 27 synthetic regression summaries (all twelve categories, unmatched cases, and an embedded instruction):
 
 ```bash
-RUN_DEEPINFRA_CLASSIFICATION_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.ai.DeepInfraClassificationIntegrationTest --rerun-tasks
+RUN_LITELLM_CLASSIFICATION_INTEGRATION_TEST=true ./gradlew integrationTest --tests com.ultiweb.jobs.svc.ai.LiteLlmClassificationIntegrationTest --rerun-tasks
 ```
 
-This opt-in test uses `DEEPINFRA_API_KEY` and requires neither Gmail access nor a running Ollama server. It makes real classification requests and asserts each expected label; it does not establish accuracy on your mailbox. Normal checks skip it.
+This opt-in test uses `LITELLM_API_KEY` and requires neither Gmail access nor a Gmail account. It makes real classification requests and asserts each expected label; it does not establish accuracy on your mailbox. Normal checks skip it.
 
 ### 🔍 SonarQube analysis
 

@@ -20,14 +20,11 @@ spring:
     default: dev
     group:
       dev:
-        - deepinfra
-        - deepinfra-summary
+        - litellm
       production:
-        - deepinfra
-        - deepinfra-summary
+        - litellm
       local-production:
-        - deepinfra
-        - deepinfra-summary
+        - litellm
   task:
     scheduling:
       pool:
@@ -51,11 +48,6 @@ spring:
       audio:
         speech: none
         transcription: none
-    ollama:
-      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
-      chat:
-        model: ${OLLAMA_MODEL:llama3.2:3b}
-        temperature: 0.0
 
 logging:
   level:
@@ -63,5 +55,4 @@ logging:
 
 email:
   inference:
-    local-max-concurrent-requests: ${OLLAMA_MAX_CONCURRENT_REQUESTS:2}
     tag-system-prompt-location: ${EMAIL_TAG_SYSTEM_PROMPT_LOCATION:classpath:prompts/email-tag-system-prompt.txt}

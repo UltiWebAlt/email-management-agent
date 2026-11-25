@@ -28,7 +28,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class ResponsePreparationWorkflowSvc {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResponsePreparationWorkflowSvc.class);
 	private final JobResponseRepository repository;
-	private final DeepInfraEmailReplyGenerator replyGenerator;
+	private final EmailReplyGenerator replyGenerator;
 	private final GmailDraftSvc gmailDraftSvc;
 	private final Executor executor;
 	private final Clock clock;
@@ -38,7 +38,7 @@ public class ResponsePreparationWorkflowSvc {
 
 	@Autowired
 	public ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
-			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
+			final EmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
 			@Qualifier("responseExecutor") final Executor executor, final Environment environment,
 			final ApplicationEventPublisher eventPublisher) {
 		this(repository, replyGenerator, gmailDraftSvc, executor, Clock.systemUTC(),
@@ -47,20 +47,20 @@ public class ResponsePreparationWorkflowSvc {
 	}
 
 	ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
-			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
+			final EmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
 			final Executor executor, final Clock clock, final boolean developmentMode) {
 		this(repository, replyGenerator, gmailDraftSvc, executor, clock, developmentMode, !developmentMode, event -> { });
 	}
 
 	ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
-			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
+			final EmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
 			final Executor executor, final Clock clock, final boolean developmentMode,
 			final ApplicationEventPublisher eventPublisher) {
 		this(repository, replyGenerator, gmailDraftSvc, executor, clock, developmentMode, !developmentMode, eventPublisher);
 	}
 
 	ResponsePreparationWorkflowSvc(final JobResponseRepository repository,
-			final DeepInfraEmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
+			final EmailReplyGenerator replyGenerator, final GmailDraftSvc gmailDraftSvc,
 			final Executor executor, final Clock clock, final boolean developmentMode, final boolean productionMode,
 			final ApplicationEventPublisher eventPublisher) {
 		this.repository = repository;

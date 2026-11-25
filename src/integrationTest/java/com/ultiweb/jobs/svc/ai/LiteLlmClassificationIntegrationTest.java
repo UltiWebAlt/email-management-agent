@@ -17,14 +17,14 @@ import org.springframework.test.context.TestConstructor;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = {"gmail.polling.enabled=false", "spring.ai.model.chat=openai",
 				"GMAIL_CLIENT_ID=unused-test-client", "GMAIL_CLIENT_SECRET=unused-test-secret"})
-@ActiveProfiles({"test", "ollama", "deepinfra"})
+@ActiveProfiles({"test", "litellm"})
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-@EnabledIfEnvironmentVariable(named = "RUN_DEEPINFRA_CLASSIFICATION_INTEGRATION_TEST", matches = "true")
-class DeepInfraClassificationIntegrationTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(DeepInfraClassificationIntegrationTest.class);
+@EnabledIfEnvironmentVariable(named = "RUN_LITELLM_CLASSIFICATION_INTEGRATION_TEST", matches = "true")
+class LiteLlmClassificationIntegrationTest {
+	private static final Logger LOGGER = LoggerFactory.getLogger(LiteLlmClassificationIntegrationTest.class);
 	private final EmailTagSvc classifier;
 
-	DeepInfraClassificationIntegrationTest(final EmailTagSvc classifier) {
+	LiteLlmClassificationIntegrationTest(final EmailTagSvc classifier) {
 		this.classifier = classifier;
 	}
 

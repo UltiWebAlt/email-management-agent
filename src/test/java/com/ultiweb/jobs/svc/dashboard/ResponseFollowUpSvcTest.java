@@ -33,7 +33,7 @@ class ResponseFollowUpSvcTest {
 
 	@Mock private JobResponseRepository repository;
 	@Mock private GmailDraftSvc gmailDraftSvc;
-	@Mock private DeepInfraEmailReplyGenerator replyGenerator;
+	@Mock private EmailReplyGenerator replyGenerator;
 	@Mock private ApplicationEventPublisher eventPublisher;
 
 	@Test

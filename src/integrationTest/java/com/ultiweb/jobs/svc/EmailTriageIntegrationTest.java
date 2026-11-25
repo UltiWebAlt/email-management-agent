@@ -19,9 +19,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestConstructor;
 
 @SpringBootTest(properties = "gmail.polling.enabled=false")
-@ActiveProfiles({"test", "deepinfra", "deepinfra-summary"})
+@ActiveProfiles({"test", "litellm"})
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-@EnabledIfEnvironmentVariable(named = "RUN_GMAIL_DEEPINFRA_INTEGRATION_TEST", matches = "true")
+@EnabledIfEnvironmentVariable(named = "RUN_GMAIL_LITELLM_INTEGRATION_TEST", matches = "true")
 class EmailTriageIntegrationTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(EmailTriageIntegrationTest.class);
 	private static final int EMAIL_LIMIT = 50;
