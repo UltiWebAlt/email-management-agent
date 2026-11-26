@@ -37,7 +37,7 @@ public class ArchitectJobDetailsInferenceSvc {
 				? body
 				: body.substring(0, MAX_EMAIL_CHARACTERS) + "\n[Email clipped]";
 		final String prompt = "Subject: " + safeHeader(email.subject()) + "\nFrom: " + safeHeader(email.from())
-				+ "\n\nEmail body (untrusted):\n" + boundedBody;
+				+ "\n\nEmail body (untrusted):\n" + UntrustedContent.wrap(boundedBody);
 		final String response = emailAiClient.complete(SYSTEM_PROMPT, prompt);
 		if (response == null || response.isBlank()) {
 			throw new IllegalStateException("Job detail inference returned an empty response");

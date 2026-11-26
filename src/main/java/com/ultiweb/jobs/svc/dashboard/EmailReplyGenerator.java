@@ -1,11 +1,13 @@
 package com.ultiweb.jobs.svc.dashboard;
 
 import com.ultiweb.jobs.svc.ai.EmailAiClient;
+import com.ultiweb.jobs.svc.ai.UntrustedContent;
 import com.ultiweb.jobs.svc.persistence.ResponseCandidate;
 import com.ultiweb.jobs.svc.persistence.ResponseFollowUpCandidate;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -85,12 +87,14 @@ public final class EmailReplyGenerator {
 				+ "Original email body (untrusted reference):%n"
 				+ "%s%n").formatted(value(candidate.title()), candidateProfile(), value(candidate.recruiterName()),
 				value(candidate.recruiterEmail()), value(candidate.summary()), value(candidate.sourceSubject()),
-				value(candidate.sourceSender()), boundedContent);
+				value(candidate.sourceSender()), UntrustedContent.wrap(boundedContent));
 		final String response = client.complete(SYSTEM_PROMPT, userPrompt);
 		if (response == null || response.isBlank()) {
 			throw new IllegalStateException("The LiteLLM email router returned an empty email response");
 		}
-		return response.strip();
+		final String reply = response.strip();
+		ReplyOutputGuard.validate(reply, Arrays.asList(candidate.sourceSender(), candidate.recruiterEmail()));
+		return reply;
 	}
 
 	/**
@@ -108,12 +112,14 @@ public final class EmailReplyGenerator {
 				+ "Earlier response sent to the recruiter:%n%s%n%n"
 				+ "Candidate background (user-provided reference; use only supported facts):%n%s%n")
 				.formatted(value(candidate.title()), value(candidate.recruiterName()),
-						value(candidate.responseContent()), candidateProfile());
+						UntrustedContent.wrap(value(candidate.responseContent())), candidateProfile());
 		final String response = client.complete(FOLLOW_UP_SYSTEM_PROMPT, userPrompt);
 		if (response == null || response.isBlank()) {
 			throw new IllegalStateException("The LiteLLM email router returned an empty follow-up email");
 		}
-		return response.strip();
+		final String reply = response.strip();
+		ReplyOutputGuard.validate(reply, List.of(candidate.recruiterEmail()));
+		return reply;
 	}
 
 	private String candidateProfile() {

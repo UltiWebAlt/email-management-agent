@@ -75,7 +75,7 @@ public class AiEmailSummarySvc implements EmailSummarySvc {
 		return "Subject: " + promptHeader(email.subject()) + "\n"
 				+ "From: " + promptHeader(email.from()) + "\n\n"
 				+ "Body (normalized visible text; links appear in parentheses and table cells use |):\n"
-				+ email.body();
+				+ UntrustedContent.wrap(email.body());
 	}
 
 	private static String promptHeader(final String value) {

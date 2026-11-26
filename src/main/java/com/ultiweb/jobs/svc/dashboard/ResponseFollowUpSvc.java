@@ -95,15 +95,18 @@ public final class ResponseFollowUpSvc {
 	}
 
 	private void sendFollowUp(final ResponseFollowUpCandidate candidate) throws IOException, MessagingException {
-		final String body = candidate.followUpContent() == null || candidate.followUpContent().isBlank()
-				? replyGenerator.generateFollowUp(candidate) : candidate.followUpContent();
-		if (candidate.followUpContent() == null || candidate.followUpContent().isBlank()) {
+		final boolean needsBody = candidate.followUpContent() == null || candidate.followUpContent().isBlank();
+		final String body = needsBody ? replyGenerator.generateFollowUp(candidate) : candidate.followUpContent();
+		if (needsBody) {
 			repository.storeFollowUpContent(candidate.positionId(), body, clock.instant());
 		}
 		final String recipient = productionMode ? candidate.recruiterEmail() : candidate.sourceAccount();
 		final String label = productionMode ? null : EmailWorkflowLabels.EMAIL_AGENT_TEST;
 		final var followUp = new FollowUpEmail(recipient, candidate.gmailThreadId(), candidate.positionId(),
 				candidate.gmailMessageId(), replySubject(candidate.sourceSubject()), body);
+		// Sending directly is intentional for now. This is reverted ahead of the sender-policy
+		// change because the pipeline already detects duplicate follow-ups through
+		// findExistingFollowUp and followUpSentAt, so review is not the only safeguard here.
 		final var sent = gmailDraftSvc.sendFollowUp(candidate.sourceAccount(), followUp, label);
 		repository.markFollowUpSent(candidate.positionId(), body, sent.messageId(),
 				sent.sentAt() == null ? clock.instant() : sent.sentAt());
