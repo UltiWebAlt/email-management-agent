@@ -59502,7 +59502,7 @@
       },
       "invocations": [
         {
-          "startTimeUtc": "2026-11-26T09:27:34.179525731Z",
+          "startTimeUtc": "2026-11-26T09:39:36.770703689Z",
           "exitCode": 0,
           "executionSuccessful": true
         }
@@ -59511,7 +59511,7 @@
       "versionControlProvenance": [
         {
           "repositoryUri": "https://github.com/UltiWebAlt/email-management-agent.git",
-          "revisionId": "68e656ea3b805e08a95c89c7a833d208238cc9bb",
+          "revisionId": "9be6374784b0c33c211f5ab07cf226b52ccffb45",
           "branch": "develop",
           "properties": {
             "repoUrl": "https://github.com/UltiWebAlt/email-management-agent.git",
@@ -59652,9 +59652,9 @@
       ],
       "automationDetails": {
         "id": "email-management-agent/qodana/2026-11-26",
-        "guid": "2a6c15ac-9786-47d4-a39f-a5dea09eb4ee",
+        "guid": "7e1d217f-0794-4fe5-b20c-7d046ed87fde",
         "properties": {
-          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/45792036113",
+          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/45793879279",
           "analysisKind": "regular"
         }
       },
