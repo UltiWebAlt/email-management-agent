@@ -268,7 +268,7 @@ class ResponsePreparationWorkflowSvcTest {
 	@Test
 	void doesNotSendAnUnclaimedResponse() throws Exception {
 		// given
-		when(repository.claimResponseForSending(7, NOW)).thenReturn(Optional.empty());
+		when(repository.claimResponseForSending(eq(7L), eq(NOW), anyString(), eq(NOW.minusSeconds(300)))).thenReturn(Optional.empty());
 
 		// when / then
 		assertEquals(false, service(false, executor).send(7));
@@ -281,15 +281,15 @@ class ResponsePreparationWorkflowSvcTest {
 	void createsMissingDraftsAndRecordsProductionSends(final String draftId) throws Exception {
 		// given
 		final var candidate = new ResponseSendCandidate(7, "owner@example.com", "pat@example.com",
-				"Architect opening", "Reply", draftId);
-		when(repository.claimResponseForSending(7, NOW)).thenReturn(Optional.of(candidate));
+				"Architect opening", "Reply", draftId, "<id@example.invalid>", false);
+		when(repository.claimResponseForSending(eq(7L), eq(NOW), anyString(), eq(NOW.minusSeconds(300)))).thenReturn(Optional.of(candidate));
 		if (draftId == null || draftId.isBlank()) {
 			when(drafts.createDraft("owner@example.com", "pat@example.com", "Re: Architect opening", "Reply"))
 					.thenReturn("draft-7");
 		}
 		final Instant sentAt = NOW.minusSeconds(2);
 		when(drafts.sendReply("owner@example.com", "draft-7", "pat@example.com", "Re: Architect opening",
-				"Reply", null, false)).thenReturn(new GmailSentMessage("draft-7", "sent-7", "thread-7", sentAt, true));
+				"Reply", null, false, "<id@example.invalid>")).thenReturn(new GmailSentMessage("draft-7", "sent-7", "thread-7", sentAt, true));
 
 		// when / then
 		assertEquals(true, service(false, executor).send(7));
@@ -302,10 +302,10 @@ class ResponsePreparationWorkflowSvcTest {
 	void redirectsTestSendsAndRecordsLabelFailures(final boolean labelApplied) throws Exception {
 		// given
 		final var candidate = new ResponseSendCandidate(7, "owner@example.com", "pat@example.com",
-				"Re: Architect opening", "Reply", "draft-7");
-		when(repository.claimResponseForSending(7, NOW)).thenReturn(Optional.of(candidate));
+				"Re: Architect opening", "Reply", "draft-7", "<id@example.invalid>", false);
+		when(repository.claimResponseForSending(eq(7L), eq(NOW), anyString(), eq(NOW.minusSeconds(300)))).thenReturn(Optional.of(candidate));
 		when(drafts.sendReply("owner@example.com", "draft-7", "owner@example.com", "Re: Architect opening",
-				"Reply", EmailWorkflowLabels.EMAIL_AGENT_TEST, true))
+				"Reply", EmailWorkflowLabels.EMAIL_AGENT_TEST, true, "<id@example.invalid>"))
 				.thenReturn(new GmailSentMessage("draft-7", "sent-7", "thread-7", null, labelApplied));
 		final var service = new ResponsePreparationWorkflowSvc(repository, generator, drafts, executor,
 				Clock.fixed(NOW, ZoneOffset.UTC), false, false, events);
@@ -321,17 +321,71 @@ class ResponsePreparationWorkflowSvcTest {
 	@ValueSource(booleans = {true, false})
 	void recordsAndPropagatesSendFailures(final boolean mimeFailure) throws Exception {
 		// given
-		final var candidate = new ResponseSendCandidate(7, "owner@example.com", "pat@example.com", null, "Reply", "draft-7");
-		when(repository.claimResponseForSending(7, NOW)).thenReturn(Optional.of(candidate));
+		final var candidate = new ResponseSendCandidate(7, "owner@example.com", "pat@example.com", null, "Reply", "draft-7", "<id@example.invalid>", false);
+		when(repository.claimResponseForSending(eq(7L), eq(NOW), anyString(), eq(NOW.minusSeconds(300)))).thenReturn(Optional.of(candidate));
 		final Exception failure = mimeFailure ? new javax.mail.MessagingException("Invalid MIME") : new IOException("Unavailable");
 		when(drafts.sendReply("owner@example.com", "draft-7", "pat@example.com", "Re: Architect job opportunity",
-				"Reply", null, false)).thenThrow(failure);
+				"Reply", null, false, "<id@example.invalid>")).thenThrow(failure);
 
 		// when / then
 		final Exception thrown = assertThrows(Exception.class, () -> service(false, executor).send(7));
 		assertEquals(failure, thrown);
-		verify(repository).markResponseSendFailed(7, NOW);
+		if (mimeFailure) {
+			verify(repository).markResponseSendFailed(7, NOW);
+		} else {
+			verify(repository).markResponseSendUnconfirmed(7, NOW);
+		}
 		verify(events).publishEvent(new DashboardResponseUpdatedEvent(7));
+	}
+
+	@Test
+	void reconcilesAnUncertainSendWithoutSendingAgain() throws Exception {
+		// given
+		final var candidate = new ResponseSendCandidate(7, "owner@example.com", "pat@example.com",
+				"Architect opening", "Reply", "draft-7", "<id@example.invalid>", true);
+		when(repository.claimResponseForSending(eq(7L), eq(NOW), anyString(), eq(NOW.minusSeconds(300))))
+				.thenReturn(Optional.of(candidate));
+		when(drafts.findSentReply("owner@example.com", "<id@example.invalid>", "pat@example.com"))
+				.thenReturn(Optional.of(new GmailSentMessage(null, "sent-7", "thread-7", NOW, true)));
+
+		// when / then
+		assertEquals(true, service(false, executor).send(7));
+		verify(repository).markResponseSent(7, "draft-7", "sent-7", "thread-7", "SENT", NOW);
+		verify(drafts, never()).sendReply(anyString(), anyString(), anyString(), anyString(), anyString(),
+				any(), eq(false), anyString());
+	}
+
+	@Test
+	void absentSearchResultKeepsSendUnconfirmed() throws Exception {
+		// given
+		final var candidate = new ResponseSendCandidate(7, "owner@example.com", "pat@example.com",
+				"Architect opening", "Reply", "draft-7", "<id@example.invalid>", true);
+		when(repository.claimResponseForSending(eq(7L), eq(NOW), anyString(), eq(NOW.minusSeconds(300))))
+				.thenReturn(Optional.of(candidate));
+		when(drafts.findSentReply("owner@example.com", "<id@example.invalid>", "pat@example.com"))
+				.thenReturn(Optional.empty());
+
+		// when / then
+		assertEquals(false, service(false, executor).send(7));
+		verify(repository).markResponseSendUnconfirmed(7, NOW);
+		verify(drafts, never()).sendReply(anyString(), anyString(), anyString(), anyString(), anyString(),
+				any(), eq(false), anyString());
+	}
+
+	@Test
+	void draftCreationFailureBeforeAnySendIsRetryable() throws Exception {
+		// given
+		final var candidate = new ResponseSendCandidate(7, "owner@example.com", "pat@example.com",
+				"Architect opening", "Reply", null, "<id@example.invalid>", false);
+		when(repository.claimResponseForSending(eq(7L), eq(NOW), anyString(), eq(NOW.minusSeconds(300))))
+				.thenReturn(Optional.of(candidate));
+		when(drafts.createDraft("owner@example.com", "pat@example.com", "Re: Architect opening", "Reply"))
+				.thenThrow(new IOException("Gmail unavailable"));
+
+		// when / then
+		assertThrows(IOException.class, () -> service(false, executor).send(7));
+		verify(repository).markResponseSendFailed(7, NOW);
+		verify(repository, never()).markSendAttemptStarted(7, NOW);
 	}
 
 	@Test

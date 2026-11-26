@@ -122,6 +122,7 @@ function responseStatusLabel(status) {
 		SENT: "Sent from Gmail",
 		SENT_LABEL_FAILED: "Sent · test label could not be applied",
 		SEND_FAILED: "Sending failed · retry",
+		SEND_UNCONFIRMED: "Send outcome uncertain · check Gmail",
 		AWAITING_REPLY: "Sent · waiting for a reply",
 		CHECKING_RESPONSE: "Checking for a reply",
 		FOLLOW_UP_SENT: "Follow-up sent · waiting for a reply",
@@ -483,24 +484,26 @@ function updateOpenDetailActions() {
 	const selectedForResponse = !responseFinished && (job.selectedForResponse || pendingSelections.get(job.id) === true);
 	const preparingReply = responsePreparationInProgress.has(job.id)
 		|| job.responseStatus === "GENERATING" || job.responseStatus === "GENERATED";
-	const sendingReply = responseSendInProgress.has(job.id) || job.responseStatus === "SENDING";
+	const sendingReply = responseSendInProgress.has(job.id);
 	const trashing = trashInProgress.has(job.id);
 	const retrying = job.responseStatus === "FAILED";
 	const sendable = Boolean(job.responseContent)
 		&& Boolean(job.sourceAccount)
 		&& Boolean(job.recruiterEmail)
-		&& ["DRAFT_CREATED", "SAVED_FOR_REVIEW", "SEND_FAILED"].includes(job.responseStatus);
+		&& ["DRAFT_CREATED", "SAVED_FOR_REVIEW", "SEND_FAILED", "SEND_UNCONFIRMED", "SENDING"].includes(job.responseStatus);
 	prepareButton.hidden = responseCreated && !retrying;
 	prepareButton.disabled = preparingReply || trashing || (responseCreated && !retrying);
 	prepareButton.textContent = preparingReply ? "Preparing response…" : retrying ? "Retry response" : "Prepare response";
 	sendButton.hidden = !sendable;
 	sendButton.disabled = sendingReply || trashing;
-	sendButton.textContent = sendingReply ? "Sending…" : job.responseStatus === "SEND_FAILED" ? "Retry send" : "Send reply";
+	sendButton.textContent = sendingReply ? "Checking Gmail…"
+		: ["SEND_UNCONFIRMED", "SENDING"].includes(job.responseStatus) ? "Check Gmail send"
+		: job.responseStatus === "SEND_FAILED" ? "Retry send" : "Send reply";
 	trashButton.disabled = selectedForResponse || preparingReply || trashing;
 	status.textContent = trashing
 		? "Moving email to Trash…"
 		: sendingReply
-			? "Sending the reply through Gmail…"
+		? "Checking or sending the reply through Gmail…"
 		: preparingReply
 			? "Your response is being prepared."
 			: selectedForResponse
@@ -548,7 +551,8 @@ function detailEmailActions(job) {
 		}
 	});
 	sendButton.addEventListener("click", async () => {
-		if (!window.confirm(`Send this reply now? Production sends it to the recruiter. All other profiles send it to the source mailbox and apply the Gmail label “EMail Agent Test”.`)) {
+		if (!["SEND_UNCONFIRMED", "SENDING"].includes(job.responseStatus)
+				&& !window.confirm(`Send this reply now? Production sends it to the recruiter. All other profiles send it to the source mailbox and apply the Gmail label “EMail Agent Test”.`)) {
 			return;
 		}
 		responseSendInProgress.add(job.id);

@@ -16,6 +16,7 @@ import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Draft;
 import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListLabelsResponse;
+import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
 import com.google.api.services.gmail.model.MessagePart;
 import com.google.api.services.gmail.model.MessagePartHeader;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -147,6 +149,65 @@ class GmailDraftSvcTest {
 		// when / then
 		assertThrows(IOException.class,
 				() -> service.sendReply(ACCOUNT, "draft-5", "to@example.com", "Job", "Body", null, false));
+	}
+
+	@Test
+	void embedsTheDurableIdentifierInTheDraftSentThroughGmail() throws Exception {
+		// given
+		when(gmail.users().drafts().send(eq("me"), any(Draft.class)).execute())
+				.thenReturn(new Message().setId("sent-6"));
+
+		// when
+		service.sendReply(ACCOUNT, "draft-6", "to@example.com", "Re: Job", "Body", null, false,
+				"<stable@example.invalid>");
+
+		// then
+		final var outgoing = org.mockito.ArgumentCaptor.forClass(Draft.class);
+		verify(gmail.users().drafts()).update(eq("me"), eq("draft-6"), outgoing.capture());
+		final var mime = new javax.mail.internet.MimeMessage(javax.mail.Session.getInstance(new java.util.Properties()),
+				new java.io.ByteArrayInputStream(Base64.getUrlDecoder().decode(outgoing.getValue().getMessage().getRaw())));
+		assertEquals("<stable@example.invalid>", mime.getHeader("Message-ID", null));
+		assertEquals("<stable@example.invalid>", mime.getHeader("X-Email-Agent-Response-ID", null));
+		assertEquals("to@example.com", mime.getRecipients(javax.mail.Message.RecipientType.TO)[0].toString());
+	}
+
+	@Test
+	void reconcilesOnlyVerifiedSentMessages() throws Exception {
+		// given
+		when(gmail.users().messages().list("me").setQ("in:sent rfc822msgid:<stable@example.invalid>")
+				.setMaxResults(100L).execute()).thenReturn(new ListMessagesResponse().setMessages(List.of(
+				new Message().setId("wrong"), new Message().setId("matching"))));
+		when(gmail.users().messages().get("me", "wrong").setFormat("metadata")
+				.setMetadataHeaders(List.of("Message-ID", "From", "To")).execute())
+				.thenReturn(sentMetadata("wrong", "other@example.com"));
+		when(gmail.users().messages().get("me", "matching").setFormat("metadata")
+				.setMetadataHeaders(List.of("Message-ID", "From", "To")).execute())
+				.thenReturn(sentMetadata("matching", "to@example.com"));
+
+		// when
+		final var found = service.findSentReply(ACCOUNT, "<stable@example.invalid>", "to@example.com");
+
+		// then
+		assertEquals("matching", found.orElseThrow().messageId());
+		verify(factory).create(List.of(GmailScopes.GMAIL_MODIFY), ACCOUNT);
+	}
+
+	@Test
+	void anEmptySentSearchDoesNotProveTheMessageWasNotSent() throws Exception {
+		// given
+		when(gmail.users().messages().list("me").setQ("in:sent rfc822msgid:<stable@example.invalid>")
+				.setMaxResults(100L).execute()).thenReturn(new ListMessagesResponse());
+
+		// when / then
+		assertTrue(service.findSentReply(ACCOUNT, "<stable@example.invalid>", "to@example.com").isEmpty());
+	}
+
+	private static Message sentMetadata(final String id, final String recipient) {
+		return new Message().setId(id).setThreadId("thread-6").setLabelIds(List.of("SENT"))
+				.setPayload(new MessagePart().setHeaders(List.of(
+						new MessagePartHeader().setName("Message-ID").setValue("<stable@example.invalid>"),
+						new MessagePartHeader().setName("From").setValue("Sender <sender@example.com>"),
+						new MessagePartHeader().setName("To").setValue("Recipient <" + recipient + ">"))));
 	}
 
 	@Test
