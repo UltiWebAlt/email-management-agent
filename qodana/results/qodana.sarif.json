@@ -59502,7 +59502,7 @@
       },
       "invocations": [
         {
-          "startTimeUtc": "2026-11-18T06:29:58.672350895Z",
+          "startTimeUtc": "2026-11-26T09:27:34.179525731Z",
           "exitCode": 0,
           "executionSuccessful": true
         }
@@ -59511,13 +59511,13 @@
       "versionControlProvenance": [
         {
           "repositoryUri": "https://github.com/UltiWebAlt/email-management-agent.git",
-          "revisionId": "8ccfd27d694c15ac7b50c86c62839f6adf6d9e13",
+          "revisionId": "68e656ea3b805e08a95c89c7a833d208238cc9bb",
           "branch": "develop",
           "properties": {
             "repoUrl": "https://github.com/UltiWebAlt/email-management-agent.git",
             "lastAuthorName": "Randy Burgess",
             "vcsType": "Git",
-            "lastAuthorEmail": "rb@ultiweb.com"
+            "lastAuthorEmail": "44614023+ultiwebalt@users.noreply.github.com"
           }
         }
       ],
@@ -59528,12 +59528,133 @@
           }
         }
       },
-      "results": [],
+      "results": [
+        {
+          "ruleId": "SimplifiableAssertion",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "'assertEquals()' can be simplified to 'assertFalse()'",
+            "markdown": "`assertEquals()` can be simplified to 'assertFalse()'"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/integrationTest/java/com/ultiweb/jobs/svc/persistence/JobResponseRepositoryIntegrationTest.java",
+                  "uriBaseId": "SRCROOT"
+                },
+                "region": {
+                  "startLine": 54,
+                  "startColumn": 3,
+                  "charOffset": 2392,
+                  "charLength": 12,
+                  "snippet": {
+                    "text": "assertEquals"
+                  },
+                  "sourceLanguage": "JAVA"
+                },
+                "contextRegion": {
+                  "startLine": 52,
+                  "startColumn": 1,
+                  "charOffset": 2261,
+                  "charLength": 279,
+                  "snippet": {
+                    "text": "\t\tassertEquals(\"gmail-draft-1\", candidate.gmailDraftId());\n\t\tassertEquals(\"<id-1@example.invalid>\", candidate.sendIdentifier());\n\t\tassertEquals(false, candidate.reconcileOnly());\n\t\tassertTrue(duplicateClaim.isEmpty());\n\t\tassertEquals(\"SENT\", responseValue(1, \"response_status\"));"
+                  },
+                  "sourceLanguage": "JAVA"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "email-management-agent.integrationTest",
+                  "kind": "module"
+                }
+              ]
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v2": "3556db41d26d6e25",
+            "equalIndicator/v1": "e26ceeb8a52b1c826dd19f7be9ca9f7ba2acf0aecbf8e3a1caf03fc17dfa72a5"
+          },
+          "baselineState": "new",
+          "properties": {
+            "ideaSeverity": "WARNING",
+            "qodanaSeverity": "High",
+            "problemType": "REGULAR",
+            "hasFixes": true,
+            "hasCleanup": true,
+            "tags": [
+              "JAVA"
+            ]
+          }
+        },
+        {
+          "ruleId": "SimplifiableAssertion",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "'assertEquals()' can be simplified to 'assertFalse()'",
+            "markdown": "`assertEquals()` can be simplified to 'assertFalse()'"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/integrationTest/java/com/ultiweb/jobs/svc/persistence/JobResponseRepositoryIntegrationTest.java",
+                  "uriBaseId": "SRCROOT"
+                },
+                "region": {
+                  "startLine": 80,
+                  "startColumn": 3,
+                  "charOffset": 3729,
+                  "charLength": 12,
+                  "snippet": {
+                    "text": "assertEquals"
+                  },
+                  "sourceLanguage": "JAVA"
+                },
+                "contextRegion": {
+                  "startLine": 78,
+                  "startColumn": 1,
+                  "charOffset": 3606,
+                  "charLength": 233,
+                  "snippet": {
+                    "text": "\t\tassertEquals(\"gmail-draft-2\", retry.gmailDraftId());\n\t\tassertEquals(\"<id-1@example.invalid>\", retry.sendIdentifier());\n\t\tassertEquals(false, retry.reconcileOnly());\n\t\tassertEquals(\"SENDING\", responseValue(1, \"response_status\"));\n\t}"
+                  },
+                  "sourceLanguage": "JAVA"
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "email-management-agent.integrationTest",
+                  "kind": "module"
+                }
+              ]
+            }
+          ],
+          "partialFingerprints": {
+            "equalIndicator/v2": "34514e0c4a770ed1",
+            "equalIndicator/v1": "17291277fe462cf702c6cadfe8479bd1439210a7db13e9543c4d757ffc616f6a"
+          },
+          "baselineState": "new",
+          "properties": {
+            "ideaSeverity": "WARNING",
+            "qodanaSeverity": "High",
+            "problemType": "REGULAR",
+            "hasFixes": true,
+            "hasCleanup": true,
+            "tags": [
+              "JAVA"
+            ]
+          }
+        }
+      ],
       "automationDetails": {
-        "id": "email-management-agent/qodana/2026-11-18",
-        "guid": "25300e0d-19a6-4275-b1e9-1793e21fd775",
+        "id": "email-management-agent/qodana/2026-11-26",
+        "guid": "2a6c15ac-9786-47d4-a39f-a5dea09eb4ee",
         "properties": {
-          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/44251672875",
+          "jobUrl": "https://github.com/UltiWebAlt/email-management-agent/actions/runs/45792036113",
           "analysisKind": "regular"
         }
       },
@@ -59547,7 +59668,8 @@
         "deviceId": "200820300000000-cfa1-6c85-fae0-4c3b3b9f9eb4",
         "baselineSource": "NONE",
         "qodanaNewResultSummary": {
-          "total": 0
+          "high": 2,
+          "total": 2
         }
       }
     }

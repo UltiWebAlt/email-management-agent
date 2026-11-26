@@ -1,4 +1,93 @@
 {
   "version": "3",
-  "listProblem": []
+  "listProblem": [
+    {
+      "tool": "Code Inspection",
+      "category": "Test frameworks",
+      "categoryPath": [
+        {
+          "id": "Java",
+          "name": "Java"
+        },
+        {
+          "id": "Java/Test frameworks",
+          "name": "Test frameworks"
+        }
+      ],
+      "type": "Simplifiable assertion",
+      "tags": [
+        "JAVA"
+      ],
+      "severity": "High",
+      "comment": "`assertEquals()` can be simplified to 'assertFalse()'",
+      "detailsInfo": "Reports any `assert` calls that can be replaced with simpler and equivalent calls.   \nExample → Replacement  \n`assertEquals(`**true**`, x());` `assertTrue(x());`  \n`assertTrue(y() != null);` `assertNotNull(y());`  \n`assertTrue(z == z());` `assertSame(z, z());`  \n`assertTrue(a.equals(a()));` `assertEquals(a, a());`  \n`assertTrue(`**false**`);` `fail();`  \n\nInspection ID: SimplifiableAssertion",
+      "sources": [
+        {
+          "type": "file",
+          "path": "src/integrationTest/java/com/ultiweb/jobs/svc/persistence/JobResponseRepositoryIntegrationTest.java",
+          "language": "JAVA",
+          "line": 54,
+          "offset": 3,
+          "length": 12,
+          "code": {
+            "startLine": 52,
+            "length": 12,
+            "offset": 131,
+            "surroundingCode": "\t\tassertEquals(\"gmail-draft-1\", candidate.gmailDraftId());\n\t\tassertEquals(\"<id-1@example.invalid>\", candidate.sendIdentifier());\n\t\tassertEquals(false, candidate.reconcileOnly());\n\t\tassertTrue(duplicateClaim.isEmpty());\n\t\tassertEquals(\"SENT\", responseValue(1, \"response_status\"));"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "email-management-agent.integrationTest",
+        "inspectionName": "SimplifiableAssertion",
+        "baselineState": "new"
+      },
+      "hash": "e26ceeb8a52b1c826dd19f7be9ca9f7ba2acf0aecbf8e3a1caf03fc17dfa72a5",
+      "problemType": "REGULAR"
+    },
+    {
+      "tool": "Code Inspection",
+      "category": "Test frameworks",
+      "categoryPath": [
+        {
+          "id": "Java",
+          "name": "Java"
+        },
+        {
+          "id": "Java/Test frameworks",
+          "name": "Test frameworks"
+        }
+      ],
+      "type": "Simplifiable assertion",
+      "tags": [
+        "JAVA"
+      ],
+      "severity": "High",
+      "comment": "`assertEquals()` can be simplified to 'assertFalse()'",
+      "detailsInfo": "Reports any `assert` calls that can be replaced with simpler and equivalent calls.   \nExample → Replacement  \n`assertEquals(`**true**`, x());` `assertTrue(x());`  \n`assertTrue(y() != null);` `assertNotNull(y());`  \n`assertTrue(z == z());` `assertSame(z, z());`  \n`assertTrue(a.equals(a()));` `assertEquals(a, a());`  \n`assertTrue(`**false**`);` `fail();`  \n\nInspection ID: SimplifiableAssertion",
+      "sources": [
+        {
+          "type": "file",
+          "path": "src/integrationTest/java/com/ultiweb/jobs/svc/persistence/JobResponseRepositoryIntegrationTest.java",
+          "language": "JAVA",
+          "line": 80,
+          "offset": 3,
+          "length": 12,
+          "code": {
+            "startLine": 78,
+            "length": 12,
+            "offset": 123,
+            "surroundingCode": "\t\tassertEquals(\"gmail-draft-2\", retry.gmailDraftId());\n\t\tassertEquals(\"<id-1@example.invalid>\", retry.sendIdentifier());\n\t\tassertEquals(false, retry.reconcileOnly());\n\t\tassertEquals(\"SENDING\", responseValue(1, \"response_status\"));\n\t}"
+          }
+        }
+      ],
+      "attributes": {
+        "module": "email-management-agent.integrationTest",
+        "inspectionName": "SimplifiableAssertion",
+        "baselineState": "new"
+      },
+      "hash": "17291277fe462cf702c6cadfe8479bd1439210a7db13e9543c4d757ffc616f6a",
+      "problemType": "REGULAR"
+    }
+  ]
 }
