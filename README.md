@@ -120,9 +120,20 @@ The application stays running with an embedded HTTP server on port 8080 and logs
 
 ### ✉️ Selecting opportunities and preparing replies
 
-Select opportunities and choose **Save selections & prepare replies**, or prepare one from its detail view. The LiteLLM `email-router` model creates a concise response using the original email and the private Markdown resume in `src/main/resources/resumes`; set `LITELLM_API_KEY` to enable generation. Generated responses, Gmail draft IDs, sent message IDs, thread IDs, and send times are stored in the `responses` table. The detail view can send a prepared reply after confirmation. The `production` profile sends to the recruiter. Every other profile redirects sends to the source mailbox and applies the Gmail label `EMail Agent Test`.
+Select opportunities and choose **Save selections & prepare replies**, or prepare one from its detail view. The LiteLLM `email-router` model creates a concise response using the original email and the private Markdown resume in `src/main/resources/resumes`; set `LITELLM_API_KEY` to enable generation. Generated responses, Gmail draft IDs, sent message IDs, thread IDs, and send times are stored in the `responses` table. The detail view can send a prepared reply after confirmation, once its Gmail draft exists for review. The `production` profile sends to the recruiter. Every other profile redirects sends to the source mailbox and applies the Gmail label `EMail Agent Test`.
 
-The application checks sent-response threads every hour. At 48 hours after an initial response, if no incoming reply is found, it automatically generates and sends one follow-up in the same Gmail thread. It continues tracking the thread and records when a reply arrives. Non-production follow-ups also go to the source mailbox and receive the `EMail Agent Test` label.
+The application checks sent-response threads every hour. At 48 hours after an initial response, if no incoming reply is found, it automatically generates and sends one follow-up in the same Gmail thread. Before sending it looks for an existing follow-up in the thread, so a restart or an overlapping check does not produce duplicates. It continues tracking the thread and records when a reply arrives. Non-production follow-ups also go to the source mailbox and receive the `EMail Agent Test` label.
+
+### 🛡️ Prompt-injection defenses
+
+Inbound email is untrusted input, so the pipeline applies layered defenses rather than relying on instruction text alone:
+
+- **Envelope.** Every email body, summary, and thread message is wrapped in `<email_content>` markers, and each system prompt states that the enclosed text is data, never instructions.
+- **Closed output.** Classification must produce one of the known labels and job-detail extraction must parse a bounded JSON object, so a hijacked response fails that email instead of writing arbitrary data.
+- **Reply checks.** Before a reply is drafted, `ReplyOutputGuard` rejects empty or overlong text, links, code fences, model self-references, and any echo of the sender or recruiter address from the source email.
+- **Human review gate.** An initial response can only be sent after a Gmail draft exists (`DRAFT_CREATED`), and the send path refuses to create the draft it sends. A failed send returns to `DRAFT_CREATED` so the retry stays reviewable. Follow-ups are still sent automatically until the Gmail sending policy changes; they rely on thread inspection to avoid duplicates rather than human review.
+
+These controls are not a guarantee. A crafted email can still influence how a reply is worded, which is why review before sending remains the last line of defense.
 
 ### 📥 Importing opportunities in development
 
@@ -137,6 +148,8 @@ On startup, a background job checks inbox messages from the last 14 days that do
 ### 🏷️ Gmail labels
 
 The exact Gmail labels are `Dev_Jobs`, `Architect_Jobs`, `Management_Jobs`, `Misc_Jobs`, `Tech_News_Publications`, `General_News_Publications`, `Promotions_Commercial`, `Receipts`, `Delivery_Notification`, `Security_Alert`, `Personal`, and `Social_Media`. `EmailTag` is the source of truth for these names.
+
+Messages classified `Dev_Jobs` are also archived: the agent adds the label and removes the `INBOX` label in a single Gmail modification, so development job mail leaves the inbox once summarized. Every other label is added without leaving the inbox. Because the archive happens when the label is applied, this works independently of sending and does not depend on policies that restrict message sending.
 
 ### 🎯 Customizing classification
 
