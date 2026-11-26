@@ -31,6 +31,8 @@ import org.springframework.stereotype.Service;
 public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GmailMailboxSvc.class);
 	private static final String USER_ID = "me";
+	/** Gmail's built-in inbox label, removed to archive a message. */
+	private static final String INBOX_LABEL_ID = "INBOX";
 	private static final int GMAIL_BATCH_SIZE = 20;
 	private static final List<String> GMAIL_SCOPES = List.of(GmailScopes.GMAIL_MODIFY);
 
@@ -170,6 +172,16 @@ public final class GmailMailboxSvc implements EmailReader, EmailLabelWriter {
 		final String labelId = findOrCreateLabel(gmail, labelName);
 		gmail.users().messages().modify(USER_ID, messageId,
 				new ModifyMessageRequest().setAddLabelIds(List.of(labelId))).execute();
+	}
+
+	@Override
+	public void applyLabelAndArchive(final String account, final String messageId, final String labelName)
+			throws IOException {
+		final Gmail gmail = gmail(account);
+		final String labelId = findOrCreateLabel(gmail, labelName);
+		gmail.users().messages().modify(USER_ID, messageId, new ModifyMessageRequest()
+				.setAddLabelIds(List.of(labelId))
+				.setRemoveLabelIds(List.of(INBOX_LABEL_ID))).execute();
 	}
 
 	public void moveToTrash(final String account, final String messageId) throws IOException {

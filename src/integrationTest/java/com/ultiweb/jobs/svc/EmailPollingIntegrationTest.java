@@ -48,10 +48,10 @@ class EmailPollingIntegrationTest {
 		when(mailbox.readEmailsForTriage()).thenReturn(List.of(email));
 
 		// when / then: the real application scheduler invokes the complete triage workflow
-		verify(mailbox, timeout(5000)).applyLabel("first@example.com", "id", "Dev_Jobs");
+		verify(mailbox, timeout(5000)).applyLabelAndArchive("first@example.com", "id", "Dev_Jobs");
 		verify(mailbox, timeout(5000).atLeast(3)).readEmailsForTriage();
 		verify(summaryClient, after(250).times(1)).complete(anyString(), anyString());
 		verify(tagClient, times(1)).complete(anyString(), anyString());
-		verify(mailbox, times(1)).applyLabel("first@example.com", "id", "Dev_Jobs");
+		verify(mailbox, times(1)).applyLabelAndArchive("first@example.com", "id", "Dev_Jobs");
 	}
 }

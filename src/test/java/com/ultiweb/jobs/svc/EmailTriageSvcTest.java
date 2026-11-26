@@ -81,7 +81,7 @@ class EmailTriageSvcTest {
 		assertEquals(List.of(
 				new EmailTriageResult("first@example.com", "same-id", "Payment due", "Dev_Jobs"),
 				new EmailTriageResult("second@example.com", "same-id", "Meeting tomorrow", "Architect_Jobs")), results);
-		verify(emailLabelWriter).applyLabel("first@example.com", "same-id", "Dev_Jobs");
+		verify(emailLabelWriter).applyLabelAndArchive("first@example.com", "same-id", "Dev_Jobs");
 		verify(emailLabelWriter).applyLabel("first@example.com", "same-id", EmailWorkflowLabels.PROCESSED);
 		verify(emailLabelWriter).applyLabel("second@example.com", "same-id", "Architect_Jobs");
 		verify(emailLabelWriter).applyLabel("second@example.com", "same-id", EmailWorkflowLabels.ARCHITECT_PERSISTED);
@@ -141,7 +141,7 @@ class EmailTriageSvcTest {
 		verify(emailSummarySvc).summarize(unmatched);
 		verify(emailTagSvc).suggestTag("Job opportunity");
 		verify(emailTagSvc).suggestTag("Purchase receipt");
-		verify(emailLabelWriter).applyLabel("first@example.com", "1", "Dev_Jobs");
+		verify(emailLabelWriter).applyLabelAndArchive("first@example.com", "1", "Dev_Jobs");
 		verify(emailLabelWriter).applyLabel("first@example.com", "1", EmailWorkflowLabels.PROCESSED);
 		verify(emailLabelWriter).applyLabel("first@example.com", "2", EmailWorkflowLabels.PROCESSED);
 		verifyNoMoreInteractions(emailSummarySvc, emailTagSvc, emailLabelWriter);
@@ -168,7 +168,7 @@ class EmailTriageSvcTest {
 		assertEquals("first@example.com", retryPoll.getFirst().account());
 		verify(emailSummarySvc, times(2)).summarize(failing);
 		verify(emailSummarySvc).summarize(healthy);
-		verify(emailLabelWriter).applyLabel("first@example.com", "1", "Dev_Jobs");
+		verify(emailLabelWriter).applyLabelAndArchive("first@example.com", "1", "Dev_Jobs");
 		verify(emailLabelWriter).applyLabel("first@example.com", "1", EmailWorkflowLabels.PROCESSED);
 		verify(emailLabelWriter).applyLabel("second@example.com", "1", "General_News_Publications");
 		verify(emailLabelWriter).applyLabel("second@example.com", "1", EmailWorkflowLabels.PROCESSED);
@@ -182,7 +182,7 @@ class EmailTriageSvcTest {
 		when(emailSummarySvc.summarize(email)).thenReturn("Job opportunity");
 		when(emailTagSvc.suggestTag("Job opportunity")).thenReturn(Optional.of(EmailTag.DEV_JOBS));
 		doThrow(new java.io.IOException("Gmail unavailable")).doNothing()
-				.when(emailLabelWriter).applyLabel("first@example.com", "1", "Dev_Jobs");
+				.when(emailLabelWriter).applyLabelAndArchive("first@example.com", "1", "Dev_Jobs");
 
 		// when
 		final List<EmailTriageResult> firstPoll = service.processEmails();
@@ -191,7 +191,7 @@ class EmailTriageSvcTest {
 		// then
 		assertEquals(List.of(), firstPoll);
 		assertEquals(1, retryPoll.size());
-		verify(emailLabelWriter, times(2)).applyLabel("first@example.com", "1", "Dev_Jobs");
+		verify(emailLabelWriter, times(2)).applyLabelAndArchive("first@example.com", "1", "Dev_Jobs");
 		verify(emailLabelWriter).applyLabel("first@example.com", "1", EmailWorkflowLabels.PROCESSED);
 	}
 

@@ -87,6 +87,24 @@ class GmailMailboxSvcTest {
 	}
 
 	@Test
+	void archivesAMessageInTheSameModificationThatAppliesItsLabel() throws Exception {
+		// given
+		doReturn(secondGmail).when(service).gmail("second@example.com");
+		when(secondGmail.users().labels().list("me").execute()).thenReturn(new ListLabelsResponse()
+				.setLabels(List.of(new Label().setName("Dev_Jobs").setId("second-label"))));
+
+		// when
+		service.applyLabelAndArchive("second@example.com", "same-id", "Dev_Jobs");
+
+		// then
+		verify(secondGmail.users().messages()).modify(eq("me"), eq("same-id"),
+				argThat(request -> request.getAddLabelIds().equals(List.of("second-label"))
+						&& request.getRemoveLabelIds().equals(List.of("INBOX"))));
+		verify(secondGmail.users().messages().modify(eq("me"), eq("same-id"), any())).execute();
+		verifyNoInteractions(firstGmail);
+	}
+
+	@Test
 	void readsUnreadMessagesBeyondTheFirstPage() throws Exception {
 		// given
 		when(oauth.accounts()).thenReturn(List.of("first@example.com"));

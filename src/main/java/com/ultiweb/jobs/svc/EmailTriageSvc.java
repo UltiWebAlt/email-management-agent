@@ -157,8 +157,17 @@ public class EmailTriageSvc {
 		final Optional<EmailTag> suggestedTag = analysis.tag();
 		if (suggestedTag.isPresent()) {
 			final EmailTag tag = suggestedTag.get();
-			emailLabelWriter.applyLabel(email.account(), email.id(), tag.labelName());
-			LOGGER.info("Applied label: account={}, message={}, label={}", email.account(), email.id(), tag.labelName());
+			if (tag == EmailTag.DEV_JOBS) {
+				// Development job mail leaves the inbox once tagged, declared ahead of the
+				// archive-on-send change so the workflow does not depend on sending.
+				emailLabelWriter.applyLabelAndArchive(email.account(), email.id(), tag.labelName());
+				LOGGER.info("Applied label and archived: account={}, message={}, label={}",
+						email.account(), email.id(), tag.labelName());
+			} else {
+				emailLabelWriter.applyLabel(email.account(), email.id(), tag.labelName());
+				LOGGER.info("Applied label: account={}, message={}, label={}", email.account(), email.id(),
+						tag.labelName());
+			}
 			if (tag == EmailTag.ARCHITECT_JOBS) {
 				emailLabelWriter.applyLabel(email.account(), email.id(), EmailWorkflowLabels.ARCHITECT_PERSISTED);
 			}
