@@ -47,6 +47,8 @@ CREATE TABLE IF NOT EXISTS responses (
 	'INITIAL_RESPONSE', 'FOLLOW_UP', 'INTERVIEW_CONFIRMATION', 'THANK_YOU', 'DECLINED')),
 	response_status TEXT NOT NULL DEFAULT 'RECORDED',
 	gmail_draft_id TEXT,
+	send_identifier TEXT,
+	send_attempted INTEGER NOT NULL DEFAULT 0,
 	gmail_message_id TEXT,
 	gmail_thread_id TEXT,
 	updated_at TEXT,

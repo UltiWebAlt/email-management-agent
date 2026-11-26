@@ -19,7 +19,10 @@ public interface JobResponseRepository {
 
 	void markResponseFailed(long positionId, Instant updatedAt);
 
-	Optional<ResponseSendCandidate> claimResponseForSending(long positionId, Instant updatedAt);
+	Optional<ResponseSendCandidate> claimResponseForSending(long positionId, Instant updatedAt, String sendIdentifier,
+			Instant staleBefore);
+
+	void markSendAttemptStarted(long positionId, Instant updatedAt);
 
 	void saveSendingDraftId(long positionId, String draftId, Instant updatedAt);
 
@@ -27,6 +30,8 @@ public interface JobResponseRepository {
 			String status, Instant sentAt);
 
 	void markResponseSendFailed(long positionId, Instant updatedAt);
+
+	void markResponseSendUnconfirmed(long positionId, Instant updatedAt);
 
 	List<ResponseFollowUpCandidate> findResponsesForFollowUp(Instant dueBefore);
 

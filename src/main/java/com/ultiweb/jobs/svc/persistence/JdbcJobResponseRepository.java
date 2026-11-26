@@ -111,24 +111,27 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 	}
 
 	@Override
-	public Optional<ResponseSendCandidate> claimResponseForSending(final long positionId, final Instant updatedAt) {
+	public Optional<ResponseSendCandidate> claimResponseForSending(final long positionId, final Instant updatedAt,
+			final String sendIdentifier, final Instant staleBefore) {
 		final int claimed = jdbcTemplate.update("""
-				UPDATE responses SET response_status = 'SENDING', updated_at = ?
+				UPDATE responses SET send_attempted = CASE WHEN response_status = 'SENDING' THEN 1 ELSE send_attempted END,
+				response_status = 'SENDING', updated_at = ?, send_identifier = COALESCE(send_identifier, ?)
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE'
-				AND response_status IN ('SAVED_FOR_REVIEW', 'DRAFT_CREATED', 'SEND_FAILED')
+				AND (response_status IN ('SAVED_FOR_REVIEW', 'DRAFT_CREATED', 'SEND_FAILED', 'SEND_UNCONFIRMED')
+				OR (response_status = 'SENDING' AND datetime(updated_at) <= datetime(?)))
 				AND NULLIF(TRIM(response_content), '') IS NOT NULL
 				AND EXISTS (
 				SELECT 1 FROM positions p JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
 				WHERE p.id = responses.position_id AND p.dismissed = 0
 				AND NULLIF(TRIM(p.source_account), '') IS NOT NULL
 				AND NULLIF(TRIM(recruiter.email), '') IS NOT NULL)
-				""", updatedAt.toString(), positionId);
+				""", updatedAt.toString(), sendIdentifier, positionId, staleBefore.toString());
 		if (claimed != 1) {
 			return Optional.empty();
 		}
 		return jdbcTemplate.query("""
 				SELECT p.id, p.source_account, recruiter.email AS recruiter_email, p.source_subject,
-				response.response_content, response.gmail_draft_id
+				response.response_content, response.gmail_draft_id, response.send_identifier, response.send_attempted
 				FROM positions p
 				JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
 				JOIN responses response ON response.position_id = p.id
@@ -136,8 +139,17 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 				""", (resultSet, rowNumber) -> new ResponseSendCandidate(
 				resultSet.getLong("id"), resultSet.getString(SOURCE_ACCOUNT),
 				resultSet.getString(RECRUITER_EMAIL), resultSet.getString(SOURCE_SUBJECT),
-				resultSet.getString("response_content"), resultSet.getString("gmail_draft_id")), positionId)
+				resultSet.getString("response_content"), resultSet.getString("gmail_draft_id"),
+				resultSet.getString("send_identifier"), resultSet.getInt("send_attempted") != 0), positionId)
 				.stream().findFirst();
+	}
+
+	@Override
+	public void markSendAttemptStarted(final long positionId, final Instant updatedAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET send_attempted = 1, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
+				""", updatedAt.toString(), positionId);
 	}
 
 	@Override
@@ -154,14 +166,23 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 		jdbcTemplate.update("""
 				UPDATE responses SET response_status = ?, gmail_draft_id = ?, gmail_message_id = ?,
 				gmail_thread_id = ?, sent_at = ?, updated_at = ?
-				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE'
+				AND response_status IN ('SENDING', 'SEND_UNCONFIRMED')
 				""", status, draftId, gmailMessageId, gmailThreadId, sentAt.toString(), sentAt.toString(), positionId);
 	}
 
 	@Override
 	public void markResponseSendFailed(final long positionId, final Instant updatedAt) {
 		jdbcTemplate.update("""
-				UPDATE responses SET response_status = 'SEND_FAILED', updated_at = ?
+				UPDATE responses SET response_status = 'SEND_FAILED', send_attempted = 0, updated_at = ?
+				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
+				""", updatedAt.toString(), positionId);
+	}
+
+	@Override
+	public void markResponseSendUnconfirmed(final long positionId, final Instant updatedAt) {
+		jdbcTemplate.update("""
+				UPDATE responses SET response_status = 'SEND_UNCONFIRMED', send_attempted = 1, updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
 				""", updatedAt.toString(), positionId);
 	}
