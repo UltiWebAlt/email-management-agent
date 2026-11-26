@@ -32,7 +32,7 @@ class JobResponseRepositoryIntegrationTest {
 	void claimsAnEligibleResponseForSendingAndRecordsTheSentMessage() {
 		// given
 		insertPosition(1, "owner@example.com", false);
-		insertResponse(1, "SAVED_FOR_REVIEW", "Prepared response", "gmail-draft-1", null, null, null);
+		insertResponse(1, "DRAFT_CREATED", "Prepared response", "gmail-draft-1", null, null, null);
 
 		// when
 		final var candidate = repository.claimResponseForSending(1, NOW).orElseThrow();
@@ -74,6 +74,21 @@ class JobResponseRepositoryIntegrationTest {
 	}
 
 	@Test
+	void failedSendsReturnToReviewableDraftsSoTheSafetyGateStillApplies() {
+		// given
+		insertPosition(1, "owner@example.com", false);
+		insertResponse(1, "DRAFT_CREATED", "Prepared response", "gmail-draft-1", null, null, null);
+		repository.claimResponseForSending(1, NOW).orElseThrow();
+
+		// when
+		repository.markResponseSendFailed(1, NOW.plusSeconds(2));
+
+		// then
+		assertEquals("DRAFT_CREATED", responseValue(1, "response_status"));
+		assertEquals("gmail-draft-1", responseValue(1, "gmail_draft_id"));
+	}
+
+	@Test
 	void refusesToClaimResponsesThatAreNotSendable() {
 		// given
 		insertPosition(1, "owner@example.com", false);
@@ -86,9 +101,11 @@ class JobResponseRepositoryIntegrationTest {
 		insertResponse(3, "SAVED_FOR_REVIEW", "Prepared response", null, null, null, null);
 		insertResponse(4, "SAVED_FOR_REVIEW", "   ", null, null, null, null);
 		insertResponse(5, "FAILED", "Prepared response", null, null, null, null);
+		insertResponse(6, "DRAFT_CREATED", "Prepared response", "   ", null, null, null);
+		insertResponse(7, "SEND_FAILED", "Prepared response", "gmail-draft-7", null, null, null);
 
 		// when / then
-		for (long positionId = 1; positionId <= 5; positionId++) {
+		for (long positionId = 1; positionId <= 7; positionId++) {
 			assertTrue(repository.claimResponseForSending(positionId, NOW).isEmpty(),
 					"position " + positionId + " should not be sendable");
 		}

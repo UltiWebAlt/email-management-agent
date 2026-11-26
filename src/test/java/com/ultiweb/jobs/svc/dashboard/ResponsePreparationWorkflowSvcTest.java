@@ -3,6 +3,7 @@ package com.ultiweb.jobs.svc.dashboard;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -277,16 +278,25 @@ class ResponsePreparationWorkflowSvcTest {
 
 	@ParameterizedTest
 	@NullAndEmptySource
-	@ValueSource(strings = {" ", "draft-7"})
-	void createsMissingDraftsAndRecordsProductionSends(final String draftId) throws Exception {
+	@ValueSource(strings = {" "})
+	void refusesToSendAResponseWithoutAReviewedDraft(final String draftId) throws Exception {
 		// given
 		final var candidate = new ResponseSendCandidate(7, "owner@example.com", "pat@example.com",
 				"Architect opening", "Reply", draftId);
 		when(repository.claimResponseForSending(7, NOW)).thenReturn(Optional.of(candidate));
-		if (draftId == null || draftId.isBlank()) {
-			when(drafts.createDraft("owner@example.com", "pat@example.com", "Re: Architect opening", "Reply"))
-					.thenReturn("draft-7");
-		}
+
+		// when / then
+		assertThrows(IllegalStateException.class, () -> service(false, executor).send(7));
+		verify(drafts, never()).createDraft(anyString(), anyString(), anyString(), anyString());
+		verify(drafts, never()).sendReply(anyString(), any(), anyString(), anyString(), anyString(), any(), anyBoolean());
+	}
+
+	@Test
+	void sendsTheReviewedDraftAndRecordsProductionSends() throws Exception {
+		// given
+		final var candidate = new ResponseSendCandidate(7, "owner@example.com", "pat@example.com",
+				"Architect opening", "Reply", "draft-7");
+		when(repository.claimResponseForSending(7, NOW)).thenReturn(Optional.of(candidate));
 		final Instant sentAt = NOW.minusSeconds(2);
 		when(drafts.sendReply("owner@example.com", "draft-7", "pat@example.com", "Re: Architect opening",
 				"Reply", null, false)).thenReturn(new GmailSentMessage("draft-7", "sent-7", "thread-7", sentAt, true));
@@ -295,6 +305,7 @@ class ResponsePreparationWorkflowSvcTest {
 		assertEquals(true, service(false, executor).send(7));
 		verify(repository).markResponseSent(7, "draft-7", "sent-7", "thread-7", "SENT", sentAt);
 		verify(events).publishEvent(new DashboardResponseUpdatedEvent(7));
+		verify(drafts, never()).createDraft(anyString(), anyString(), anyString(), anyString());
 	}
 
 	@ParameterizedTest

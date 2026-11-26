@@ -121,11 +121,12 @@ public class ResponsePreparationWorkflowSvc {
 		}
 		try {
 			final var response = candidate.orElseThrow();
-			String draftId = response.gmailDraftId();
+			// The repository only claims DRAFT_CREATED rows, so a draft id is always present. This
+			// guard exists so the review step cannot be skipped even if that query changes later:
+			// send() must never create the draft it then sends.
+			final String draftId = response.gmailDraftId();
 			if (draftId == null || draftId.isBlank()) {
-				draftId = gmailDraftSvc.createDraft(response.sourceAccount(), response.recruiterEmail(),
-						replySubject(response.sourceSubject()), response.responseContent());
-				repository.saveSendingDraftId(positionId, draftId, clock.instant());
+				throw new IllegalStateException("A Gmail draft must be reviewed before the response is sent");
 			}
 			final String recipient = productionMode ? response.recruiterEmail() : response.sourceAccount();
 			final String label = productionMode ? null : EmailWorkflowLabels.EMAIL_AGENT_TEST;
@@ -138,7 +139,7 @@ public class ResponsePreparationWorkflowSvc {
 			notifyResponseUpdated(positionId);
 			LOGGER.info("Sent Gmail response for position {} (message {}).", positionId, sent.messageId());
 			return true;
-		} catch (final IOException | MessagingException exception) {
+			} catch (final IOException | MessagingException exception) {
 			repository.markResponseSendFailed(positionId, clock.instant());
 			notifyResponseUpdated(positionId);
 			throw exception;

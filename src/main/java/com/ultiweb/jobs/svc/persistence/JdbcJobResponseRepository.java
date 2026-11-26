@@ -112,10 +112,16 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 
 	@Override
 	public Optional<ResponseSendCandidate> claimResponseForSending(final long positionId, final Instant updatedAt) {
+		// A Gmail draft must already exist before a response can be sent. DRAFT_CREATED is the only
+		// state written after the draft is created, so requiring it (plus a nonblank draft id) means
+		// a human has had the opportunity to review the content in Gmail first. SEND_FAILED is
+		// deliberately absent: a failed send keeps its draft but returns to DRAFT_CREATED through
+		// markResponseSendFailed, so retries stay reviewable.
 		final int claimed = jdbcTemplate.update("""
 				UPDATE responses SET response_status = 'SENDING', updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE'
-				AND response_status IN ('SAVED_FOR_REVIEW', 'DRAFT_CREATED', 'SEND_FAILED')
+				AND response_status = 'DRAFT_CREATED'
+				AND NULLIF(TRIM(gmail_draft_id), '') IS NOT NULL
 				AND NULLIF(TRIM(response_content), '') IS NOT NULL
 				AND EXISTS (
 				SELECT 1 FROM positions p JOIN recruiters recruiter ON recruiter.id = p.recruiter_id
@@ -160,8 +166,10 @@ public class JdbcJobResponseRepository implements JobResponseRepository {
 
 	@Override
 	public void markResponseSendFailed(final long positionId, final Instant updatedAt) {
+		// A failed send returns to DRAFT_CREATED, not a terminal failure: the Gmail draft still
+		// exists and must remain reviewable before a retry can be claimed for sending again.
 		jdbcTemplate.update("""
-				UPDATE responses SET response_status = 'SEND_FAILED', updated_at = ?
+				UPDATE responses SET response_status = 'DRAFT_CREATED', updated_at = ?
 				WHERE position_id = ? AND response_type = 'INITIAL_RESPONSE' AND response_status = 'SENDING'
 				""", updatedAt.toString(), positionId);
 	}

@@ -121,7 +121,7 @@ function responseStatusLabel(status) {
 		SENDING: "Sending from Gmail",
 		SENT: "Sent from Gmail",
 		SENT_LABEL_FAILED: "Sent · test label could not be applied",
-		SEND_FAILED: "Sending failed · retry",
+		SEND_FAILED: "Sending failed · review the kept draft, then send again",
 		AWAITING_REPLY: "Sent · waiting for a reply",
 		CHECKING_RESPONSE: "Checking for a reply",
 		FOLLOW_UP_SENT: "Follow-up sent · waiting for a reply",
