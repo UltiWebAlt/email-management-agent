@@ -40,8 +40,9 @@ class DashboardEventStreamTest {
 		assertTrue(events.contains("event:opportunity-added"));
 		assertTrue(events.contains("event:opportunity-updated"));
 		assertTrue(events.contains("event:response-updated"));
-		assertTrue(events.contains("data:{\"running\":true}"));
-		assertTrue(events.contains("data:{\"running\":false}"));
+		// Spring Framework 7 renders SSE JSON payloads with a space after the field colon.
+		assertTrue(events.contains("data: {\"running\":true}"));
+		assertTrue(events.contains("data: {\"running\":false}"));
 	}
 
 	@Test
@@ -58,7 +59,7 @@ class DashboardEventStreamTest {
 		stream.importStateChanged(false);
 
 		// then
-		assertTrue(live.getResponse().getContentAsString().contains("data:{\"running\":false}"));
+		assertTrue(live.getResponse().getContentAsString().contains("data: {\"running\":false}"));
 	}
 
 	private static MockMvc mvc(final DashboardEventStream stream) {
